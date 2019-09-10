@@ -4,8 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "webpack-dev-server --mode development",
+    "test": "./node_modules/.bin/wdio wdio.conf.js",
+    "start-test": "webpack-dev-server --mode development &",
+    "stop-test": " pgrep -f 'webpack-dev-server' | xargs kill",
     "format": "prettier --write \"src/**/*.js\"",
     "eslint-fix": "eslint --fix \"src/**/*.js\"",
     "build": "webpack --mode production"
