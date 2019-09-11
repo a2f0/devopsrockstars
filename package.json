@@ -4,9 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "start-server": "webpack-dev-server --mode development",
     "test": "./node_modules/.bin/wdio wdio.conf.js",
-    "start-test": "webpack-dev-server --mode development &",
-    "stop-test": " pgrep -f 'webpack-dev-server' | xargs kill",
+    "ci": "start-server-and-test start-server http-get://localhost:8080 test",
     "format": "prettier --write \"src/**/*.js\"",
     "eslint-fix": "eslint --fix \"src/**/*.js\"",
     "build": "webpack --mode production"
@@ -36,6 +36,7 @@
     "less": "latest",
     "less-loader": "latest",
     "prettier": "latest",
+    "start-server-and-test": "^1.10.0",
     "style-loader": "latest",
     "wdio-chromedriver-service": "^5.0.2",
     "webpack": "latest",
