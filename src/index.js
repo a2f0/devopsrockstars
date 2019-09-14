@@ -1,6 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import { BrowserRouter as Router, Route, Link } from "react-router-dom";
+import './style/devopsrockstars.less';
 
 function Index () {
     return <h2>Home</h2>;

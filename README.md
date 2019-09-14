@@ -1,6 +1,6 @@
 # devopsrockstars-frontend
 
-run `npm run start`
+run `npm run start-server`
 
 build `npm run build`
 
