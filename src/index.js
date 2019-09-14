@@ -24,22 +24,19 @@ function AppRouter () {
         <Router>
             <div>
                 <nav>
-                    <ul>
-                        <li>
-                            <Link to="/">Index</Link>
-                        </li>
-                        <li>
-                            <Link to="/company/">Company</Link>
-                        </li>
-                        <li>
-                            <Link to="/store/">Store</Link>
-                        </li>
-                        <li>
-                            <Link to="/contact/">Contact</Link>
-                        </li>
-                    </ul>
+                    <div className="menu-item">
+                        <Link to="/">Index</Link>
+                    </div>
+                    <div className="menu-item">
+                        <Link to="/company/">Company</Link>
+                    </div>
+                    <div className="menu-item">
+                        <Link to="/store/">Store</Link>
+                    </div>
+                    <div className="menu-item">
+                        <Link to="/contact/">Contact</Link>
+                    </div>
                 </nav>
-
                 <Route path="/" exact component={Index} />
                 <Route path="/company/" exact component={Company} />
                 <Route path="/store/" component={Store} />
