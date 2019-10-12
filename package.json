@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start-server": "webpack-dev-server --mode development",
+    "start-server": "webpack-dev-server --mode development --history-api-fallback",
     "test": "./node_modules/.bin/wdio wdio.conf.js",
     "ci": "start-server-and-test start-server http-get://localhost:8080 test",
     "format": "prettier --write \"src/**/*.js\"",
@@ -38,12 +38,14 @@
     "prettier": "latest",
     "start-server-and-test": "^1.10.0",
     "style-loader": "latest",
+    "url-loader": "^2.2.0",
     "wdio-chromedriver-service": "^5.0.2",
     "webpack": "latest",
     "webpack-cli": "latest",
     "webpack-dev-server": "latest"
   },
   "dependencies": {
+    "@svgr/webpack": "^4.3.3",
     "react": "latest",
     "react-dom": "latest",
     "react-router-dom": "^5.0.1"

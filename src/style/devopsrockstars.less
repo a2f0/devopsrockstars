@@ -1,15 +1,86 @@
 a {
-    font-size: .85em;
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-    color: white;
+  font-size: .80em;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  color: white;
 }
 
 body {
-    background-color: black;
-    color: white;
+  background-color: black;
+  color: white;
+  margin:0;
 }
 
 .menu-item {
-    display: inline-block;
-    margin-left: .3em
+  display: inline-block;
+  margin-left: .3em;
+}
+
+// Navbar
+
+.navbar {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+}
+
+.navbar-top {
+  top: 0;
+}
+
+.navbar a {
+  float: left;
+  display: block;
+  text-align: center;
+  text-decoration: none;
+}
+
+.navbar a:hover {
+  color: gray;
+}
+
+.navbar-bottom {
+  bottom: 0;
+}
+
+// Top and bottom container
+
+.flex-container {
+  display: flex;
+  justify-content: center;
+}
+
+.flex-max-width {
+  flex: 1;
+  max-width: 60em;
+}
+
+.flex {
+  flex: 1;
+}
+  
+.flex-container-right {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.flex-container-left {
+  display: flex;
+  justify-content: flex-start;
+}
+
+// Skyline
+
+.full-screen {
+  z-index:-1337;
+  position:absolute;
+  left:0px;
+  right:0px;
+  width:100%;
+  height:100%;
+  background:transparent;
+}
+  
+.fill-container {
+  height: 100%;
+  width: 100%;
 }

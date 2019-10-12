@@ -4,9 +4,12 @@
       "browser": true,
       "node": true
     },
-    "settings": {
+    "settings": { 
       "react": {
         "version": "detect"
       }
+    },
+    "rules": {
+      "indent": ["error", 2]
     }
   }
