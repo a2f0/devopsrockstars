@@ -1,10 +1,14 @@
 {
-    // Insert spaces when pressing Tab.
-    "editor.insertSpaces": true,
+  // Insert spaces when pressing Tab.
+  "editor.insertSpaces": true,
 
-    // The number of spaces a tab is equal to.
-    "editor.tabSize": 2,
+  // The number of spaces a tab is equal to.
+  "editor.tabSize": 2,
 
-    // Scrollback buffer on the integrated terminal
-    "terminal.integrated.scrollback": 10000
+  // Scrollback buffer on the integrated terminal
+  "terminal.integrated.scrollback": 10000,
+  
+  // Autosave after 999 milliseconds
+  "files.autoSave": "afterDelay",
+  "files.autoSaveDelay": 999
 }
