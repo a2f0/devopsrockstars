@@ -1,5 +1,7 @@
 # devopsrockstars-frontend
 
+install dependencies `npm ci`
+
 run `npm run start-server`
 
 build `npm run build`
