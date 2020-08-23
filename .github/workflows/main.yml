@@ -31,9 +31,23 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Build container
+      - name: Build SHA image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: tfdevopsrockstars
+          IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build . -t devopsrockstars-frontend-production
+          docker build . -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+
+      - name: Tag and push production images to Amazon ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: tfdevopsrockstars
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:frontend-production-latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:backend-staging-latest
 
   deploy-code:
     runs-on: ubuntu-latest
