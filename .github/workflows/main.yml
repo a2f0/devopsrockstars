@@ -20,6 +20,10 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Build container
+        run: |
+          docker build . -t devopsrockstars-frontend-production
+
   deploy-code:
     runs-on: ubuntu-latest
     continue-on-error: false
