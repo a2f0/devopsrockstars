@@ -1,0 +1,56 @@
+name: Github Actions
+
+on:
+  push:
+    branches: '**'
+  pull_request:
+    branches: '**'
+
+jobs:
+
+  run-tests:
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    steps:
+      - uses: actions/checkout@v2
+
+  push-containers:
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    steps:
+      - uses: actions/checkout@v2
+
+  deploy-code:
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    needs: push-containers
+
+    steps:
+      - name: Install SSH key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.SSH_KEY }}
+          known_hosts: ${{ secrets.KNOWN_HOSTS }}
+
+      - name: Deploy production via SSH
+        env:
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_FQDN: ${{ secrets.DEPLOY_PRODUCTION_FQDN }}
+        run: |
+          ssh $DEPLOY_USER@$DEPLOY_FQDN /home/$DEPLOY_USER/devopsrockstars/pull-containers.sh
+
+  post-to-slack:
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    needs: deploy-code
+    
+    steps:
+      - uses: 8398a7/action-slack@v3
+        if: always()
+        with:
+          status: ${{ job.status }}
+          fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      
