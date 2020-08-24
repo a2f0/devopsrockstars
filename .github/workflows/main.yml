@@ -32,6 +32,7 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v1
 
       - name: Build SHA image
+        if: github.event.ref == 'refs/heads/staging' || github.event.ref == 'refs/heads/production'
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: tfdevopsrockstars
@@ -40,6 +41,7 @@ jobs:
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
 
       - name: Tag and push production images to Amazon ECR
+        if: github.event.ref == 'refs/heads/production'
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: tfdevopsrockstars
@@ -48,6 +50,17 @@ jobs:
           docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:frontend-production-latest
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:frontend-production-latest
+
+      - name: Tag and push staging images to Amazon ECR
+        if: github.event.ref == 'refs/heads/staging'
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: tfdevopsrockstars
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:frontend-staging-latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:frontend-staging-latest
 
   deploy-code:
     runs-on: ubuntu-latest
