@@ -24,6 +24,13 @@ body {
   margin-right: .3em;
 }
 
+.menu-item-center{
+  display: inline-block;
+  margin-right: .3em;
+  margin-left: .3em;
+  background-color: purple;
+}
+
 .menu-top {
   position: fixed;
   bottom: top;
@@ -65,6 +72,7 @@ body {
   justify-content: center;
   background-color:  green;
   flex-direction: row;
+  width: 100%
 }
 
 .flex-container-column {
@@ -116,8 +124,6 @@ body {
   height: 20px;
 }
 
-
-
 .flex-max-width {
   width: 60em;
   background-color:  blue;
@@ -139,20 +145,29 @@ body {
 
 .flex {
   display: flex;
-  width: calc(60em / 2);
+  width: calc(60em /2);
   background-color: orange;
-}
-  
-.flex-container-right {
-  display: flex;
-  justify-content: flex-end;
-  background-color: red;
 }
 
 .flex-container-left {
   display: flex;
+  flex-grow: 1;
   justify-content: flex-start;
   background-color: pink;
+}
+
+.flex-container-right {
+  display: flex;
+  flex-grow: 1;
+  justify-content: flex-end;
+  background-color: red;
+}
+
+.flex-container-center {
+  display: flex;
+  flex-grow: 1;
+  justify-content: center;
+  background-color: black;
 }
 
 // Skyline

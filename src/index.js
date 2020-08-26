@@ -149,9 +149,22 @@ function AppRouter() {
             <div className="flex-row-header">
 
               <div className="flex-container-row">
-
-                header
-
+                <div className="flex-container-left">
+                  <div className="menu-item-left">
+                    <Link to="/">index</Link>
+                  </div>
+                </div>
+                <div className="flex-container-right">
+                  <div className="menu-item-right">
+                    <Link to="/company">company</Link>
+                  </div>
+                  <div className="menu-item-right">
+                    <Link to="/store">store</Link>
+                  </div>
+                  <div className="menu-item-right">
+                    <Link to="/contact">contact</Link>
+                  </div>
+                </div>
               </div>
 
             </div>
@@ -298,7 +311,26 @@ function AppRouter() {
               </div>
             </div>
             <div className="flex-row-footer">
-              here
+              <div className="flex-container-row">
+                <div className="flex-container-left">
+                  <div className="menu-item-left">
+                    <Link to="/">index</Link>
+                  </div>
+                </div>
+                <div className="flex-container-center">
+                  <div className="menu-item-center">
+                    <Link to="/">index</Link>
+                  </div>
+                </div>
+                <div className="flex-container-right">
+                  <div className="menu-item-right">
+                    <Link to="/store">kiva</Link>
+                  </div>
+                  <div className="menu-item-right">
+                    <Link to="/contact">search</Link>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
