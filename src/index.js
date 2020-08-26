@@ -137,90 +137,73 @@ function FullScreenMap() {
   )
 }
 
-function NavigationTop() {
-  return (
-    <div className="navbar navbar-top">
-      <div className="flex-container">
-        <div className="flex-max-width">
-          <div className="flex-container">
-            <div className="flex">
-              <div className="flex-container-left">
-                <div className="menu-item">
-                  <Link to="/">Index</Link>
-                </div>
-              </div>
-            </div>
-            <div className="flex">
-              <div className="flex-container-right">
-                <div className="menu-item">
-                  <Link to="/company">Kiva</Link>
-                </div>
-                <div className="menu-item">
-                  <Link to="/store">Store</Link>
-                </div>
-                <div className="menu-item">
-                  <Link to="/contact">Contact</Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function NavigationBottom() {
-  return (
-    <div className="navbar navbar-bottom">
-      <div className="flex-container">
-        <div className="flex-max-width">
-          <div className="flex-container">
-            <div className="flex">
-              <div className="flex-container-left">
-                <div className="menu-item">
-                  <Link to="/">DevOpsRockstars, LLC</Link>
-                </div>
-              </div>
-            </div>
-            <div className="flex">
-              <div className="flex-container">
-                <div className="menu-item">
-                  <Link to="/">Index</Link>
-                </div>
-              </div>
-            </div>
-            <div className="flex">
-              <div className="flex-container-right">
-                <div className="menu-item">
-                  <Link to="/company/">Kiva</Link>
-                </div>
-                <div className="menu-item">
-                  <Link to="/store/">Search</Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 function AppRouter() {
   return (
     <Router>
-      <NavigationTop />
-      <FullScreenMap/>
-      <div className="flex-container">
-        <div className="flex-max-width">
-          <Route path="/" exact component={Index} />
-          <Route path="/company" exact component={Company} />
-          <Route path="/store" component={Store} />
-          <Route path="/contact" component={Contact} />
+      {/* <NavigationTop /> */}
+      {/* <FullScreenMap/> */}
+      <Route path="/" exact component={Index} />
+      <div className="flex-container-row">
+        <div className="flex-full-height-min">
+          <div className="flex-container-column">
+            
+            <div className="flex-row-header">
+
+              <div className="flex-container-row">
+                <div className="flex-container-left">
+                  <div className="menu-item-left">
+                    <Link to="/">index</Link>
+                  </div>
+                </div>
+                <div className="flex-container-right">
+                  <div className="menu-item-right">
+                    <Link to="/company">company</Link>
+                  </div>
+                  <div className="menu-item-right">
+                    <Link to="/store">store</Link>
+                  </div>
+                  <div className="menu-item-right">
+                    <Link to="/contact">contact</Link>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+            <div className="flex-row-body">
+              <div className="flex-container-column">
+               
+                <Route path="/company" exact component={Company} />
+                <Route path="/store" component={Store} />
+                <Route path="/contact" component={Contact} />
+              </div>
+            </div>
+            <div className="flex-row-footer">
+              <div className="flex-container-row">
+                <div className="flex-container-left">
+                  <div className="menu-item-left">
+                    <Link to="/">index</Link>
+                  </div>
+                </div>
+                <div className="flex-container-center">
+                  <div className="menu-item-center">
+                    <Link to="/">index</Link>
+                  </div>
+                </div>
+                <div className="flex-container-right">
+                  <div className="menu-item-right">
+                    <Link to="/store">kiva</Link>
+                  </div>
+                  <div className="menu-item-right">
+                    <Link to="/contact">search</Link>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-      <NavigationBottom />
+
+      {/* <NavigationBottom /> */}
     </Router>
   );
 }

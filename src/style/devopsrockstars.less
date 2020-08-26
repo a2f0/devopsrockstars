@@ -1,7 +1,7 @@
 a {
-  font-size: .80em;
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   color: white;
+  font-size: 14px;
 }
 
 body {
@@ -12,15 +12,36 @@ body {
 
 .menu-item {
   display: inline-block;
+}
+
+.menu-item-right {
+  display: inline-block;
   margin-left: .3em;
+}
+
+.menu-item-left {
+  display: inline-block;
+  margin-right: .3em;
+}
+
+.menu-item-center{
+  display: inline-block;
+  margin-right: .3em;
+  margin-left: .3em;
+}
+
+.menu-top {
+  position: fixed;
+  bottom: top;
 }
 
 // Navbar
 
 .navbar {
-  overflow: hidden;
-  position: fixed;
-  width: 100%;
+  // overflow: hidden;
+  // position: fixed;
+  background-color:  coral;
+  flex: 1;
 }
 
 .navbar-top {
@@ -44,43 +65,112 @@ body {
 
 // Top and bottom container
 
-.flex-container {
+.flex-container-row {
   display: flex;
   justify-content: center;
+  flex-direction: row;
+  width: 100%
+}
+
+.flex-container-column {
+  display: flex;
+  justify-content: flex-start;
+  flex-direction: column;
+  width: 100%;
+}
+
+.flex-row-header {
+  display: flex;
+  position: sticky;
+  top: 0;
+}
+
+.flex-row-footer {
+  display: flex;
+  position: sticky;
+  bottom: 0;
+}
+
+.flex-row-body {
+  flex-grow: 1;
+  display: flex;
+}
+
+.flex-full-height-min {
+  display: flex;
+  width: 60em;
+  min-height: 100vh;
+}
+
+.flex-container-top {
+  display: flex;
+  justify-content: center;
+  height: 20px;
+}
+
+.flex-container-bottom {
+  display: flex;
+  justify-content: center;
+  height: 20px;
 }
 
 .flex-max-width {
-  flex: 1;
-  max-width: 60em;
+  width: 60em;
+  display: flex;
+}
+
+.top-menu {
+  width: 60em;
+  position: fixed;
+}
+
+.bottom-menu {
+  width: 60em;
+  position: fixed;
+  bottom: 0;
 }
 
 .flex {
-  flex: 1;
-}
-  
-.flex-container-right {
   display: flex;
-  justify-content: flex-end;
+  width: calc(60em /2);
+  background-color: orange;
 }
 
 .flex-container-left {
   display: flex;
+  flex-grow: 1;
   justify-content: flex-start;
 }
 
-// Skyline
+.flex-container-right {
+  display: flex;
+  flex-grow: 1;
+  justify-content: flex-end;
+}
 
+.flex-container-center {
+  display: flex;
+  flex-grow: 1;
+  justify-content: center;
+}
+
+// Skyline
 .full-screen {
   z-index:-1337;
-  position:absolute;
+  position: fixed;
   left:0px;
   right:0px;
-  width:100%;
-  height:100%;
-  background:transparent;
+  width:100vw;
+  height:100vh;
 }
   
 .fill-container {
-  height: 100%;
-  width: 100%;
+  width:100%;
+  height:100%;
+  display: block;
+}
+
+html {
+  margin-left: calc(100vw - 100%);
+  margin-right: 0;
 }
