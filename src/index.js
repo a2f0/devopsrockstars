@@ -142,6 +142,7 @@ function AppRouter() {
     <Router>
       {/* <NavigationTop /> */}
       {/* <FullScreenMap/> */}
+      <Route path="/" exact component={Index} />
       <div className="flex-container-row">
         <div className="flex-full-height-min">
           <div className="flex-container-column">
@@ -170,144 +171,10 @@ function AppRouter() {
             </div>
             <div className="flex-row-body">
               <div className="flex-container-column">
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
-                <div>long text</div>
+               
+                <Route path="/company" exact component={Company} />
+                <Route path="/store" component={Store} />
+                <Route path="/contact" component={Contact} />
               </div>
             </div>
             <div className="flex-row-footer">
