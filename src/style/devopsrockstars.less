@@ -10,24 +10,37 @@ body {
   margin:0;
 }
 
+.mapVisible {
+  visibility: visible;
+  background-color: red;
+}
+
+.mapHidden {
+  visibility: hidden;
+}
+
 .menu-item {
   display: inline-block;
+  pointer-events: none;
 }
 
 .menu-item-right {
   display: inline-block;
   margin-left: .3em;
+  pointer-events: auto;
 }
 
 .menu-item-left {
   display: inline-block;
   margin-right: .3em;
+  pointer-events: auto;
 }
 
 .menu-item-center{
   display: inline-block;
   margin-right: .3em;
   margin-left: .3em;
+  pointer-events: auto;
 }
 
 .menu-top {
@@ -92,6 +105,7 @@ body {
 }
 
 .flex-row-body {
+  pointer-events: none;
   flex-grow: 1;
   display: flex;
 }
@@ -171,6 +185,7 @@ body {
 }
 
 html {
+  pointer-events: none;
   margin-left: calc(100vw - 100%);
   margin-right: 0;
 }
