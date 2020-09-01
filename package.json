@@ -26,7 +26,7 @@
     "@wdio/sync": "latest",
     "babel-eslint": "latest",
     "babel-loader": "latest",
-    "chromedriver": "latest",
+    "chromedriver": "^84.0.1",
     "css-loader": "latest",
     "eslint": "latest",
     "eslint-config-react": "latest",

@@ -102,7 +102,7 @@ function Contact() {
 }
 
 function FullScreenMap() {
-  
+
   const getClassname = () => { 
     const location = useLocation();
     switch(location.pathname) { 
@@ -114,7 +114,7 @@ function FullScreenMap() {
   }
 
   return (
-    <div id='mapdiv' className={getClassname()}>
+    <div id='mapdiv' className={`full-screen ${getClassname()}`}>
       <link
         rel="stylesheet"
         href="//cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css"
@@ -123,16 +123,17 @@ function FullScreenMap() {
         rel="stylesheet" 
         href="//unpkg.com/leaflet@1.6.0/dist/leaflet.css"
       />
+      {/* https://docs.mapbox.com/studio-manual/overview/publish-your-style/#mapboxjs-and-leaflet */}
       <Map 
         attributionControl={false}
-        center={[45.4, -75.7]} 
-        zoom={12} 
+        center={[41.796242, -87.580913]} 
+        zoom={11} 
         zoomControl={false}>
         <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          url="https://api.mapbox.com/styles/v1/devopsrockstars/ckejfwno819jl1aqscnuvkr7r/tiles/256/{z}/{x}/{y}?access_token=pk.eyJ1IjoiZGV2b3Bzcm9ja3N0YXJzIiwiYSI6InpUN3Buak0ifQ.a9f4FaZbPCK6GNJc8ImH7w"
           attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap2</a> contributors'
         />
-      </Map>   
+      </Map>
     </div>
   )
 }
@@ -141,7 +142,7 @@ function AppRouter() {
   return (
     <Router>
       {/* <NavigationTop /> */}
-      {/* <FullScreenMap/> */}
+      <FullScreenMap/>
       <Route path="/" exact component={Index} />
       <div className="flex-container-row">
         <div className="flex-full-height-min">
@@ -171,7 +172,6 @@ function AppRouter() {
             </div>
             <div className="flex-row-body">
               <div className="flex-container-column">
-               
                 <Route path="/company" exact component={Company} />
                 <Route path="/store" component={Store} />
                 <Route path="/contact" component={Contact} />
