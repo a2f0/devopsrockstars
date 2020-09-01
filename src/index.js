@@ -7,6 +7,7 @@ import './style/devopsrockstars.less';
 import FullScreenMap from "./FullScreenMap.jsx";
 import Company from "./Company.jsx";
 import Skyline from "./Skyline.jsx";
+import FlexContainerRow from "./shared/FlexContainerRow.jsx"
 
 function Store() {
   return <h2>Store</h2>;
@@ -21,13 +22,13 @@ function AppRouter() {
     <Router>
       <FullScreenMap/>
       <Route path="/" exact component={Skyline} />
-      <div className="flex-container-row">
+      <FlexContainerRow>
         <div className="flex-full-height-min">
           <div className="flex-container-column">
             
             <div className="flex-row-header">
 
-              <div className="flex-container-row">
+              <FlexContainerRow>
                 <div className="flex-container-left">
                   <div className="menu-item-left">
                     <Link to="/">index</Link>
@@ -44,7 +45,7 @@ function AppRouter() {
                     <Link to="/contact">contact</Link>
                   </div>
                 </div>
-              </div>
+              </FlexContainerRow>
 
             </div>
             <div className="flex-row-body">
@@ -55,7 +56,7 @@ function AppRouter() {
               </div>
             </div>
             <div className="flex-row-footer">
-              <div className="flex-container-row">
+              <FlexContainerRow>
                 <div className="flex-container-left">
                   <div className="menu-item-left">
                     <Link to="/">index</Link>
@@ -74,11 +75,11 @@ function AppRouter() {
                     <Link to="/contact">search</Link>
                   </div>
                 </div>
-              </div>
+              </FlexContainerRow>
             </div>
           </div>
         </div>
-      </div>
+      </FlexContainerRow>
 
       {/* <NavigationBottom /> */}
     </Router>
