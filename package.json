@@ -45,6 +45,7 @@
     "webpack-dev-server": "latest"
   },
   "dependencies": {
+    "@material-ui/core": "^4.11.0",
     "@svgr/webpack": "latest",
     "leaflet": "^1.6.0",
     "react": "latest",
