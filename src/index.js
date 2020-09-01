@@ -3,93 +3,10 @@ import ReactDOM from "react-dom";
 import { BrowserRouter as Router, Route, Link } from "react-router-dom";
 import './style/map.less';
 import './style/devopsrockstars.less';
-import skylineUrl from './image/chicago_skyline.svg';
+
 import FullScreenMap from "./FullScreenMap.jsx";
-
-function Index() {
-  return (
-    <div className='full-screen'>
-      <img className='fill-container' src={skylineUrl} alt="skyline" />
-    </div>  
-  );
-}
-
-function Company() {
-  return (
-    <div>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-    </div>
-  );
-}
+import Company from "./Company.jsx";
+import Skyline from "./Skyline.jsx";
 
 function Store() {
   return <h2>Store</h2>;
@@ -102,9 +19,8 @@ function Contact() {
 function AppRouter() {
   return (
     <Router>
-      {/* <NavigationTop /> */}
       <FullScreenMap/>
-      <Route path="/" exact component={Index} />
+      <Route path="/" exact component={Skyline} />
       <div className="flex-container-row">
         <div className="flex-full-height-min">
           <div className="flex-container-column">
