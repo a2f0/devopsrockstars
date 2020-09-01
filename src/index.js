@@ -26,7 +26,7 @@ function AppRouter() {
         <div className="flex-full-height-min">
           <div className="flex-container-column">
             
-            <div className="flex-row-header">
+            <div className="flex-header">
 
               <FlexContainerRow>
                 <div className="flex-container-left">
@@ -48,14 +48,14 @@ function AppRouter() {
               </FlexContainerRow>
 
             </div>
-            <div className="flex-row-body">
+            <div className="flex-body">
               <div className="flex-container-column">
                 <Route path="/company" exact component={Company} />
                 <Route path="/store" component={Store} />
                 <Route path="/contact" component={Contact} />
               </div>
             </div>
-            <div className="flex-row-footer">
+            <div className="flex-footer">
               <FlexContainerRow>
                 <div className="flex-container-left">
                   <div className="menu-item-left">
