@@ -123,13 +123,14 @@ function FullScreenMap() {
         rel="stylesheet" 
         href="//unpkg.com/leaflet@1.6.0/dist/leaflet.css"
       />
+      {/* https://docs.mapbox.com/studio-manual/overview/publish-your-style/#mapboxjs-and-leaflet */}
       <Map 
         attributionControl={false}
         center={[41.796242, -87.580913]} 
         zoom={11} 
         zoomControl={false}>
         <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          url="https://api.mapbox.com/styles/v1/devopsrockstars/ckejfwno819jl1aqscnuvkr7r/tiles/256/{z}/{x}/{y}?access_token=pk.eyJ1IjoiZGV2b3Bzcm9ja3N0YXJzIiwiYSI6InpUN3Buak0ifQ.a9f4FaZbPCK6GNJc8ImH7w"
           attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap2</a> contributors'
         />
       </Map>
