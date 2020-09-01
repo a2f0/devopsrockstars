@@ -23,60 +23,59 @@ function AppRouter() {
       <FullScreenMap/>
       <Route path="/" exact component={Skyline} />
       <FlexContainerRow>
-        <div className="flex-full-height-min">
-          <div className="flex-container-column">
+
+        <div className="flex-container-column">
             
-            <div className="flex-row-header">
+          <div className="flex-row-header">
 
-              <FlexContainerRow>
-                <div className="flex-container-left">
-                  <div className="menu-item-left">
-                    <Link to="/">index</Link>
-                  </div>
+            <FlexContainerRow>
+              <div className="flex-container-left">
+                <div className="menu-item-left">
+                  <Link to="/">index</Link>
                 </div>
-                <div className="flex-container-right">
-                  <div className="menu-item-right">
-                    <Link to="/company">company</Link>
-                  </div>
-                  <div className="menu-item-right">
-                    <Link to="/store">store</Link>
-                  </div>
-                  <div className="menu-item-right">
-                    <Link to="/contact">contact</Link>
-                  </div>
-                </div>
-              </FlexContainerRow>
-
-            </div>
-            <div className="flex-row-body">
-              <div className="flex-container-column">
-                <Route path="/company" exact component={Company} />
-                <Route path="/store" component={Store} />
-                <Route path="/contact" component={Contact} />
               </div>
+              <div className="flex-container-right">
+                <div className="menu-item-right">
+                  <Link to="/company">company</Link>
+                </div>
+                <div className="menu-item-right">
+                  <Link to="/store">store</Link>
+                </div>
+                <div className="menu-item-right">
+                  <Link to="/contact">contact</Link>
+                </div>
+              </div>
+            </FlexContainerRow>
+
+          </div>
+          <div className="flex-row-body">
+            <div className="flex-container-column">
+              <Route path="/company" exact component={Company} />
+              <Route path="/store" component={Store} />
+              <Route path="/contact" component={Contact} />
             </div>
-            <div className="flex-row-footer">
-              <FlexContainerRow>
-                <div className="flex-container-left">
-                  <div className="menu-item-left">
-                    <Link to="/">index</Link>
-                  </div>
+          </div>
+          <div className="flex-row-footer">
+            <FlexContainerRow>
+              <div className="flex-container-left">
+                <div className="menu-item-left">
+                  <Link to="/">index</Link>
                 </div>
-                <div className="flex-container-center">
-                  <div className="menu-item-center">
-                    <Link to="/">index</Link>
-                  </div>
+              </div>
+              <div className="flex-container-center">
+                <div className="menu-item-center">
+                  <Link to="/">index</Link>
                 </div>
-                <div className="flex-container-right">
-                  <div className="menu-item-right">
-                    <Link to="/store">kiva</Link>
-                  </div>
-                  <div className="menu-item-right">
-                    <Link to="/contact">search</Link>
-                  </div>
+              </div>
+              <div className="flex-container-right">
+                <div className="menu-item-right">
+                  <Link to="/store">kiva</Link>
                 </div>
-              </FlexContainerRow>
-            </div>
+                <div className="menu-item-right">
+                  <Link to="/contact">search</Link>
+                </div>
+              </div>
+            </FlexContainerRow>
           </div>
         </div>
       </FlexContainerRow>
