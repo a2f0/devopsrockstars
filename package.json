@@ -18,6 +18,7 @@
     "@babel/plugin-proposal-class-properties": "latest",
     "@babel/preset-env": "latest",
     "@babel/preset-react": "latest",
+    "@types/react-leaflet": "^2.5.2",
     "@wdio/cli": "latest",
     "@wdio/dot-reporter": "latest",
     "@wdio/local-runner": "latest",

@@ -4,7 +4,7 @@ import { BrowserRouter as Router, Route, Link } from "react-router-dom";
 import './style/map.less';
 import './style/devopsrockstars.less';
 
-import FullScreenMap from "./FullScreenMap.jsx";
+import FullScreenMap from "./FullScreenMap";
 import Company from "./Company.jsx";
 import Skyline from "./Skyline.jsx";
 import FlexContainerRow from "./shared/FlexContainerRow.jsx"
