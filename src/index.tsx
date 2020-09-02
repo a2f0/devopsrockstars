@@ -75,7 +75,6 @@ function AppRouter() {
         </div>
       </FlexContainerRow>
 
-      {/* <NavigationBottom /> */}
     </Router>
   );
 }
