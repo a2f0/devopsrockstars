@@ -8,14 +8,8 @@ import FullScreenMap from "./FullScreenMap.jsx";
 import Company from "./Company.jsx";
 import Skyline from "./Skyline.jsx";
 import FlexContainerRow from "./shared/FlexContainerRow.jsx"
-
-function Store() {
-  return <h2>Store</h2>;
-}
-
-function Contact() {
-  return <h2>Contact</h2>;
-}
+import Store from "./Store.jsx"
+import Contact from "./Contact.jsx"
 
 function AppRouter() {
   return (
