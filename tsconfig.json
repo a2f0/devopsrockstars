@@ -7,8 +7,8 @@
       "jsx": "react",             // use typescript to transpile jsx to js
       "target": "es5",            // specify ECMAScript target version
       "allowJs": true,            // allow a partial TypeScript and JavaScript codebase
-      "esModuleInterop": true     // allow default imports from modules with no default export.
-
+      "esModuleInterop": true,    // allow default imports from modules with no default export.
+      "experimentalDecorators": true
   },
   "include": [
       "./src/"
