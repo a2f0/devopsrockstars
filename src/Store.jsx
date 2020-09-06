@@ -11,21 +11,27 @@ const Store = React.memo(function Store() {
 
   const retrieveEntries = () => {
     const fetchData = async () => {
-      let response = await StoreProduct.includes('store_product_pictures').all()
-      setStoreProducts(response.data)
+      StoreProduct.includes('store_product_pictures').all().then((response) => {
+        setStoreProducts(response.data)
+      })
     }
     fetchData();
   }
 
-
   return (
     <>
-      <h2>Store</h2>
-      {storeProducts.map(function(product, index){
+      {storeProducts.map(function(product, i) {
         return (
-          <div key={'product' + product.id}>
+          <div key={'product-' + product.id}>
+            {product.storeProductPictures.map(function(picture, i)  {
+              return (
+                <div key={'picture-' + picture.id}>
+                  {picture.url}
+                </div>
+              );
+            })}
           </div>
-        )
+        );
       })}
     </>
   );
