@@ -10,7 +10,7 @@ const useStyles = makeStyles(() => ({
   },
 }));
 
-const FlexContainerRow = function (props) {
+const FlexContainerRow = function (props: any) {
   const classes = useStyles();
   return (
     <div

@@ -3,13 +3,12 @@ import ReactDOM from "react-dom";
 import { BrowserRouter as Router, Route, Link } from "react-router-dom";
 import './style/map.less';
 import './style/devopsrockstars.less';
-
 import FullScreenMap from "./FullScreenMap";
-import Company from "./Company.jsx";
-import Skyline from "./Skyline.jsx";
-import FlexContainerRow from "./shared/FlexContainerRow.jsx"
-import Store from "./Store.jsx"
-import Contact from "./Contact.jsx"
+import Company from "./Company";
+import Skyline from "./Skyline";
+import FlexContainerRow from "./shared/FlexContainerRow"
+import Store from "./Store"
+import Contact from "./Contact"
 
 function AppRouter() {
   return (
