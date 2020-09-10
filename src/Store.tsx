@@ -36,7 +36,7 @@ const Store = React.memo(function Store() {
     <>
       {storeProducts.map(function(product, i) {
         return (
-          <div className={classes.storeItem}>
+          <div key={'product-' + product.id} className={classes.storeItem}>
             {product.storeProductPictures.map(function(picture, i)  {
               return (
                 <div key={'picture-' + picture.id}>
