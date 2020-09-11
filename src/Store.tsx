@@ -2,6 +2,7 @@ import React, {useEffect, useState} from 'react'
 import { StoreProduct } from "./models"
 import { makeStyles } from '@material-ui/core/styles';
 import FlexContainerRow from "./shared/FlexContainerRow.jsx"
+import { ReactSVG } from 'react-svg'
 
 const useStyles = makeStyles(() => ({	
   storeItem: {	
@@ -9,7 +10,10 @@ const useStyles = makeStyles(() => ({
     justifyContent: 'center',
     flexDirection: 'row',
     width: '100%',
-    backgroundColor: 'red'
+  },
+  storePicture: {	
+    marginTop: 75,
+    display: 'flex'
   },
 }));
 
@@ -39,8 +43,13 @@ const Store = React.memo(function Store() {
           <div key={'product-' + product.id} className={classes.storeItem}>
             {product.storeProductPictures.map(function(picture, i)  {
               return (
-                <div key={'picture-' + picture.id}>
-                  {picture.url}
+                <div key={'picture-' + picture.id} className={classes.storePicture}>
+                  <ReactSVG
+                      src={picture.fullUrl}
+                      beforeInjection={(svg) => {
+                        svg.classList.add('svg-class-name')
+                        svg.setAttribute('style', 'width: 270px')
+                      }}/>
                 </div>
               );
             })}

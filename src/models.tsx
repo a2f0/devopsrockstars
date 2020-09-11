@@ -1,3 +1,4 @@
+
 import {
   Model,
   SpraypaintBase,
@@ -25,6 +26,11 @@ class ApplicationRecord extends SpraypaintBase {
 export class StoreProductPicture extends ApplicationRecord {
   static jsonapiType = "store_product_pictures"
   @Attr url: string
+
+  get fullUrl() {
+    return `${baseHTTPURL()}${this.url}`
+  }
+
   @BelongsTo() storeProduct: StoreProduct
 }
 

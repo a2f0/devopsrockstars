@@ -73,6 +73,10 @@ jobs:
         with:
           key: ${{ secrets.SSH_KEY }}
           known_hosts: ${{ secrets.KNOWN_HOSTS }}
+      
+      - name: Inspect known hosts
+        run: |
+          cat /home/runner/.ssh/known_hosts
 
       - name: Deploy production via SSH
         if: github.event.ref == 'refs/heads/production'
