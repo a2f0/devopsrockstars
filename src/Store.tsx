@@ -1,11 +1,11 @@
 import React, {useEffect, useState} from 'react'
 import { StoreProduct } from "./models"
 import { makeStyles } from '@material-ui/core/styles';
-import FlexContainerRow from "./shared/FlexContainerRow.jsx"
+import FlexContainerRow from "./shared/FlexContainerRow"
 import { ReactSVG } from 'react-svg'
 
 const useStyles = makeStyles(() => ({	
-  storeItem: {	
+  flexContainerColumn: {	
     display: 'flex',
     justifyContent: 'center',
     flexDirection: 'row',
@@ -13,8 +13,15 @@ const useStyles = makeStyles(() => ({
   },
   storePicture: {	
     marginTop: 75,
-    display: 'flex'
+    display: 'flex',
+    width: 270
   },
+  flex1: {
+    display: 'flex',
+  },
+  flex2: {
+    display: 'flex',
+  }
 }));
 
 const Store = React.memo(function Store() {
@@ -38,23 +45,43 @@ const Store = React.memo(function Store() {
 
   return (
     <>
-      {storeProducts.map(function(product, i) {
-        return (
-          <div key={'product-' + product.id} className={classes.storeItem}>
-            {product.storeProductPictures.map(function(picture, i)  {
-              return (
-                <div key={'picture-' + picture.id} className={classes.storePicture}>
-                  <ReactSVG
-                      src={picture.fullUrl}
-                      beforeInjection={(svg) => {
-                        svg.classList.add('svg-class-name')
-                        svg.setAttribute('style', 'width: 270px')
-                      }}/>
+    {storeProducts.map(function(product, i) {
+      return (
+       <>
+        {product.storeProductPictures.map(function(picture, i)  {
+          return (
+            <div key={'picture-' + picture.id} className={classes.flexContainerColumn}>
+              <div key={'picture-' + picture.id} className={classes.storePicture}>
+                <ReactSVG
+                    src={picture.fullUrl}
+                    beforeInjection={(svg) => {
+                      svg.classList.add('svg-class-name')
+                      svg.setAttribute('style', 'width: 270px')
+                    }}/>
                 </div>
-              );
-            })}
+            </div>
+          );
+        })}
+        <FlexContainerRow>
+            <div>
+            centered description
+            </div>
+        </FlexContainerRow>
+        <FlexContainerRow>
+            <div>
+            centered description
+            </div>
+        </FlexContainerRow> 
+        <FlexContainerRow>
+          <div className={classes.flex1}>
+            test
           </div>
-        );
+          <div className={classes.flex2}>
+            test
+          </div>
+        </FlexContainerRow>
+        </>
+        )
       })}
     </>
   );
