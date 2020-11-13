@@ -80,7 +80,7 @@ jobs:
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           DEPLOY_FQDN: ${{ secrets.DEPLOY_PRODUCTION_FQDN }}
         run: |
-          ssh $DEPLOY_USER@$DEPLOY_FQDN /home/$DEPLOY_USER/devopsrockstars/pull-containers.sh
+          ssh $DEPLOY_USER@$DEPLOY_FQDN /home/$DEPLOY_USER/devopsrockstars/pull-containers-v2.sh
 
       - name: Deploy staging via SSH
         if: github.event.ref == 'refs/heads/staging'
