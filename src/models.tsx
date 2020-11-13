@@ -39,3 +39,8 @@ export class StoreProduct extends ApplicationRecord {
   static jsonapiType = "store_products"
   @HasMany() storeProductPictures: StoreProductPicture[]
 }
+
+@Model()
+export class TechtagSection extends ApplicationRecord {
+  static jsonapiType = "techtag_sections"
+}
