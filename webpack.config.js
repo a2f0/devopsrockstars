@@ -2,30 +2,21 @@ const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
-  entry: './src/index.js',
+  entry: './src/index.tsx',
   output: {
     path: path.resolve(__dirname, 'build'),
     publicPath: '/',
     filename: 'bundle.js'
   },
-  devServer: {
-    contentBase: "./build",
+  resolve: {
+    extensions: [".ts", ".tsx", ".js", ".jsx"]
   },
   module: {
     rules: [
-      {
-        test: /\.(js|jsx)$/,
-        exclude: /node_modules/,
-        use: ['babel-loader', 'eslint-loader']
-      },
-      {
-        test: /\.js$/,
-        exclude: /node_modules/,
-        loader: 'eslint-loader',
-        options: {
-          fix: true,
-        },
-      },
+      { test: /\.(t|j)sx?$/, use: { loader: 'ts-loader' }, exclude: /node_modules/ },
+
+      { enforce: "pre", test: /\.js$/, exclude: /node_modules/, loader: "source-map-loader" },
+
       { 
         test: /\.less$/,
         use: [ 
@@ -40,6 +31,9 @@ module.exports = {
       }
     ]
   },
+  
+  // addition - add source-map support
+  devtool: "source-map",
   plugins: [
     new HtmlWebpackPlugin({
       template:  path.resolve('./index.html'),
