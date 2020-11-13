@@ -10,6 +10,8 @@ import {
 export const baseHTTPURL = () => {
   if (window.location.hostname === 'esor.devopsrockstars.com') {
     return 'https://rose.devopsrockstars.com';
+  } else if (window.location.hostname === 'axl.devopsrockstars.com') {  
+    return 'https://devopsrockstars.com';
   } else {
     return 'http://localhost:3000';
   }
