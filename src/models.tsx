@@ -45,4 +45,10 @@ export class StoreProduct extends ApplicationRecord {
 @Model()
 export class TechtagSection extends ApplicationRecord {
   static jsonapiType = "techtag_sections"
+  @HasMany() techtags: Techtag[]
+}
+
+@Model()
+export class Techtag extends ApplicationRecord {
+  static jsonapiType = "techtags"
 }

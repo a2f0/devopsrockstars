@@ -12,8 +12,7 @@ const Company = React.memo(function FullScreenMap(props) {
 
   const retrieveEntries = () => {
     const fetchData = async () => {
-      TechtagSection.all().then((response) => {
-        console.info(response.data)
+      TechtagSection.includes('techtags').all().then((response) => {
         setTechtagSections(response.data)
       })
     }
