@@ -31,7 +31,7 @@ const FullScreenMap = React.memo(function FullScreenMap(props) {
         zoom={11} 
         zoomControl={false}>
         <TileLayer
-          url="https://api.mapbox.com/styles/v1/devopsrockstars/ckejfwno819jl1aqscnuvkr7r/tiles/256/{z}/{x}/{y}?access_token=pk.eyJ1IjoiZGV2b3Bzcm9ja3N0YXJzIiwiYSI6InpUN3Buak0ifQ.a9f4FaZbPCK6GNJc8ImH7w"
+          url="https://api.mapbox.com/styles/v1/devopsrockstars/ckhobopaz1o8519lupxgprhji/tiles/256/{z}/{x}/{y}?access_token=pk.eyJ1IjoiZGV2b3Bzcm9ja3N0YXJzIiwiYSI6InpUN3Buak0ifQ.a9f4FaZbPCK6GNJc8ImH7w"
           attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap2</a> contributors'
         />
       </Map>
