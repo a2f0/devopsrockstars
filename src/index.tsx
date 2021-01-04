@@ -3,7 +3,7 @@ import ReactDOM from "react-dom";
 import { BrowserRouter as Router, Route, Link } from "react-router-dom";
 import './style/map.less';
 import './style/devopsrockstars.less';
-import FullScreenMap from "./FullScreenMap";
+import FullScreenMap from "./Map";
 import Company from "./Company";
 import Skyline from "./Skyline";
 import FlexContainerRow from "./shared/FlexContainerRow"
