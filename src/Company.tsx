@@ -1,8 +1,9 @@
 
 import React, {useEffect, useState} from 'react'
 import { TechtagSection } from "./models"
+import { ReactSVG } from 'react-svg'
 
-const Company = React.memo(function FullScreenMap(props) {
+const Company = React.memo(function Company(props) {
 
   const [techtagSections, setTechtagSections] = useState([] as TechtagSection[])
 
@@ -19,78 +20,39 @@ const Company = React.memo(function FullScreenMap(props) {
     fetchData();
   }
 
+  const techtag = {  
+    display: "inline-block",
+    width: "30px",
+    paddingRight: "4px",
+    verticalAlign: "middle"
+  };
+
   return (
+    
     <div>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
-      <p>long text</p>
+      {techtagSections.map((entry) => {
+        return (
+  
+          <div key={'section-' + entry.id}>
+            <div>
+            { entry.title }
+            </div>
+            {entry.techtags.map((tag) => {
+              return (
+                <div key={'tag-' + tag.id} style={techtag}>
+                    <ReactSVG
+                      src={tag.fullUrl}
+                      beforeInjection={(svg) => {
+                        svg.classList.add('svg-class-name');
+                        svg.setAttribute('style', 'width: 30px');
+                      }}
+                    />
+                </div>
+              )
+            })}    
+          </div>
+        )
+      })}
     </div>
   );
 

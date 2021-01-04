@@ -44,11 +44,16 @@ export class StoreProduct extends ApplicationRecord {
 
 @Model()
 export class TechtagSection extends ApplicationRecord {
+  @Attr title: string
   static jsonapiType = "techtag_sections"
   @HasMany() techtags: Techtag[]
 }
 
 @Model()
 export class Techtag extends ApplicationRecord {
+  @Attr url: string
+  get fullUrl() {
+    return `${baseHTTPURL()}${this.url}`
+  }
   static jsonapiType = "techtags"
 }
