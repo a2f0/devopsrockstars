@@ -17,11 +17,11 @@ module.exports = {
 
       { enforce: "pre", test: /\.js$/, exclude: /node_modules/, loader: "source-map-loader" },
 
-      { 
+      {
         test: /\.less$/,
-        use: [ 
+        use: [
           'style-loader',
-          'css-loader', 
+          'css-loader',
           'less-loader',
         ],
       },
@@ -31,7 +31,7 @@ module.exports = {
       }
     ]
   },
-  
+
   // addition - add source-map support
   devtool: "source-map",
   plugins: [

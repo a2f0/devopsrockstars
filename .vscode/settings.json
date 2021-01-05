@@ -7,7 +7,7 @@
 
   // Scrollback buffer on the integrated terminal
   "terminal.integrated.scrollback": 10000,
-  
+
   // Autosave after 999 milliseconds
   "files.autoSave": "afterDelay",
   "files.autoSaveDelay": 999

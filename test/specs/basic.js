@@ -6,7 +6,7 @@ describe('index page', () => {
     const title = browser.getTitle();
     assert.strictEqual(title, 'DevOpsRockstars');
     const map = $('#mapdiv')
-    assert.strictEqual(map.isDisplayed(), false);        
+    assert.strictEqual(map.isDisplayed(), false);
   });
 });
 
@@ -14,6 +14,6 @@ describe('contact page', () => {
   it('loads correctly', () => {
     browser.url('http://localhost:8080/contact');
     const map = $('#mapdiv')
-    assert.strictEqual(map.isDisplayed(), true);       
+    assert.strictEqual(map.isDisplayed(), true);
   });
 });

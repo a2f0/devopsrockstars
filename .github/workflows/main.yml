@@ -94,7 +94,7 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: false
     needs: deploy-code
-    
+
     steps:
       - uses: 8398a7/action-slack@v3
         if: always()
@@ -104,4 +104,3 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-      

@@ -5,14 +5,14 @@ import L from 'leaflet';
 
 const FullScreenMap = React.memo(function FullScreenMap(props) {
 
-  const getClassname = () => { 
+  const getClassname = () => {
     const location = useLocation();
-    switch(location.pathname) { 
-    case '/contact': 
-      return 'visible';  
+    switch(location.pathname) {
+    case '/contact':
+      return 'visible';
     default:
       return 'hidden';
-    } 
+    }
   }
 
 
@@ -26,15 +26,15 @@ const FullScreenMap = React.memo(function FullScreenMap(props) {
         rel="stylesheet"
         href="//cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css"
       />
-      <link 
-        rel="stylesheet" 
+      <link
+        rel="stylesheet"
         href="//unpkg.com/leaflet@1.6.0/dist/leaflet.css"
       />
       {/* https://docs.mapbox.com/studio-manual/overview/publish-your-style/#mapboxjs-and-leaflet */}
-      <Map 
+      <Map
         attributionControl={false}
-        center={[41.796242, -87.580913]} 
-        zoom={11} 
+        center={[41.796242, -87.580913]}
+        zoom={11}
         minZoom={5}
         zoomControl={false}
         maxBounds={bounds}>

@@ -20,7 +20,7 @@ const Company = React.memo(function Company(props) {
     fetchData();
   }
 
-  const techtag = {  
+  const techtag = {
     display: "inline-block",
     width: "30px",
     paddingRight: "4px",
@@ -28,11 +28,11 @@ const Company = React.memo(function Company(props) {
   };
 
   return (
-    
+
     <div>
       {techtagSections.map((entry) => {
         return (
-  
+
           <div key={'section-' + entry.id}>
             <div>
             { entry.title }
@@ -49,7 +49,7 @@ const Company = React.memo(function Company(props) {
                     />
                 </div>
               )
-            })}    
+            })}
           </div>
         )
       })}

@@ -1,8 +1,8 @@
 import React from 'react'
 import { makeStyles } from '@material-ui/core/styles';
 
-const useStyles = makeStyles(() => ({	
-  flexContainerRow: {	
+const useStyles = makeStyles(() => ({
+  flexContainerRow: {
     display: 'flex',
     justifyContent: 'center',
     flexDirection: 'row',
