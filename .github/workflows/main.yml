@@ -19,6 +19,16 @@ jobs:
           pre-commit install
           pre-commit run --all-files
 
+      - name: Post to slack
+        uses: 8398a7/action-slack@v3
+        if: ${{ failure() }}
+        with:
+          status: ${{ job.status }}
+          fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
   push-containers:
     runs-on: ubuntu-latest
     continue-on-error: false
@@ -67,6 +77,16 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:frontend-staging-latest
 
+      - name: Post to slack
+        uses: 8398a7/action-slack@v3
+        if: ${{ failure() }}
+        with:
+          status: ${{ job.status }}
+          fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
   deploy-code:
     runs-on: ubuntu-latest
     continue-on-error: false
@@ -95,14 +115,9 @@ jobs:
         run: |
           ssh $DEPLOY_USER@$DEPLOY_FQDN /home/$DEPLOY_USER/devopsrockstars/pull-containers-v2.sh
 
-  post-to-slack:
-    runs-on: ubuntu-latest
-    continue-on-error: false
-    needs: deploy-code
-
-    steps:
-      - uses: 8398a7/action-slack@v3
-        if: always()
+      - name: Post to slack
+        uses: 8398a7/action-slack@v3
+        if: ${{ failure() }}
         with:
           status: ${{ job.status }}
           fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
