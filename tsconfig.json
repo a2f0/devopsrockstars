@@ -12,6 +12,7 @@
     "experimentalDecorators": true,
     "sourceMap": true,
     "baseUrl": ".",
+    "outDir": "src/ts-out",
     "types": [
       "node"
     ],
@@ -34,7 +35,5 @@
     "tests/**/*.ts",
     "tests/**/*.tsx"
   ],
-  "exclude": [
-    "node_modules"
-  ]
+  "exclude": ["src/ts-out/**/*"]
 }
