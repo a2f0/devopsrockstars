@@ -3,10 +3,15 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "engines": {
+    "node": ">=14.15.4 <15"
+  },
   "scripts": {
     "start-server": "webpack serve --mode development --history-api-fallback",
-    "test": "./node_modules/.bin/wdio wdio.conf.js",
+    "test": "./node_modules/.bin/wdio wdio.shared.conf.js",
+    "test-headless": "./node_modules/.bin/wdio wdio.headless.conf.js",
     "ci": "start-server-and-test start-server http-get://localhost:8080 test",
+    "ci-headless": "start-server-and-test start-server http-get://localhost:8080 test-headless",
     "format": "prettier --write \"src/**/*.js\"",
     "eslint-fix": "eslint --fix \"src/**/*.js\"",
     "build": "webpack --mode production"
@@ -14,11 +19,17 @@
   "keywords": [],
   "author": "Dan Sullivan",
   "devDependencies": {
+    "@babel/cli": "^7.14.3",
     "@babel/core": "^7.14.3",
     "@babel/plugin-proposal-class-properties": "^7.13.0",
     "@babel/preset-env": "^7.14.4",
     "@babel/preset-react": "^7.13.13",
+    "@babel/register": "^7.13.16",
+    "@types/node": "^15.6.2",
+    "@types/react": "^17.0.9",
+    "@types/react-dom": "^17.0.6",
     "@types/react-leaflet": "^2.8.1",
+    "@types/react-router-dom": "^5.1.7",
     "@wdio/cli": "^7.7.2",
     "@wdio/dot-reporter": "^7.7.0",
     "@wdio/local-runner": "^7.7.2",
@@ -48,9 +59,6 @@
   "dependencies": {
     "@material-ui/core": "^4.11.4",
     "@svgr/webpack": "^5.5.0",
-    "@types/react": "^17.0.9",
-    "@types/react-dom": "^17.0.6",
-    "@types/react-router-dom": "^5.1.7",
     "isomorphic-fetch": "^3.0.0",
     "leaflet": "^1.7.1",
     "react": "^17.0.2",
