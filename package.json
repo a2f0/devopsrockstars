@@ -59,6 +59,7 @@
   "dependencies": {
     "@material-ui/core": "^4.11.4",
     "@svgr/webpack": "^5.5.0",
+    "check-more-types": "^2.24.0",
     "isomorphic-fetch": "^3.0.0",
     "leaflet": "^1.7.1",
     "react": "^17.0.2",

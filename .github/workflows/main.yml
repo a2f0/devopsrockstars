@@ -27,6 +27,8 @@ jobs:
           pip install pre-commit
           pre-commit install
           pre-commit run --all-files
+      - name: run integration tests
+        run:  npm run ci-headless
       - name: Post to slack
         uses: 8398a7/action-slack@v3
         if: ${{ failure() }}
