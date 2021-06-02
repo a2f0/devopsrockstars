@@ -1,6 +1,6 @@
 import React from 'react'
 import { useLocation } from "react-router-dom";
-import { Map, TileLayer } from 'react-leaflet'
+import { MapContainer, TileLayer } from 'react-leaflet'
 import L from 'leaflet';
 
 const FullScreenMap = React.memo(function FullScreenMap(props) {
@@ -31,7 +31,7 @@ const FullScreenMap = React.memo(function FullScreenMap(props) {
         href="//unpkg.com/leaflet@1.6.0/dist/leaflet.css"
       />
       {/* https://docs.mapbox.com/studio-manual/overview/publish-your-style/#mapboxjs-and-leaflet */}
-      <Map
+      <MapContainer
         attributionControl={false}
         center={[41.796242, -87.580913]}
         zoom={11}
@@ -42,7 +42,7 @@ const FullScreenMap = React.memo(function FullScreenMap(props) {
           url="https://api.mapbox.com/styles/v1/devopsrockstars/ckhobopaz1o8519lupxgprhji/tiles/256/{z}/{x}/{y}?access_token=pk.eyJ1IjoiZGV2b3Bzcm9ja3N0YXJzIiwiYSI6InpUN3Buak0ifQ.a9f4FaZbPCK6GNJc8ImH7w"
           attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap2</a> contributors'
         />
-      </Map>
+      </MapContainer>
     </div>
   )
 });
