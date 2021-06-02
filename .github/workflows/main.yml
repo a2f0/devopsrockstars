@@ -13,12 +13,20 @@ jobs:
     continue-on-error: false
     steps:
       - uses: actions/checkout@v2
-
-      - name: Run pre-commit
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.7'
+          architecture: 'x64'
+      - name: npm audit
+        run: npm audit --audit-level=high
+      - name: npm install
+        run: npm install
+      - name: pre-commit
         run: |
+          pip install pre-commit
           pre-commit install
           pre-commit run --all-files
-
       - name: Post to slack
         uses: 8398a7/action-slack@v3
         if: ${{ failure() }}
