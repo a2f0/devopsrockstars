@@ -1,61 +1,55 @@
 
 import React, {useEffect, useState} from 'react'
-import { TechtagSection } from "./models"
 import { ReactSVG } from 'react-svg'
 
 const Company = React.memo(function Company(props) {
 
-  const [techtagSections, setTechtagSections] = useState([] as TechtagSection[])
-
-  useEffect(() => {
-    retrieveEntries();
-  }, []);
-
-  const retrieveEntries = () => {
-    const fetchData = async () => {
-      TechtagSection.includes('techtags').all().then((response) => {
-        setTechtagSections(response.data)
-      })
-    }
-    fetchData();
-  }
+  const [grayscale, setGrayscale] = useState(100);
 
   const techtag = {
     display: "inline-block",
-    width: "30px",
     paddingRight: "4px",
-    verticalAlign: "middle"
+    verticalAlign: "middle",
   };
 
+  interface svgProps {
+    backgroundColor: string;
+    cursor: string;
+    pointerEvents: string;
+  }
+
   return (
+    <>
+      <h2>
+        About Us
+      </h2>
 
-    <div>
-      {techtagSections.map((entry) => {
-        return (
+      <h2>
+        Technologies
+      </h2>
 
-          <div key={'section-' + entry.id}>
-            <div>
-            { entry.title }
-            </div>
-            {entry.techtags.map((tag) => {
-              return (
-                <div key={'tag-' + tag.id} style={techtag}>
-                    <ReactSVG
-                      src={tag.fullUrl}
-                      beforeInjection={(svg) => {
-                        svg.classList.add('svg-class-name');
-                        svg.setAttribute('style', 'width: 30px');
-                      }}
-                    />
-                </div>
-              )
-            })}
-          </div>
-        )
-      })}
-    </div>
+      <h3>
+        Web
+      </h3>
+
+
+      <div style={{
+        cursor: 'pointer',
+        pointerEvents: 'auto',
+        height: '130px',
+        width: '130px',
+      }}>
+        <ReactSVG
+          src='./src/image/tags/aws.svg'
+          onMouseEnter={() => setGrayscale(0)}
+          onMouseLeave={() => setGrayscale(100)}
+          beforeInjection={(svg) => {
+            svg.setAttribute('filter', `grayscale(${grayscale}%)`);
+          }}
+        />
+      </div>
+    </>
   );
-
 });
 
 export default Company

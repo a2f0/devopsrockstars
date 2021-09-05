@@ -34,12 +34,12 @@ const Store = React.memo(function Store() {
 
   const retrieveEntries = () => {
     const fetchData = async () => {
-      StoreProduct.includes('store_product_pictures')
-        .all()
-        .then((response) => {
-          console.info(response.data);
-          setStoreProducts(response.data);
-        });
+      // StoreProduct.includes('store_product_pictures')
+      //   .all()
+      //   .then((response) => {
+      //     console.info(response.data);
+      //     setStoreProducts(response.data);
+      //   });
     };
     fetchData();
   };
