@@ -1,6 +1,6 @@
 {
   "name": "devopsrockstars-frontend",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "",
   "main": "index.js",
   "engines": {
@@ -39,6 +39,7 @@
     "babel-eslint": "^10.1.0",
     "babel-loader": "^8.2.2",
     "chromedriver": "^92.0.1",
+    "copy-webpack-plugin": "^9.0.1",
     "css-loader": "^5.2.6",
     "eslint": "^7.27.0",
     "eslint-config-react": "^1.1.7",
