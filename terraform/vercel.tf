@@ -7,7 +7,6 @@ resource "vercel_project" "project" {
   output_directory = "build"
   domain   {
     name           = "staging.devopsrockstars.com"
-    branch         = "production"
   }
 
   git_repository {

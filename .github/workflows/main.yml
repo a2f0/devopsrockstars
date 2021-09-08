@@ -39,92 +39,26 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
-  push-containers:
+  deploy:
     runs-on: ubuntu-latest
     continue-on-error: false
     steps:
       - uses: actions/checkout@v2
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+      # production deploy
+      - uses: amondnet/vercel-action@v19
+        if: ${{ github.event.ref == 'refs/heads/production' && github.event_name == 'push' }}
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
-
-      - name: Build SHA image
-        if: github.event.ref == 'refs/heads/staging' || github.event.ref == 'refs/heads/production'
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: tfdevopsrockstars
-          IMAGE_TAG: ${{ github.sha }}
-        run: |
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-
-      - name: Tag and push production images to Amazon ECR
-        if: github.event.ref == 'refs/heads/production'
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: tfdevopsrockstars
-          IMAGE_TAG: ${{ github.sha }}
-        run: |
-          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:frontend-production-latest
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:frontend-production-latest
-
-      - name: Tag and push staging images to Amazon ECR
-        if: github.event.ref == 'refs/heads/staging'
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: tfdevopsrockstars
-          IMAGE_TAG: ${{ github.sha }}
-        run: |
-          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:frontend-staging-latest
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:frontend-staging-latest
-
-      - name: Post to slack
-        uses: 8398a7/action-slack@v3
-        if: ${{ failure() }}
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-args: '--prod'
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID}}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID}}
+      # non-production deploy
+      - uses: amondnet/vercel-action@v19
+        if: ${{ github.event.ref != 'refs/heads/main' && github.event_name == 'push' }}
         with:
-          status: ${{ job.status }}
-          fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-
-  deploy-code:
-    runs-on: ubuntu-latest
-    continue-on-error: false
-    needs: push-containers
-
-    steps:
-      - name: Install SSH key
-        uses: shimataro/ssh-key-action@v2
-        with:
-          key: ${{ secrets.SSH_KEY }}
-          known_hosts: ${{ secrets.KNOWN_HOSTS }}
-
-      - name: Deploy production via SSH
-        if: github.event.ref == 'refs/heads/production'
-        env:
-          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-          DEPLOY_FQDN: ${{ secrets.DEPLOY_PRODUCTION_FQDN }}
-        run: |
-          ssh $DEPLOY_USER@$DEPLOY_FQDN /home/$DEPLOY_USER/devopsrockstars/pull-containers-v2.sh
-
-      - name: Deploy staging via SSH
-        if: github.event.ref == 'refs/heads/staging'
-        env:
-          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-          DEPLOY_FQDN: ${{ secrets.DEPLOY_STAGING_FQDN }}
-        run: |
-          ssh $DEPLOY_USER@$DEPLOY_FQDN /home/$DEPLOY_USER/devopsrockstars/pull-containers-v2.sh
-
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID}}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID}}
       - name: Post to slack
         uses: 8398a7/action-slack@v3
         if: ${{ failure() }}
