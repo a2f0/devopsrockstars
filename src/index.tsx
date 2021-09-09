@@ -9,6 +9,7 @@ import Skyline from "./Skyline";
 import FlexContainerRow from "./shared/FlexContainerRow"
 import Store from "./Store"
 import Contact from "./Contact"
+import { ReactSVG } from 'react-svg'
 
 function AppRouter() {
   return (
@@ -24,7 +25,16 @@ function AppRouter() {
               <FlexContainerRow>
                 <div className="flex-container-left">
                   <div className="menu-item-left">
-                    <Link to="/">index</Link>
+                    {/* <div style={{
+                      cursor: 'pointer',
+                      pointerEvents: 'auto',
+                      height: '130px',
+                      width: '130px',
+                    }}>
+                      <ReactSVG
+                        src='image/tags/aws.svg'
+                      />
+                    </div> */}
                   </div>
                 </div>
                 <div className="flex-container-right">
@@ -52,7 +62,15 @@ function AppRouter() {
               <FlexContainerRow>
                 <div className="flex-container-left">
                   <div className="menu-item-left">
-                    <Link to="/">index</Link>
+                    <div style={{
+                      cursor: 'pointer',
+                      pointerEvents: 'auto',
+                      width: '130px',
+                    }}>
+                      <ReactSVG
+                        src='image/devopsrockstars-llc.svg'
+                      />
+                    </div>
                   </div>
                 </div>
                 <div className="flex-container-center">
