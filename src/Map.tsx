@@ -21,7 +21,7 @@ const FullScreenMap = React.memo(function FullScreenMap(props) {
   const bounds = L.latLngBounds(southWest, northEast);
 
   return (
-    <div id='mapdiv' className={`full-screen ${getClassname()}`}>
+    <div id='mapdiv' className={`full-screen-map ${getClassname()}`}>
       <link
         rel="stylesheet"
         href="//cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css"
