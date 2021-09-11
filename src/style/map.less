@@ -4,6 +4,13 @@
   position: absolute;
   z-index: -2000;
   pointer-events: auto;
+  background: black !important;
+}
+
+// This is a hack to prevent lines between tiles (anti-aliasing?).
+.leaflet-tile-container img {
+  width: 256.5px !important;
+  height: 256.5px !important;
 }
 
 .hidden {
