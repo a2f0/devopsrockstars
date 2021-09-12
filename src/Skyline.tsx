@@ -1,5 +1,5 @@
 import React from 'react'
-import skylineUrl from './image/skyline.svg';
+import skylineUrl from '/static/image/skyline.svg';
 
 const Skyline = React.memo(function Skyline(props) {
 

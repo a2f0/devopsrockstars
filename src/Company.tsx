@@ -40,7 +40,7 @@ const Company = React.memo(function Company(props) {
         width: '130px',
       }}>
         <ReactSVG
-          src='image/tags/aws.svg'
+          src='/static/image/tags/aws.svg'
           onMouseEnter={() => setGrayscale(0)}
           onMouseLeave={() => setGrayscale(100)}
           beforeInjection={(svg) => {

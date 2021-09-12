@@ -42,7 +42,7 @@ module.exports = {
     new CopyWebpackPlugin(
       {
         patterns: [
-          {from:'src/image',to:'image'}
+          {from:'static',to:'static'}
         ]
       }
     ),
