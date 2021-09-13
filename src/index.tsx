@@ -68,7 +68,7 @@ function AppRouter() {
                       width: '130px',
                     }}>
                       <ReactSVG
-                        src='image/devopsrockstars-llc.svg'
+                        src='/static/image/devopsrockstars-llc.svg'
                       />
                     </div>
                   </div>
