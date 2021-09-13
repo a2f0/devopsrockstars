@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom";
-import { BrowserRouter as Router, Route, Link } from "react-router-dom";
+import { BrowserRouter as Router, Route, Link, useLocation } from "react-router-dom";
 import './style/map.less';
 import './style/devopsrockstars.less';
 import FullScreenMap from "./Map";
@@ -9,7 +9,7 @@ import Skyline from "./Skyline";
 import FlexContainerRow from "./shared/FlexContainerRow"
 import Store from "./Store"
 import Contact from "./Contact"
-import { ReactSVG } from 'react-svg'
+import Footer from "./Footer"
 
 function AppRouter() {
   return (
@@ -58,36 +58,7 @@ function AppRouter() {
                 <Route path="/contact" component={Contact} />
               </div>
             </div>
-            <div className="flex-footer">
-              <FlexContainerRow>
-                <div className="flex-container-left">
-                  <div className="menu-item-left">
-                    <div style={{
-                      cursor: 'pointer',
-                      pointerEvents: 'auto',
-                      width: '130px',
-                    }}>
-                      <ReactSVG
-                        src='/static/image/devopsrockstars-llc.svg'
-                      />
-                    </div>
-                  </div>
-                </div>
-                <div className="flex-container-center">
-                  <div className="menu-item-center">
-                    <Link to="/">index</Link>
-                  </div>
-                </div>
-                <div className="flex-container-right">
-                  <div className="menu-item-right">
-                    <Link to="/store">kiva</Link>
-                  </div>
-                  <div className="menu-item-right">
-                    <Link to="/contact">search</Link>
-                  </div>
-                </div>
-              </FlexContainerRow>
-            </div>
+            <Footer />
           </div>
         </div>
       </FlexContainerRow>
