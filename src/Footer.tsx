@@ -1,6 +1,4 @@
-import React, { useEffect, useState } from 'react';
-import { StoreProduct } from './models';
-import { makeStyles } from '@material-ui/core/styles';
+import React from 'react';
 import FlexContainerRow from './shared/FlexContainerRow';
 import { ReactSVG } from 'react-svg';
 import { Link, useLocation } from "react-router-dom";
@@ -42,10 +40,7 @@ const Footer = React.memo(function Footer() {
           </div>
         </div>
         <div className="flex-container-center">
-          <div className="menu-item-center">
-
-
-          </div>
+          <div className="menu-item-center"></div>
         </div>
         <div className="flex-container-right">
           <div className="menu-item-right">

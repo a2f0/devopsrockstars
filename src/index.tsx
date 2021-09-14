@@ -7,7 +7,6 @@ import FullScreenMap from "./Map";
 import Company from "./Company";
 import Skyline from "./Skyline";
 import FlexContainerRow from "./shared/FlexContainerRow"
-import Store from "./Store"
 import Contact from "./Contact"
 import Footer from "./Footer"
 
@@ -42,9 +41,6 @@ function AppRouter() {
                     <Link to="/company">company</Link>
                   </div>
                   <div className="menu-item-right">
-                    <Link to="/store">store</Link>
-                  </div>
-                  <div className="menu-item-right">
                     <Link to="/contact">contact</Link>
                   </div>
                 </div>
@@ -54,7 +50,6 @@ function AppRouter() {
             <div className="flex-body">
               <div className="flex-container-column">
                 <Route path="/company" exact component={Company} />
-                <Route path="/store" component={Store} />
                 <Route path="/contact" component={Contact} />
               </div>
             </div>
