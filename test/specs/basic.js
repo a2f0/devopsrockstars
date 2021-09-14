@@ -4,7 +4,7 @@ describe('index page', () => {
   it('loads correctly', () => {
     browser.url('http://localhost:8080');
     const title = browser.getTitle();
-    assert.strictEqual(title, 'DevOpsRockstars');
+    assert.strictEqual(title, '\u200E');
     const map = $('#mapdiv')
     assert.strictEqual(map.isDisplayed(), false);
   });

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Generator: Adobe Illustrator 19.2.1, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+
+<svg
+   version="1.1"
+   id="svg2"
+   inkscape:version="1.1 (c4e8f9e, 2021-05-24)"
+   sodipodi:docname="map-marker.svg"
+   x="0px"
+   y="0px"
+   width="313.60001"
+   height="313.60001"
+   viewBox="0 0 313.60001 313.60002"
+   xml:space="preserve"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"><defs
+   id="defs19" />
+<style
+   type="text/css"
+   id="style9">
+	.st0{fill:#FFFFFF;}
+</style>
+
+<sodipodi:namedview
+   bordercolor="#666666"
+   borderopacity="1.0"
+   fit-margin-bottom="0"
+   fit-margin-left="0"
+   fit-margin-right="0"
+   fit-margin-top="0"
+   id="base"
+   inkscape:current-layer="layer2"
+   inkscape:cx="-91.785714"
+   inkscape:cy="108.57143"
+   inkscape:document-units="px"
+   inkscape:pageopacity="0.0"
+   inkscape:pageshadow="2"
+   inkscape:window-height="1344"
+   inkscape:window-maximized="0"
+   inkscape:window-width="1998"
+   inkscape:window-x="2217"
+   inkscape:window-y="641"
+   inkscape:zoom="1.4"
+   pagecolor="#ffffff"
+   showgrid="false"
+   inkscape:pagecheckerboard="0">
+	</sodipodi:namedview>
+
+
+
+<g
+   inkscape:groupmode="layer"
+   id="layer2"
+   inkscape:label="Background"
+   style="display:inline" /><g
+   inkscape:groupmode="layer"
+   id="layer1"
+   inkscape:label="Star"
+   style="display:inline"><path
+     id="path3757"
+     inkscape:connector-curvature="0"
+     class="st0"
+     d="M 255.01484,213.51856 178.69503,194.7514 156.8,270.02858 134.90497,194.7514 58.585162,213.51856 112.80143,156.80001 58.585162,100.08146 134.90497,118.84863 156.8,43.571434 l 21.89503,75.277196 76.31981,-18.76717 -54.21626,56.71855 z"
+     style="stroke-width:2.08524" /></g></svg>
