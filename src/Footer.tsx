@@ -4,6 +4,8 @@ import { makeStyles } from '@material-ui/core/styles';
 import FlexContainerRow from './shared/FlexContainerRow';
 import { ReactSVG } from 'react-svg';
 import { Link, useLocation } from "react-router-dom";
+import styled from 'styled-components';
+import packageJson from '../package.json';
 
 const Footer = React.memo(function Footer() {
   const location = useLocation();
@@ -12,6 +14,14 @@ const Footer = React.memo(function Footer() {
   if (location.pathname === '/') {
     return null;
   }
+
+  const VersionLink = styled.a`
+  color: white;
+  font-size: 12px;
+  font-family: monospace;
+  font-weight: 10;
+  text-decoration: none;
+`;
 
   return (
     <footer className="flex-footer" >
@@ -39,10 +49,7 @@ const Footer = React.memo(function Footer() {
         </div>
         <div className="flex-container-right">
           <div className="menu-item-right">
-            <Link to="/store">kiva</Link>
-          </div>
-          <div className="menu-item-right">
-            <Link to="/contact">search</Link>
+            <VersionLink href="https://github.com/a2f0/devopsrockstars-frontend">v{packageJson.version}</VersionLink>
           </div>
         </div>
       </FlexContainerRow>
