@@ -13,16 +13,6 @@ const Footer = React.memo(function Footer() {
     return null;
   }
 
-  const VersionLink = styled.a`
-  color: white;
-  font-size: 12px;
-  font-family: monospace;
-  font-weight: 10;
-  text-decoration: none;
-  position: absolute;
-  bottom: 0;
-`;
-
   return (
     <footer className="flex-footer" >
       <FlexContainerRow>
@@ -46,7 +36,6 @@ const Footer = React.memo(function Footer() {
         </div>
         <div className="flex-container-right">
           <div className="menu-item-right">
-            <VersionLink href="https://github.com/a2f0/devopsrockstars-frontend">v{packageJson.version}</VersionLink>
           </div>
         </div>
       </FlexContainerRow>

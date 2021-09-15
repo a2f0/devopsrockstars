@@ -5,13 +5,6 @@ import { ReactSVG } from 'react-svg'
 const Company = React.memo(function Company(props) {
 
   const [grayscale, setGrayscale] = useState(100);
-
-  const techtag = {
-    display: "inline-block",
-    paddingRight: "4px",
-    verticalAlign: "middle",
-  };
-
   interface svgProps {
     backgroundColor: string;
     cursor: string;
