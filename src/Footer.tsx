@@ -19,6 +19,8 @@ const Footer = React.memo(function Footer() {
   font-family: monospace;
   font-weight: 10;
   text-decoration: none;
+  position: absolute;
+  bottom: 0;
 `;
 
   return (
@@ -30,7 +32,7 @@ const Footer = React.memo(function Footer() {
               <div style={{
                 cursor: 'pointer',
                 pointerEvents: 'auto',
-                width: '130px',
+                width: '200px',
               }}>
                 <ReactSVG
                   src='/static/image/devopsrockstars-llc.svg'

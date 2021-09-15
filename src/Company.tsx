@@ -20,24 +20,22 @@ const Company = React.memo(function Company(props) {
 
   return (
     <>
-      <h2>
+      <h1>
         About Us
-      </h2>
+      </h1>
 
-      <h2>
+      <p>
+        We are a consultancy offering services in DevOps and development.
+      </p>
+
+      <h1>
         Technologies
-      </h2>
-
-      <h3>
-        Web
-      </h3>
-
-
+      </h1>
       <div style={{
         cursor: 'pointer',
         pointerEvents: 'auto',
-        height: '130px',
-        width: '130px',
+        height: '100px',
+        width: '100px',
       }}>
         <ReactSVG
           src='/static/image/tags/aws.svg'

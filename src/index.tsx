@@ -9,44 +9,19 @@ import Skyline from "./Skyline";
 import FlexContainerRow from "./shared/FlexContainerRow"
 import Contact from "./Contact"
 import Footer from "./Footer"
+import Header from "./Header"
+import GlobalStyle from './styled-components/GlobalStyle';
 
 function AppRouter() {
   return (
     <Router>
+      <GlobalStyle />
       <FullScreenMap/>
       <Route path="/" exact component={Skyline} />
       <FlexContainerRow>
         <div className="flex-full-height-min">
           <div className="flex-container-column">
-
-            <div className="flex-header">
-
-              <FlexContainerRow>
-                <div className="flex-container-left">
-                  <div className="menu-item-left">
-                    {/* <div style={{
-                      cursor: 'pointer',
-                      pointerEvents: 'auto',
-                      height: '130px',
-                      width: '130px',
-                    }}>
-                      <ReactSVG
-                        src='image/tags/aws.svg'
-                      />
-                    </div> */}
-                  </div>
-                </div>
-                <div className="flex-container-right">
-                  <div className="menu-item-right">
-                    <Link to="/company">company</Link>
-                  </div>
-                  <div className="menu-item-right">
-                    <Link to="/contact">contact</Link>
-                  </div>
-                </div>
-              </FlexContainerRow>
-
-            </div>
+            <Header />
             <div className="flex-body">
               <div className="flex-container-column">
                 <Route path="/company" exact component={Company} />
@@ -57,7 +32,6 @@ function AppRouter() {
           </div>
         </div>
       </FlexContainerRow>
-
     </Router>
   );
 }
