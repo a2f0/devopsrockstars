@@ -4,9 +4,10 @@ import { ReactSVG } from 'react-svg';
 interface IProps {
   width: number;
   height: number;
+  path: string;
 }
 
-const SVG = React.memo(function SVG({width, height}: IProps) {
+const SVG = React.memo(function SVG({width, height, path}: IProps) {
 
   const [grayscale, setGrayscale] = useState(100);
 
@@ -17,9 +18,10 @@ const SVG = React.memo(function SVG({width, height}: IProps) {
       pointerEvents: 'auto',
       height: `${width}px`,
       width: `${height}px`,
+      display: 'inline-block',
     }}>
       <ReactSVG
-        src='/static/image/tags/aws.svg'
+        src={`${path}`}
         onMouseEnter={() => setGrayscale(100)}
         onMouseLeave={() => setGrayscale(100)}
         beforeInjection={(svg) => {
