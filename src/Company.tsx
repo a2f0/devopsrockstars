@@ -1,15 +1,10 @@
 
-import React, {useEffect, useState} from 'react'
-import { ReactSVG } from 'react-svg'
+import React, {useState} from 'react';
+import SVG from './SVG';
 
 const Company = React.memo(function Company(props) {
 
   const [grayscale, setGrayscale] = useState(100);
-  interface svgProps {
-    backgroundColor: string;
-    cursor: string;
-    pointerEvents: string;
-  }
 
   return (
     <>
@@ -24,21 +19,7 @@ const Company = React.memo(function Company(props) {
       <h1>
         Technologies
       </h1>
-      <div style={{
-        cursor: 'pointer',
-        pointerEvents: 'auto',
-        height: '100px',
-        width: '100px',
-      }}>
-        <ReactSVG
-          src='/static/image/tags/aws.svg'
-          onMouseEnter={() => setGrayscale(0)}
-          onMouseLeave={() => setGrayscale(100)}
-          beforeInjection={(svg) => {
-            svg.setAttribute('filter', `grayscale(${grayscale}%)`);
-          }}
-        />
-      </div>
+      <SVG height={100} width={100} />
     </>
   );
 });
