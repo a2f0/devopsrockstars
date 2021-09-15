@@ -19,7 +19,7 @@ const Company = React.memo(function Company(props) {
       </h1>
       <div>
         <SVG height={100} width={100} path={'/static/image/tags/aws.svg'} />
-        <SVG height={100} width={100} path={'/static/image/tags/azure2.svg'} />
+        <SVG height={100} width={100} path={'/static/image/tags/azure.svg'} />
       </div>
     </>
   );
