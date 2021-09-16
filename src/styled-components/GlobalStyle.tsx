@@ -11,10 +11,11 @@ const GlobalStyle = createGlobalStyle`
   a {
     color: white;
     font-size: 24px;
-    text-decoration: none;
   }
+
   a:hover {
-    text-decoration: underline;
+    color: gray;
+    pointer-events: auto;
   }
 
   p {
@@ -23,7 +24,7 @@ const GlobalStyle = createGlobalStyle`
   }
 
   h1 {
-    margin-top: 50px;
+    margin-top: 35px;
     margin-right: 0px;
     margin-left: 0px;
     margin-bottom: 0px;
