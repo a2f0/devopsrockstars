@@ -1,22 +1,18 @@
 import React from 'react'
-import { makeStyles } from '@material-ui/core/styles';
+import styled from 'styled-components';
 
-const useStyles = makeStyles(() => ({
-  flexContainerRow: {
-    display: 'flex',
-    justifyContent: 'center',
-    flexDirection: 'row',
-    width: '100%'
-  },
-}));
+export const StyledRow = styled.div`
+  display: flex;
+  justify-content: center;
+  flex-drection: row;
+  width: 100%;
+`;
 
 const FlexContainerRow = function (props: any) {
-  const classes = useStyles();
   return (
-    <div
-      className={classes.flexContainerRow}>
+    <StyledRow>
       {props.children}
-    </div>
+    </StyledRow>
   )
 }
 export default FlexContainerRow
