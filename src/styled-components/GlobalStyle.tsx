@@ -1,6 +1,10 @@
 import { createGlobalStyle } from 'styled-components';
 
 const GlobalStyle = createGlobalStyle`
+  :root {
+    --hover-color: gray;
+  }
+
   body {
     background-color: black;
     color: white;
@@ -14,7 +18,7 @@ const GlobalStyle = createGlobalStyle`
   }
 
   a:hover {
-    color: gray;
+    color: var(--hover-color);
     pointer-events: auto;
   }
 
