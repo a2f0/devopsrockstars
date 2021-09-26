@@ -1,6 +1,28 @@
-import React from 'react';
+import React, {useState} from 'react';
 import SVG from './SVG';
-import styled from 'styled-components';
+import styled, {css} from 'styled-components';
+
+interface IRowProps {
+  isActive: boolean;
+}
+
+export const Row = styled.div<IRowProps>`
+    pointer-events: auto;
+    ${({isActive}) =>
+    isActive &&
+    css`
+      .svg {
+        fill: var(--hover-color);
+      }
+    `}
+    ${({isActive}) =>
+    !isActive &&
+    css`
+      .svg {
+        fill: var(--foreground-color);
+      }
+    `}
+`;
 
 export const SvgInline = styled.div`
   display: inline-block;
@@ -25,23 +47,25 @@ interface IProps {
 }
 
 const ContactRow = React.memo(function ContactRow({svgWidth, svgHeight, svgPath, rowDescription, uri}: IProps) {
+  const [isActive, setIsActive] = useState<boolean>(false);
 
   return (
-    <div>
-      <SvgInline>
-        <a href={uri}>
-          <SVG height={svgHeight} width={svgWidth} path={svgPath} />
-        </a>
-      </SvgInline>
-      <DescriptionInline>
-        <p>
-          <ContactLink href={uri}>
+    <a
+      href={uri}>
+      <Row
+        onMouseEnter={() => setIsActive(true)}
+        onMouseLeave={() => setIsActive(false)}
+        isActive={isActive}>
+        <SvgInline>
+          <SVG height={svgHeight} width={svgWidth} path={svgPath} initialGrayscale={0} />
+        </SvgInline>
+        <DescriptionInline>
+          <p>
             {rowDescription}
-          </ContactLink>
-        </p>
-      </DescriptionInline>
-    </div>
-
+          </p>
+        </DescriptionInline>
+      </Row>
+    </a>
   )
 });
 

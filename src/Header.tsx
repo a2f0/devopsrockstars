@@ -1,6 +1,10 @@
 import React from 'react';
 import FlexContainerRow from './shared/FlexContainerRow';
-import { Link } from "react-router-dom";
+import styled from 'styled-components';
+
+export const MenuLink = styled.a`
+  font-size: 24px;
+`;
 
 const Header = React.memo(function Footer() {
 
@@ -13,10 +17,10 @@ const Header = React.memo(function Footer() {
         </div>
         <div className="flex-container-right">
           <div className="menu-item-right">
-            <Link to="/company">company</Link>
+            <MenuLink href="/company">company</MenuLink>
           </div>
           <div className="menu-item-right">
-            <Link to="/contact">contact</Link>
+            <MenuLink href="/contact">contact</MenuLink>
           </div>
         </div>
       </FlexContainerRow>

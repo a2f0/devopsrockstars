@@ -5,11 +5,12 @@ interface IProps {
   width: number;
   height: number;
   path: string;
+  initialGrayscale: number;
 }
 
-const SVG = React.memo(function SVG({width, height, path}: IProps) {
+const SVG = React.memo(function SVG({width, height, path, initialGrayscale}: IProps) {
 
-  const [grayscale, setGrayscale] = useState(100);
+  const [grayscale, setGrayscale] = useState(initialGrayscale);
 
   return (
 

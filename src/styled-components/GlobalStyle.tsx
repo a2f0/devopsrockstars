@@ -3,18 +3,19 @@ import { createGlobalStyle } from 'styled-components';
 const GlobalStyle = createGlobalStyle`
   :root {
     --hover-color: gray;
+    --foreground-color: white;
   }
 
   body {
     background-color: black;
-    color: white;
+    color: var(--foreground-color);
     margin:0;
     font-family: Open-Sans, Helvetica, Sans-Serif;
+    font-size: 20px;
   }
 
   a {
-    color: white;
-    font-size: 24px;
+    color: var(--foreground-color);
   }
 
   a:hover {
@@ -24,7 +25,6 @@ const GlobalStyle = createGlobalStyle`
 
   p {
     margin: 0;
-    font-size: 20px;
   }
 
   h1 {
