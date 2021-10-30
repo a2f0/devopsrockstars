@@ -31,9 +31,11 @@ jobs:
         name: Setup Chrome
         with:
           chrome-version: stable
-      # CHROMIUM_BIN explicitly sets the path of Chrome to the one installed by the action.
+      # Move the setup-chrome version to /tmp/custom/chrome
+      # This binary path is hardcoded in wdio.headless.conf.js
       # See: https://github.com/browser-ations/setup-chrome
-      - run: CHROMIUM_BIN=$(which chrome) npm run ci-headless
+      - run: rm -rf /tmp/custom-chrome && mv $(dirname `which chrome`) /tmp/custom-chrome
+      - run: npm run ci-headless
       - name: Post to slack
         uses: 8398a7/action-slack@v3
         if: ${{ failure() }}
