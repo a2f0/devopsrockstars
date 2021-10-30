@@ -8,7 +8,7 @@ on:
 
 jobs:
 
-  run-tests:
+  code-quality:
     runs-on: ubuntu-latest
     continue-on-error: false
     steps:
@@ -49,6 +49,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     continue-on-error: false
+    needs: code-quality
     steps:
       - uses: actions/checkout@v2
       # production deploy
