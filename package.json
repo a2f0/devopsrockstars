@@ -1,6 +1,6 @@
 {
   "name": "devopsrockstars-frontend",
-  "version": "2.0.18",
+  "version": "2.0.20",
   "description": "",
   "main": "index.js",
   "engines": {
@@ -40,7 +40,7 @@
     "@wdio/sync": "^7.7.2",
     "babel-eslint": "^10.1.0",
     "babel-loader": "^8.2.2",
-    "chromedriver": "^92.0.1",
+    "chromedriver": "^95.0.0",
     "copy-webpack-plugin": "^9.0.1",
     "css-loader": "^5.2.6",
     "eslint": "^7.27.0",
@@ -58,7 +58,7 @@
     "wdio-chromedriver-service": "^7.1.0",
     "webpack": "^5.38.1",
     "webpack-cli": "^4.7.0",
-    "webpack-dev-server": "^3.11.2"
+    "webpack-dev-server": "^4.4.0"
   },
   "dependencies": {
     "@material-ui/core": "^4.11.4",
