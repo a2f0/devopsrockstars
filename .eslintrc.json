@@ -24,7 +24,6 @@
     "indent": ["error", 2],
     // This is not a published npm package - no-unpublished-import is not required.
     "node/no-unpublished-import": 0,
-    "@typescript-eslint/no-explicit-any": 0,
     "node/no-unsupported-features/es-syntax": [
       "error",
       { "ignores": ["modules"] }

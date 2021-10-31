@@ -8,7 +8,11 @@ export const StyledRow = styled.div`
   width: 100%;
 `;
 
-const FlexContainerRow = function (props: any) {
-  return <StyledRow>{props.children}</StyledRow>;
+interface IProps {
+  children: React.ReactNode;
+}
+
+const FlexContainerRow = function ({children}: IProps) {
+  return <StyledRow>{children}</StyledRow>;
 };
 export default FlexContainerRow;
