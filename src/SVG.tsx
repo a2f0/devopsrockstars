@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import { ReactSVG } from 'react-svg';
+import {ReactSVG} from 'react-svg';
 
 interface IProps {
   width: number;
@@ -8,29 +8,29 @@ interface IProps {
   initialGrayscale: number;
 }
 
-const SVG = React.memo(function SVG({width, height, path, initialGrayscale}: IProps) {
-
+const SVG = React.memo(({width, height, path, initialGrayscale}: IProps) => {
   const [grayscale, setGrayscale] = useState(initialGrayscale);
 
   return (
-
-    <div style={{
-      cursor: 'arrow',
-      pointerEvents: 'auto',
-      height: `${width}px`,
-      width: `${height}px`,
-      display: 'inline-block',
-    }}>
+    <div
+      style={{
+        cursor: 'arrow',
+        pointerEvents: 'auto',
+        height: `${width}px`,
+        width: `${height}px`,
+        display: 'inline-block',
+      }}
+    >
       <ReactSVG
         src={`${path}`}
         onMouseEnter={() => setGrayscale(100)}
         onMouseLeave={() => setGrayscale(100)}
-        beforeInjection={(svg) => {
+        beforeInjection={svg => {
           svg.setAttribute('filter', `grayscale(${grayscale}%)`);
         }}
       />
     </div>
-  )
+  );
 });
 
 export default SVG;

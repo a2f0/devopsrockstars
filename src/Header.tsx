@@ -6,14 +6,12 @@ export const MenuLink = styled.a`
   font-size: 24px;
 `;
 
-const Header = React.memo(function Footer() {
-
+const Header = React.memo(() => {
   return (
     <header className="flex-header">
       <FlexContainerRow>
         <div className="flex-container-left">
-          <div className="menu-item-left">
-          </div>
+          <div className="menu-item-left"></div>
         </div>
         <div className="flex-container-right">
           <div className="menu-item-right">
@@ -25,7 +23,7 @@ const Header = React.memo(function Footer() {
         </div>
       </FlexContainerRow>
     </header>
-  )
+  );
 });
 
 export default Header;

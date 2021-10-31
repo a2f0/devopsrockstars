@@ -1,4 +1,4 @@
-import React from 'react'
+import React from 'react';
 import styled from 'styled-components';
 
 export const StyledRow = styled.div`
@@ -9,10 +9,6 @@ export const StyledRow = styled.div`
 `;
 
 const FlexContainerRow = function (props: any) {
-  return (
-    <StyledRow>
-      {props.children}
-    </StyledRow>
-  )
-}
-export default FlexContainerRow
+  return <StyledRow>{props.children}</StyledRow>;
+};
+export default FlexContainerRow;

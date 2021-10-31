@@ -1,6 +1,6 @@
 {
   "name": "devopsrockstars-frontend",
-  "version": "2.0.22",
+  "version": "2.0.23",
   "description": "",
   "main": "index.js",
   "engines": {
@@ -14,7 +14,14 @@
     "ci-headless": "start-server-and-test start-server http-get://localhost:8080 test-headless",
     "format": "prettier --write \"src/**/*.js\"",
     "eslint-fix": "eslint --fix \"src/**/*.js\"",
-    "build": "webpack --mode production"
+    "build": "webpack --mode production",
+    "lint": "gts lint",
+    "clean": "gts clean",
+    "compile": "tsc",
+    "fix": "gts fix",
+    "prepare": "npm run compile",
+    "pretest": "npm run compile",
+    "posttest": "npm run lint"
   },
   "keywords": [],
   "author": "Dan Sullivan",
@@ -47,13 +54,14 @@
     "eslint-config-react": "^1.1.7",
     "eslint-loader": "^4.0.2",
     "eslint-plugin-react": "^7.24.0",
+    "gts": "^3.1.0",
     "html-webpack-plugin": "^5.3.1",
     "less": "^4.1.1",
     "less-loader": "^9.0.0",
-    "prettier": "^2.3.0",
+    "prettier": "^2.4.1",
     "start-server-and-test": "^1.12.3",
     "style-loader": "^2.0.0",
-    "styled-components": "^5.3.1",
+    "typescript": "^4.0.3",
     "url-loader": "^4.1.1",
     "wdio-chromedriver-service": "^7.1.0",
     "webpack": "^5.38.1",
@@ -64,6 +72,9 @@
     "@material-ui/core": "^4.11.4",
     "@svgr/webpack": "^5.5.0",
     "check-more-types": "^2.24.0",
+    "eslint-plugin-mocha": "^9.0.0",
+    "eslint-plugin-wdio": "^7.4.2",
+    "eslint-plugin-webdriverio": "^1.0.1",
     "isomorphic-fetch": "^3.0.0",
     "leaflet": "^1.7.1",
     "react": "^17.0.2",
@@ -72,6 +83,7 @@
     "react-router-dom": "^5.2.0",
     "react-svg": "^13.0.6",
     "spraypaint": "^0.10.24",
+    "styled-components": "^5.3.1",
     "ts-loader": "^9.2.2",
     "typescript": "^4.3.2"
   }

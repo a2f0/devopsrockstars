@@ -1,7 +1,10 @@
 {
+  "extends": "./node_modules/gts/tsconfig-google.json",
   "compilerOptions": {
     "target": "esnext",
     "module": "esnext",
+    "rootDir": ".",
+    "outDir": "src/ts-out",
     "strict": true,
     "resolveJsonModule": true,
     "jsx": "react",
@@ -13,7 +16,6 @@
     "experimentalDecorators": true,
     "sourceMap": true,
     "baseUrl": ".",
-    "outDir": "src/ts-out",
     "types": [
       "node"
     ],
