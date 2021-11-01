@@ -10,6 +10,7 @@ import FlexContainerRow from './shared/FlexContainerRow';
 import FlexContainerColumn from './styled-components/FlexContainerColumn';
 import Contact from './Contact';
 import Footer from './Footer';
+import FlexMain from './styled-components/FlexMain';
 import Header from './Header';
 import GlobalStyle from './styled-components/GlobalStyle';
 
@@ -23,12 +24,12 @@ function AppRouter() {
         <div className="flex-full-height-min">
           <FlexContainerColumn>
             <Header />
-            <div className="flex-body">
+            <FlexMain>
               <FlexContainerColumn>
                 <Route path="/company" exact component={Company} />
                 <Route path="/contact" component={Contact} />
               </FlexContainerColumn>
-            </div>
+            </FlexMain>
             <Footer />
           </FlexContainerColumn>
         </div>
