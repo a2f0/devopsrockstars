@@ -13,6 +13,7 @@ const SVG = React.memo(({width, height, path, initialGrayscale}: IProps) => {
 
   return (
     <div
+      id={`${path}`}
       style={{
         cursor: 'arrow',
         pointerEvents: 'auto',
