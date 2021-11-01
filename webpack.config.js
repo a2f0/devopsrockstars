@@ -20,17 +20,11 @@ module.exports = {
         use: {loader: 'ts-loader'},
         exclude: /node_modules/,
       },
-
       {
         enforce: 'pre',
         test: /\.js$/,
         exclude: /node_modules/,
         loader: 'source-map-loader',
-      },
-
-      {
-        test: /\.less$/,
-        use: ['style-loader', 'css-loader', 'less-loader'],
       },
       {
         test: /\.svg$/,
