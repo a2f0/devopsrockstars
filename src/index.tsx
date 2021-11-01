@@ -2,7 +2,6 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import {BrowserRouter as Router, Route} from 'react-router-dom';
 import './style/map.less';
-import './style/devopsrockstars.less';
 import FullScreenMap from './Map';
 import Company from './Company';
 import Skyline from './Skyline';

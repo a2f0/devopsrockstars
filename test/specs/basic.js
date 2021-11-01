@@ -15,6 +15,8 @@ describe('index page', () => {
 describe('company page', () => {
   it('loads correctly', () => {
     browser.url('http://localhost:8080/company');
+    const map = $('#mapdiv');
+    assert.strictEqual(map.isDisplayed(), false);
     // The id of the svg itself.
     const awsSvg = $('#aws');
     assert.strictEqual(awsSvg.isDisplayed(), true);

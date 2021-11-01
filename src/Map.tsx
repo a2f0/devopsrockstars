@@ -3,6 +3,16 @@ import {useLocation} from 'react-router-dom';
 import {MapContainer, TileLayer, Marker} from 'react-leaflet';
 import L from 'leaflet';
 import whiteStar from '/static/image/white-star-only.svg';
+import styled from 'styled-components';
+
+const FullScreen = styled.div`
+  z-index: -1337;
+  position: fixed;
+  left: 0px;
+  right: 0px;
+  width: 100vw;
+  height: 100vh;
+`;
 
 const FullScreenMap = React.memo(() => {
   const getClassname = () => {
@@ -27,7 +37,7 @@ const FullScreenMap = React.memo(() => {
   });
 
   return (
-    <div id="mapdiv" className={`full-screen-map ${getClassname()}`}>
+    <FullScreen id="mapdiv" className={`${getClassname()}`}>
       <link
         rel="stylesheet"
         href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
@@ -55,7 +65,7 @@ const FullScreenMap = React.memo(() => {
         />
         <Marker position={[40.762189, -73.961183]} icon={starIcon}></Marker>
       </MapContainer>
-    </div>
+    </FullScreen>
   );
 });
 
