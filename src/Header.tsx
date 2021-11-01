@@ -1,5 +1,6 @@
 import React from 'react';
 import FlexContainerLeft from './styled-components/FlexContainerLeft';
+import FlexContainerRight from './styled-components/FlexContainerRight'
 import FlexContainerRow from './shared/FlexContainerRow';
 import FlexHeader from './styled-components/FlexHeader';
 import MenuItemLeft from './styled-components/MenuItemLeft';
@@ -17,14 +18,14 @@ const Header = React.memo(() => {
         <FlexContainerLeft>
           <MenuItemLeft></MenuItemLeft>
         </FlexContainerLeft>
-        <div className="flex-container-right">
+        <FlexContainerRight>
           <MenuItemRight>
             <MenuLink href="/company">company</MenuLink>
           </MenuItemRight>
           <MenuItemRight>
             <MenuLink href="/contact">contact</MenuLink>
           </MenuItemRight>
-        </div>
+        </FlexContainerRight>
       </FlexContainerRow>
     </FlexHeader>
   );
