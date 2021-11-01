@@ -6,6 +6,11 @@ const GlobalStyle = createGlobalStyle`
     --foreground-color: white;
   }
 
+  html { pointer-events: none;
+    margin-left: calc(100vw - 100%);
+    margin-right: 0;
+  }
+
   body {
     background-color: black;
     color: var(--foreground-color);
@@ -23,10 +28,6 @@ const GlobalStyle = createGlobalStyle`
     pointer-events: auto;
   }
 
-  p {
-    margin: 0;
-  }
-
   h1 {
     margin-top: 35px;
     margin-right: 0px;
@@ -35,9 +36,8 @@ const GlobalStyle = createGlobalStyle`
     font-size: 22px;
   }
 
-  html { pointer-events: none;
-    margin-left: calc(100vw - 100%);
-    margin-right: 0;
+  p {
+    margin: 0;
   }
 `;
 

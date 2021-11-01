@@ -6,7 +6,7 @@ import whiteStar from '/static/image/white-star-only.svg';
 import styled, {css} from 'styled-components';
 
 interface IProps {
-  hidden: boolean;
+  hideMap: boolean;
 }
 
 const FullScreen = styled.div<IProps>`
@@ -16,8 +16,9 @@ const FullScreen = styled.div<IProps>`
   right: 0px;
   width: 100vw;
   height: 100vh;
-  ${({hidden}) =>
-    hidden &&
+
+  ${({hideMap}) =>
+    hideMap &&
     css`
       visibility: hidden;
     `}
@@ -42,9 +43,9 @@ const FullScreen = styled.div<IProps>`
 
 const FullScreenMap = React.memo(() => {
   const location = useLocation();
-  let hidden = true;
+  let hideMap = true;
   if (location.pathname === '/contact') {
-    hidden = false;
+    hideMap = false;
   }
 
   const southWest = L.latLng(17.476, -126.386);
@@ -60,7 +61,7 @@ const FullScreenMap = React.memo(() => {
   });
 
   return (
-    <FullScreen id="mapdiv" hidden={hidden}>
+    <FullScreen id="mapdiv" hideMap={hideMap}>
       <link
         rel="stylesheet"
         href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
