@@ -7,6 +7,7 @@ import FullScreenMap from './Map';
 import Company from './Company';
 import Skyline from './Skyline';
 import FlexContainerRow from './shared/FlexContainerRow';
+import FlexContainerColumn from './styled-components/FlexContainerColumn';
 import Contact from './Contact';
 import Footer from './Footer';
 import Header from './Header';
@@ -20,16 +21,16 @@ function AppRouter() {
       <Route path="/" exact component={Skyline} />
       <FlexContainerRow>
         <div className="flex-full-height-min">
-          <div className="flex-container-column">
+          <FlexContainerColumn>
             <Header />
             <div className="flex-body">
-              <div className="flex-container-column">
+              <FlexContainerColumn>
                 <Route path="/company" exact component={Company} />
                 <Route path="/contact" component={Contact} />
-              </div>
+              </FlexContainerColumn>
             </div>
             <Footer />
-          </div>
+          </FlexContainerColumn>
         </div>
       </FlexContainerRow>
     </Router>
