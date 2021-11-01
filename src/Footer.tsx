@@ -2,6 +2,7 @@ import React from 'react';
 import FlexContainerRow from './shared/FlexContainerRow';
 import {ReactSVG} from 'react-svg';
 import {Link, useLocation} from 'react-router-dom';
+import MenuItemRight from './styled-components/MenuItemRight';
 
 const Footer = React.memo(() => {
   const location = useLocation();
@@ -33,7 +34,7 @@ const Footer = React.memo(() => {
           <div className="menu-item-center"></div>
         </div>
         <div className="flex-container-right">
-          <div className="menu-item-right"></div>
+          <MenuItemRight></MenuItemRight>
         </div>
       </FlexContainerRow>
     </footer>
