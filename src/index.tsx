@@ -13,6 +13,7 @@ import Footer from './Footer';
 import FlexMain from './styled-components/FlexMain';
 import Header from './Header';
 import GlobalStyle from './styled-components/GlobalStyle';
+import FlexFullHeightMin from './styled-components/FlexFullHeightMin';
 
 function AppRouter() {
   return (
@@ -21,7 +22,7 @@ function AppRouter() {
       <FullScreenMap />
       <Route path="/" exact component={Skyline} />
       <FlexContainerRow>
-        <div className="flex-full-height-min">
+        <FlexFullHeightMin>
           <FlexContainerColumn>
             <Header />
             <FlexMain>
@@ -32,7 +33,7 @@ function AppRouter() {
             </FlexMain>
             <Footer />
           </FlexContainerColumn>
-        </div>
+        </FlexFullHeightMin>
       </FlexContainerRow>
     </Router>
   );

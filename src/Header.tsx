@@ -1,4 +1,5 @@
 import React from 'react';
+import FlexContainerLeft from './styled-components/FlexContainerLeft';
 import FlexContainerRow from './shared/FlexContainerRow';
 import FlexHeader from './styled-components/FlexHeader';
 import MenuItemLeft from './styled-components/MenuItemLeft';
@@ -13,9 +14,9 @@ const Header = React.memo(() => {
   return (
     <FlexHeader>
       <FlexContainerRow>
-        <div className="flex-container-left">
+        <FlexContainerLeft>
           <MenuItemLeft></MenuItemLeft>
-        </div>
+        </FlexContainerLeft>
         <div className="flex-container-right">
           <MenuItemRight>
             <MenuLink href="/company">company</MenuLink>
