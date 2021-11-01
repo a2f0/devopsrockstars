@@ -1,5 +1,6 @@
 import React from 'react';
 import FlexContainerRow from './shared/FlexContainerRow';
+import FlexHeader from './styled-components/FlexHeader';
 import MenuItemLeft from './styled-components/MenuItemLeft';
 import MenuItemRight from './styled-components/MenuItemRight';
 import styled from 'styled-components';
@@ -10,7 +11,7 @@ export const MenuLink = styled.a`
 
 const Header = React.memo(() => {
   return (
-    <header className="flex-header">
+    <FlexHeader>
       <FlexContainerRow>
         <div className="flex-container-left">
           <MenuItemLeft></MenuItemLeft>
@@ -24,7 +25,7 @@ const Header = React.memo(() => {
           </MenuItemRight>
         </div>
       </FlexContainerRow>
-    </header>
+    </FlexHeader>
   );
 });
 
