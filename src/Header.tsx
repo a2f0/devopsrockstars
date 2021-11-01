@@ -1,6 +1,6 @@
 import React from 'react';
 import FlexContainerLeft from './styled-components/FlexContainerLeft';
-import FlexContainerRight from './styled-components/FlexContainerRight'
+import FlexContainerRight from './styled-components/FlexContainerRight';
 import FlexContainerRow from './shared/FlexContainerRow';
 import FlexHeader from './styled-components/FlexHeader';
 import MenuItemLeft from './styled-components/MenuItemLeft';
