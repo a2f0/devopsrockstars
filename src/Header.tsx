@@ -5,9 +5,10 @@ import FlexContainerRow from './shared/FlexContainerRow';
 import FlexHeader from './styled-components/FlexHeader';
 import MenuItemLeft from './styled-components/MenuItemLeft';
 import MenuItemRight from './styled-components/MenuItemRight';
+import {Link} from 'react-router-dom';
 import styled from 'styled-components';
 
-export const MenuLink = styled.a`
+export const MenuLink = styled(Link)`
   font-size: 24px;
 `;
 
@@ -20,10 +21,10 @@ const Header = React.memo(() => {
         </FlexContainerLeft>
         <FlexContainerRight>
           <MenuItemRight>
-            <MenuLink href="/company">company</MenuLink>
+            <MenuLink to="/company">company</MenuLink>
           </MenuItemRight>
           <MenuItemRight>
-            <MenuLink href="/contact">contact</MenuLink>
+            <MenuLink to="/contact">contact</MenuLink>
           </MenuItemRight>
         </FlexContainerRight>
       </FlexContainerRow>
