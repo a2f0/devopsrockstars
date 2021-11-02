@@ -1,5 +1,5 @@
-import React from 'react';
 import ContactRow from './ContactRow';
+import React from 'react';
 import styled from 'styled-components';
 
 export const ContactRowContainer = styled.div`

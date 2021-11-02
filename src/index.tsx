@@ -1,17 +1,17 @@
+import {Route, BrowserRouter as Router} from 'react-router-dom';
+import Company from './Company';
+import Contact from './Contact';
+import FlexContainerColumn from './styled-components/FlexContainerColumn';
+import FlexContainerRow from './shared/FlexContainerRow';
+import FlexFullHeightMin from './styled-components/FlexFullHeightMin';
+import FlexMain from './styled-components/FlexMain';
+import Footer from './Footer';
+import FullScreenMap from './Map';
+import GlobalStyle from './styled-components/GlobalStyle';
+import Header from './Header';
 import React from 'react';
 import ReactDOM from 'react-dom';
-import {BrowserRouter as Router, Route} from 'react-router-dom';
-import FullScreenMap from './Map';
-import Company from './Company';
 import Skyline from './Skyline';
-import FlexContainerRow from './shared/FlexContainerRow';
-import FlexContainerColumn from './styled-components/FlexContainerColumn';
-import Contact from './Contact';
-import Footer from './Footer';
-import FlexMain from './styled-components/FlexMain';
-import Header from './Header';
-import GlobalStyle from './styled-components/GlobalStyle';
-import FlexFullHeightMin from './styled-components/FlexFullHeightMin';
 
 function AppRouter() {
   return (

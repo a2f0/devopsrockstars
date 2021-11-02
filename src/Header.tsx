@@ -1,11 +1,11 @@
-import React from 'react';
 import FlexContainerLeft from './styled-components/FlexContainerLeft';
 import FlexContainerRight from './styled-components/FlexContainerRight';
 import FlexContainerRow from './shared/FlexContainerRow';
 import FlexHeader from './styled-components/FlexHeader';
+import {Link} from 'react-router-dom';
 import MenuItemLeft from './styled-components/MenuItemLeft';
 import MenuItemRight from './styled-components/MenuItemRight';
-import {Link} from 'react-router-dom';
+import React from 'react';
 import styled from 'styled-components';
 
 export const MenuLink = styled(Link)`

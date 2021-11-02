@@ -1,6 +1,6 @@
 import React, {useState} from 'react';
-import SVG from './SVG';
 import styled, {css} from 'styled-components';
+import SVG from './SVG';
 
 interface IRowProps {
   isActive: boolean;

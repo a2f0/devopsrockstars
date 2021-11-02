@@ -1,9 +1,9 @@
+import {MapContainer, Marker, TileLayer} from 'react-leaflet';
+import styled, {css} from 'styled-components';
+import L from 'leaflet';
 import React from 'react';
 import {useLocation} from 'react-router-dom';
-import {MapContainer, TileLayer, Marker} from 'react-leaflet';
-import L from 'leaflet';
 import whiteStar from '/static/image/white-star-only.svg';
-import styled, {css} from 'styled-components';
 
 interface IProps {
   hideMap: boolean;
