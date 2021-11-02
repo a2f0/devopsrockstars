@@ -1,9 +1,7 @@
 import {Configuration} from 'webpack';
-
-/* eslint node/no-unpublished-require: 0 */
-const path = require('path');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
-const CopyWebpackPlugin = require('copy-webpack-plugin');
+import CopyWebpackPlugin from 'copy-webpack-plugin';
+import HtmlWebpackPlugin from 'html-webpack-plugin';
+import path from 'path';
 
 const config: Configuration = {
   entry: './src/index.tsx',
