@@ -1,6 +1,6 @@
 {
   "name": "devopsrockstars-frontend",
-  "version": "2.0.43",
+  "version": "2.0.44",
   "description": "",
   "main": "index.js",
   "engines": {
@@ -48,12 +48,10 @@
     "@wdio/spec-reporter": "^7.7.0",
     "@wdio/sync": "^7.7.2",
     "babel-eslint": "^10.1.0",
-    "babel-loader": "^8.2.2",
     "chromedriver": "^95.0.0",
     "copy-webpack-plugin": "^9.0.1",
     "eslint": "^7.27.0",
     "eslint-config-react": "^1.1.7",
-    "eslint-loader": "^4.0.2",
     "eslint-plugin-mocha": "^9.0.0",
     "eslint-plugin-react": "^7.24.0",
     "expect-webdriverio": "^3.1.4",
@@ -61,7 +59,7 @@
     "html-webpack-plugin": "^5.3.1",
     "prettier": "^2.4.1",
     "start-server-and-test": "^1.12.3",
-    "style-loader": "^2.0.0",
+    "ts-loader": "^9.2.2",
     "ts-node": "^10.4.0",
     "typescript": "^4.4.4",
     "url-loader": "^4.1.1",
@@ -81,7 +79,6 @@
     "react-leaflet": "^3.2.0",
     "react-router-dom": "^5.2.0",
     "react-svg": "^13.0.6",
-    "styled-components": "^5.3.1",
-    "ts-loader": "^9.2.2"
+    "styled-components": "^5.3.1"
   }
 }
