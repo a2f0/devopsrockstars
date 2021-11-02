@@ -3,13 +3,12 @@
   "compilerOptions": {
     "allowJs": false,
     "target": "esnext",
-    "module": "esnext",
     "rootDir": ".",
     "outDir": "src/ts-out",
+    "skipLibCheck": true,
     "strict": true,
     "resolveJsonModule": true,
     "jsx": "react",
-    "importHelpers": true,
     "moduleResolution": "node",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
@@ -18,7 +17,8 @@
     "sourceMap": true,
     "baseUrl": ".",
     "types": [
-      "node"
+      "webdriverio/async",
+      "@wdio/mocha-framework",
     ],
     "paths": {
       "@/*": [

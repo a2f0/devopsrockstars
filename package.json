@@ -1,6 +1,6 @@
 {
   "name": "devopsrockstars-frontend",
-  "version": "2.0.39",
+  "version": "2.0.40",
   "description": "",
   "main": "index.js",
   "engines": {
@@ -8,8 +8,8 @@
   },
   "scripts": {
     "start-server": "webpack serve --mode development --history-api-fallback",
-    "test": "./node_modules/.bin/wdio wdio.shared.conf.js",
-    "test-headless": "./node_modules/.bin/wdio wdio.headless.conf.js",
+    "test": "./node_modules/.bin/wdio wdio.shared.conf.ts",
+    "test-headless": "./node_modules/.bin/wdio wdio.headless.conf.ts",
     "ci": "start-server-and-test start-server http-get://localhost:8080 test",
     "ci-headless": "start-server-and-test start-server http-get://localhost:8080 test-headless",
     "format": "prettier --write \"src/**/*.js\"",
@@ -32,6 +32,7 @@
     "@babel/preset-env": "^7.14.4",
     "@babel/preset-react": "^7.13.13",
     "@babel/register": "^7.13.16",
+    "@types/mocha": "^9.0.0",
     "@types/node": "^15.6.2",
     "@types/react": "^17.0.9",
     "@types/react-dom": "^17.0.6",
@@ -59,6 +60,7 @@
     "prettier": "^2.4.1",
     "start-server-and-test": "^1.12.3",
     "style-loader": "^2.0.0",
+    "ts-node": "^10.4.0",
     "typescript": "^4.0.3",
     "url-loader": "^4.1.1",
     "wdio-chromedriver-service": "^7.1.0",
