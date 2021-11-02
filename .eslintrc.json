@@ -1,11 +1,6 @@
 {
   "extends": [ "./node_modules/gts/", "plugin:wdio/recommended"],
   "plugins": ["webdriverio", "mocha"],
-  "parserOptions": {
-    "ecmaFeatures": {
-      "legacyDecorators": true
-    }
-  },
   "settings": {
     "react": {
       "version": "detect"
