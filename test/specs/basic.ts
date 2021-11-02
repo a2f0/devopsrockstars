@@ -1,4 +1,4 @@
-const assert = require('assert');
+import assert from 'assert';
 
 describe('index page', () => {
   it('loads correctly', () => {
