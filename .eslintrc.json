@@ -1,6 +1,5 @@
 {
   "extends": [ "./node_modules/gts/", "plugin:wdio/recommended"],
-  "parser": "@typescript-eslint/parser",
   "plugins": ["webdriverio", "mocha"],
   "globals": {
     "browser": true // Mocha

@@ -1,7 +1,7 @@
 export const config: WebdriverIO.Config = {
   runner: 'local',
   path: '/',
-  specs: ['./test/specs/**/*.js'],
+  specs: ['./test/specs/**/*.ts'],
   exclude: [],
   maxInstances: 10,
   capabilities: [

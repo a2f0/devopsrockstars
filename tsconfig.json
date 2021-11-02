@@ -1,5 +1,15 @@
 {
   "extends": "./node_modules/gts/tsconfig-google.json",
+  "autoCompileOpts": {
+    "autoCompile": true,
+    "tsNodeOpts": {
+        "transpileOnly": true,
+        "project": "tsconfig.json",
+    },
+    "tsConfigPathsOpts": {
+        "baseUrl": "./",
+    }
+  },
   "compilerOptions": {
     "allowJs": false,
     "target": "esnext",
@@ -7,17 +17,15 @@
     "outDir": "src/ts-out",
     "skipLibCheck": true,
     "strict": true,
-    "resolveJsonModule": true,
     "jsx": "react",
     "moduleResolution": "node",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "strictPropertyInitialization": false,
-    "experimentalDecorators": true,
     "sourceMap": true,
     "baseUrl": ".",
     "types": [
-      "webdriverio/async",
+      "node", // For wdio: https://webdriver.io/docs/typescript
+      "webdriverio/sync",
       "@wdio/mocha-framework",
     ],
     "paths": {
@@ -34,10 +42,8 @@
   },
   "include": [
     "src/image/chicago_skyline.svg",
-    "src/**/*.ts",
-    "src/**/*.tsx",
-    "tests/**/*.ts",
-    "tests/**/*.tsx"
+    "**/*.ts",
+    "**/*.tsx"
   ],
   "exclude": ["src/ts-out/**/*"]
 }
