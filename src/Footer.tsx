@@ -2,7 +2,7 @@ import {Link, useLocation} from 'react-router-dom';
 import FlexContainerCenter from './styled-components/FlexContainerCenter';
 import FlexContainerLeft from './styled-components/FlexContainerLeft';
 import FlexContainerRight from './styled-components/FlexContainerRight';
-import FlexContainerRow from './shared/FlexContainerRow';
+import FlexContainerRow from './styled-components/FlexContainerRow';
 import FlexFooter from './styled-components/FlexFooter';
 import MenuItemCenter from './styled-components/MenuItemCenter';
 import MenuItemLeft from './styled-components/MenuItemLeft';

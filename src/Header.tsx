@@ -1,6 +1,6 @@
 import FlexContainerLeft from './styled-components/FlexContainerLeft';
 import FlexContainerRight from './styled-components/FlexContainerRight';
-import FlexContainerRow from './shared/FlexContainerRow';
+import FlexContainerRow from './styled-components/FlexContainerRow';
 import FlexHeader from './styled-components/FlexHeader';
 import {Link} from 'react-router-dom';
 import MenuItemLeft from './styled-components/MenuItemLeft';

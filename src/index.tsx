@@ -2,7 +2,7 @@ import {Route, BrowserRouter as Router} from 'react-router-dom';
 import Company from './Company';
 import Contact from './Contact';
 import FlexContainerColumn from './styled-components/FlexContainerColumn';
-import FlexContainerRow from './shared/FlexContainerRow';
+import FlexContainerRow from './styled-components/FlexContainerRow';
 import FlexFullHeightMin from './styled-components/FlexFullHeightMin';
 import FlexMain from './styled-components/FlexMain';
 import Footer from './Footer';
