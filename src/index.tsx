@@ -1,4 +1,4 @@
-import {Route, BrowserRouter as Router} from 'react-router-dom';
+import {Route, BrowserRouter as Router, Routes} from 'react-router-dom';
 import Company from './Company';
 import Contact from './Contact';
 import FlexContainerColumn from './styled-components/FlexContainerColumn';
@@ -18,15 +18,17 @@ function AppRouter() {
     <Router>
       <GlobalStyle />
       <FullScreenMap />
-      <Route path="/" exact component={Skyline} />
       <FlexContainerRow>
         <FlexFullHeightMin>
           <FlexContainerColumn>
             <Header />
             <FlexMain>
               <FlexContainerColumn>
-                <Route path="/company" exact component={Company} />
-                <Route path="/contact" component={Contact} />
+                <Routes>
+                  <Route path="/" element={<Skyline />} />
+                  <Route path="/company" element={<Company />} />
+                  <Route path="/contact" element={<Contact />} />
+                </Routes>
               </FlexContainerColumn>
             </FlexMain>
             <Footer />
