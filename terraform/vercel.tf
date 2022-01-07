@@ -5,6 +5,7 @@ provider "vercel" {
 resource "vercel_project" "project" {
   name             = "devopsrockstars-frontend"
   output_directory = "build"
+  node_version     = "14.x"
   domain   {
     name           = "devopsrockstars.com"
   }

@@ -6,7 +6,7 @@ terraform {
     }
     vercel = {
       source  = "chronark/vercel"
-      version = "0.14.0"
+      version = "0.14.2"
     }
     github = {
       source  = "integrations/github"
