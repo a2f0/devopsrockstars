@@ -22,7 +22,7 @@ jobs:
           python-version: '3.7'
           architecture: 'x64'
       - name: npm audit
-        run: npm audit --audit-level=high
+        run: npm audit --audit-level=critical
       - name: npm install
         run: npm install
       - name: pre-commit
@@ -39,6 +39,8 @@ jobs:
       # See: https://github.com/browser-ations/setup-chrome
       - run: rm -rf /tmp/custom-chrome && mv $(dirname `which chrome`) /tmp/custom-chrome
       - run: npm run ci-headless
+        env:
+          CUSTOM_CHROME_PATH: '/tmp/custom-chrome/chrome'
       - name: Post to slack
         uses: 8398a7/action-slack@v3
         if: ${{ failure() }}

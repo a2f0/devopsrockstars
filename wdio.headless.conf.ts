@@ -1,5 +1,13 @@
 import {config as sharedConfig} from './wdio.shared.conf';
 
+if (process.env.CUSTOM_CHROME_PATH) {
+  console.info(
+    '=== using custom chrome path: ' + process.env.CUSTOM_CHROME_PATH
+  );
+} else {
+  console.info('=== not using custom chrome path');
+}
+
 export const config = {
   ...sharedConfig,
   ...{
@@ -7,10 +15,9 @@ export const config = {
       {
         browserName: 'chrome',
         'goog:chromeOptions': {
-          // This path is hardcoded to the determinstic path configured by
-          // setup-chrome inside of Github actions. It can be commented out
-          // to use the default. See .github/workflows/main.yml
-          binary: '/tmp/custom-chrome/chrome',
+          // If this is undefined it will default to launching Chrome from the existing path.
+          // See .github/workflows/main.yml for a deterministic configuration of this value.
+          binary: process.env.CUSTOM_CHROME_PATH,
           args: [
             '--headless',
             '--disable-gpu',

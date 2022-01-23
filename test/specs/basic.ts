@@ -2,7 +2,7 @@ import assert from 'assert';
 
 describe('index page', () => {
   it('loads correctly', () => {
-    browser.url('http://localhost:8080');
+    browser.url('http://localhost:8081');
     const title = browser.getTitle();
     assert.strictEqual(title, '\u200E');
     const map = $('#mapdiv');
@@ -14,7 +14,7 @@ describe('index page', () => {
 
 describe('company page', () => {
   it('loads correctly', () => {
-    browser.url('http://localhost:8080/company');
+    browser.url('http://localhost:8081/company');
     const map = $('#mapdiv');
     assert.strictEqual(map.isDisplayed(), false);
     // Make sure an SVG is retrievable.
@@ -26,7 +26,7 @@ describe('company page', () => {
 
 describe('contact page', () => {
   it('loads correctly', () => {
-    browser.url('http://localhost:8080/contact');
+    browser.url('http://localhost:8081/contact');
     const map = $('#mapdiv');
     assert.strictEqual(map.isDisplayed(), true);
   });
