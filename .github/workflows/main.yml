@@ -58,7 +58,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       # production deploy
-      - uses: amondnet/vercel-action@v19
+      - uses: amondnet/vercel-action@v20
         if: ${{ github.event.ref == 'refs/heads/production' && github.event_name == 'push' }}
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
@@ -66,7 +66,7 @@ jobs:
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID}}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID}}
       # non-production deploy
-      - uses: amondnet/vercel-action@v19
+      - uses: amondnet/vercel-action@v20
         if: ${{ github.event.ref != 'refs/heads/main' && github.event_name == 'push' }}
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
