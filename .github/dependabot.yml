@@ -3,13 +3,13 @@ updates:
   - package-ecosystem: 'github-actions'
     directory: '/'
     schedule:
-      interval: 'daily'
+      interval: 'monthly'
     reviewers:
       - 'a2f0'
 
   - package-ecosystem: 'npm'
     directory: '/'
     schedule:
-      interval: 'daily'
+      interval: 'monthly'
     reviewers:
       - 'a2f0'
