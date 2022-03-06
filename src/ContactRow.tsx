@@ -8,6 +8,7 @@ interface IRowProps {
 
 export const Row = styled.div<IRowProps>`
   pointer-events: auto;
+  width: fit-content;
   ${({isActive}) =>
     isActive &&
     css`
