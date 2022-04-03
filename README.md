@@ -13,6 +13,7 @@ Testing
 
 ```shell
 npm run ci
+npm run ci-headless
 ```
 
 Start the testing webpack server (on different port than normal development server) and run tests manually.
