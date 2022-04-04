@@ -8,7 +8,7 @@ if (process.env.CUSTOM_CHROME_PATH) {
   console.info('=== not using custom chrome path');
 }
 
-export const config = {
+export const config: WebdriverIO.Config = {
   ...sharedConfig,
   ...{
     capabilities: [
