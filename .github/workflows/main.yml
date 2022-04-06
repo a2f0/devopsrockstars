@@ -32,6 +32,8 @@ jobs:
           pip install pre-commit
           pre-commit install
           pre-commit run --all-files
+        env:
+          SKIP: no-commit-to-branch
       - uses: browser-actions/setup-chrome@latest
         name: Setup Chrome
         with:
