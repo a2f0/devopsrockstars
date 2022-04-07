@@ -23,7 +23,7 @@ jobs:
       - name: eslint
         run: npx eslint .
       - name: Set up Python
-        uses: actions/setup-python@v3.1.0
+        uses: actions/setup-python@v3.1.1
         with:
           python-version: '3.7'
           architecture: 'x64'
