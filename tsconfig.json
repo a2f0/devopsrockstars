@@ -1,16 +1,8 @@
 {
   "extends": "./node_modules/gts/tsconfig-google.json",
-  "autoCompileOpts": {
-    "autoCompile": true,
-    "tsNodeOpts": {
-        "transpileOnly": true,
-        "project": "tsconfig.json",
-    },
-    "tsConfigPathsOpts": {
-        "baseUrl": "./",
-    }
-  },
+
   "compilerOptions": {
+    "types": ["webdriverio/async", "mocha", "expect-webdriverio"],
     "allowJs": false,
     "target": "esnext",
     "rootDir": ".",
@@ -22,17 +14,6 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "sourceMap": true,
-    "baseUrl": ".",
-    "types": [
-      "node", // For wdio: https://webdriver.io/docs/typescript
-      "webdriverio/sync",
-      "@wdio/mocha-framework",
-    ],
-    "paths": {
-      "@/*": [
-        "src/*"
-      ]
-    },
     "lib": [
       "esnext",
       "dom",

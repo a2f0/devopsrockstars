@@ -28,7 +28,7 @@ npm run test-headless
 Run a specific spec
 
 ```shell
-npx wdio wdio.shared.conf.ts --spec=./specs/basic.ts
+npx wdio wdio.shared.conf.ts --spec=./specs/basic.spec.ts
 ```
 
 ## Production
