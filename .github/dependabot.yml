@@ -4,12 +4,8 @@ updates:
     directory: '/'
     schedule:
       interval: 'daily'
-    reviewers:
-      - 'a2f0'
 
   - package-ecosystem: 'npm'
     directory: '/'
     schedule:
       interval: 'daily'
-    reviewers:
-      - 'a2f0'
