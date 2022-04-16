@@ -1,26 +1,27 @@
+import {BasePage} from '../pageObjects/base';
 import assert from 'assert';
 
 describe('index page', () => {
   it('loads correctly', async () => {
-    await browser.url('http://localhost:8081');
+    await BasePage.open('');
     const title = await browser.getTitle();
     assert.strictEqual(title, '\u200E');
-    await expect($('#mapdiv')).not.toBeDisplayed();
-    await expect($('#skyline')).toBeDisplayed();
+    await expect(BasePage.mapDiv).not.toBeDisplayed();
+    await expect(BasePage.skyline).toBeDisplayed();
   });
 });
 
 describe('company page', () => {
   it('loads correctly', async () => {
-    await browser.url('http://localhost:8081/company');
-    await expect($('#mapdiv')).not.toBeDisplayed();
-    await expect($('#aws')).toBeDisplayed();
+    await BasePage.open('company');
+    await expect(BasePage.mapDiv).not.toBeDisplayed();
+    await expect(BasePage.awsSvg).toBeDisplayed();
   });
 });
 
 describe('contact page', () => {
   it('loads correctly', async () => {
-    await browser.url('http://localhost:8081/contact');
-    await expect($('#mapdiv')).toBeDisplayed();
+    await BasePage.open('contact');
+    await expect(BasePage.mapDiv).toBeDisplayed();
   });
 });
