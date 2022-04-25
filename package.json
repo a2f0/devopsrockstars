@@ -79,7 +79,7 @@
     "react-dom": "^18.0.0",
     "react-leaflet": "^4.0.0",
     "react-router-dom": "^6.3.0",
-    "react-svg": "^14.1.17",
+    "react-svg": "^14.1.19",
     "styled-components": "^5.3.5"
   }
 }
