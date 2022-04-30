@@ -8,7 +8,7 @@ export const config: WebdriverIO.Config = {
   },
   runner: 'local',
   path: '/',
-  specs: ['./test/specs/**/*.ts'],
+  specs: ['./test/specs/**/*.spec.ts'],
   exclude: [],
   maxInstances: 10,
   capabilities: [
