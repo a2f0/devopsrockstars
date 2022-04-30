@@ -26,8 +26,6 @@ const config: Configuration = {
       },
     ],
   },
-
-  // addition - add source-map support
   devtool: 'source-map',
   plugins: [
     new HtmlWebpackPlugin({
