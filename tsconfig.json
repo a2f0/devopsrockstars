@@ -6,7 +6,7 @@
     "allowJs": false,
     "target": "esnext",
     "rootDir": ".",
-    "outDir": "src/ts-out",
+    "outDir": ".ts-out",
     "skipLibCheck": true,
     "strict": true,
     "jsx": "react",
@@ -26,5 +26,5 @@
     "**/*.ts",
     "**/*.tsx"
   ],
-  "exclude": ["src/ts-out/**/*"]
+  "exclude": [".ts-out/**/*"]
 }
