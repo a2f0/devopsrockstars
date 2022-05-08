@@ -33,6 +33,6 @@ npx wdio wdio.shared.conf.ts --spec=./specs/basic.spec.ts
 
 ## Production
 
-See `./.github/workflows/main.yml`. The site is deployed to Vercel using Github actions.
+The site is deployed to [Vercel](https://vercel.com/) using [Github Actions](https://docs.github.com/en/actions) (see [.github/workflows/main.yml](.github/workflows/main.yml)).
 
-The configuration for the site is under `./terraform`.
+The configuration for the site is in the [terraform folder](terraform).
