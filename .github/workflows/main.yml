@@ -10,12 +10,15 @@ jobs:
 
   code-quality:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [14, 16]
     continue-on-error: false
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: '14'
+          node-version: ${{ matrix.node-version }}
       - name: npm audit
         run: npm audit --audit-level=critical
       - name: npm install

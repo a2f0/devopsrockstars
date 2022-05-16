@@ -9,7 +9,6 @@ permissions:
   contents: write
 
 jobs:
-
   dependabot:
     runs-on: ubuntu-latest
     if: ${{ github.actor == 'dependabot[bot]' }}
