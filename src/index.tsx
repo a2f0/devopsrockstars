@@ -10,7 +10,7 @@ import FullScreenMap from './Map';
 import GlobalStyle from './styled-components/GlobalStyle';
 import Header from './Header';
 import React from 'react';
-import ReactDOM from 'react-dom';
+import ReactDOM from 'react-dom/client';
 import Skyline from './Skyline';
 
 function AppRouter() {
@@ -38,4 +38,8 @@ function AppRouter() {
     </Router>
   );
 }
-ReactDOM.render(<AppRouter />, document.getElementById('©'));
+
+const rootElement = document.getElementById('©');
+if (!rootElement) throw new Error('Failed to find the root element');
+const root = ReactDOM.createRoot(rootElement);
+root.render(<AppRouter />);
