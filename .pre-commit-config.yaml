@@ -1,12 +1,20 @@
 repos:
--   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.1.0
-    hooks:
-    -   id: check-yaml
-    -   id: end-of-file-fixer
-    -   id: trailing-whitespace
-    -   id: check-merge-conflict
-    -   id: forbid-new-submodules
-    -   id: mixed-line-ending
-    -   id: no-commit-to-branch
-        args: ['--branch', 'production']
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v4.1.0
+  hooks:
+    - id: check-yaml
+    - id: end-of-file-fixer
+    - id: trailing-whitespace
+    - id: check-merge-conflict
+    - id: forbid-new-submodules
+    - id: mixed-line-ending
+    - id: no-commit-to-branch
+      args: ['--branch', 'production']
+
+- repo: local
+  hooks:
+    - id: check-for-unpinned-dependencies
+      name: check-for-unpinned-dependencies
+      entry: npx check-for-unpinned-dependencies
+      pass_filenames: false
+      language: node
