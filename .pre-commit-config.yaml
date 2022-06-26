@@ -10,11 +10,15 @@ repos:
     - id: mixed-line-ending
     - id: no-commit-to-branch
       args: ['--branch', 'production']
-
 - repo: local
   hooks:
     - id: check-for-unpinned-dependencies
       name: check-for-unpinned-dependencies
       entry: npx check-for-unpinned-dependencies
+      pass_filenames: false
+      language: node
+    - id: eslint
+      name: eslint
+      entry: npx eslint .
       pass_filenames: false
       language: node
