@@ -22,3 +22,8 @@ repos:
       entry: npx eslint .
       pass_filenames: false
       language: node
+    - id: prettier
+      name: prettier
+      entry: npx prettier --check '**/*.{ts,js,tsx,jsx,css,html}'
+      pass_filenames: false
+      language: node
