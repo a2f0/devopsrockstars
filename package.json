@@ -44,7 +44,7 @@
     "@wdio/spec-reporter": "7.20.8",
     "chromedriver": "103.0.0",
     "copy-webpack-plugin": "11.0.0",
-    "eslint": "8.20.0",
+    "eslint": "8.21.0",
     "eslint-config-react": "1.1.7",
     "eslint-plugin-import": "2.26.0",
     "eslint-plugin-mocha": "10.1.0",
