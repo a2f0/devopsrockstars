@@ -30,7 +30,7 @@
     "@a2f0/check-for-unpinned-dependencies": "1.0.4",
     "@types/mocha": "9.1.1",
     "@types/node": "18.7.16",
-    "@types/react": "18.0.18",
+    "@types/react": "18.0.19",
     "@types/react-dom": "18.0.6",
     "@types/react-leaflet": "2.8.2",
     "@types/react-router-dom": "5.3.3",
