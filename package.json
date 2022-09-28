@@ -73,6 +73,6 @@
     "react-leaflet": "4.1.0",
     "react-router-dom": "6.4.1",
     "react-svg": "15.1.9",
-    "styled-components": "5.3.5"
+    "styled-components": "5.3.6"
   }
 }
