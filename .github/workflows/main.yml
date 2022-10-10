@@ -24,7 +24,7 @@ jobs:
       - name: npm ci
         run: npm ci
       - name: Set up Python
-        uses: actions/setup-python@v4.2.0
+        uses: actions/setup-python@v4.3.0
         with:
           python-version: '3.7'
           architecture: 'x64'
