@@ -20,7 +20,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - name: npm audit
-        run: npm audit --audit-level=critical
+        run: npm audit --audit-level=critical --production
       - name: npm ci
         run: npm ci
       - name: Set up Python
