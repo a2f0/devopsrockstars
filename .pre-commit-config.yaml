@@ -27,3 +27,8 @@ repos:
       entry: npx prettier --check '**/*.{ts,js,tsx,jsx,css,html}'
       pass_filenames: false
       language: node
+    - id: audit
+      name: npm audit
+      entry: npm audit --audit-level=critical --production
+      pass_filenames: false
+      language: node
