@@ -53,7 +53,7 @@
     "expect-webdriverio": "3.4.0",
     "gts": "3.1.1",
     "html-webpack-plugin": "5.5.0",
-    "prettier": "2.7.1",
+    "prettier": "2.8.0",
     "start-server-and-test": "1.14.0",
     "ts-loader": "9.4.1",
     "ts-node": "10.9.1",
