@@ -29,7 +29,7 @@
   "devDependencies": {
     "@a2f0/check-for-unpinned-dependencies": "1.0.4",
     "@types/mocha": "10.0.0",
-    "@types/node": "18.11.9",
+    "@types/node": "18.11.10",
     "@types/react": "18.0.25",
     "@types/react-dom": "18.0.8",
     "@types/react-leaflet": "2.8.2",
