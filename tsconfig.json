@@ -2,7 +2,7 @@
   "extends": "./node_modules/gts/tsconfig-google.json",
 
   "compilerOptions": {
-    "types": ["webdriverio/async", "mocha", "expect-webdriverio"],
+    "types": ["@wdio/globals/types", "mocha", "expect-webdriverio"],
     "allowJs": false,
     "target": "esnext",
     "rootDir": ".",
