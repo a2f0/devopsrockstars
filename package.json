@@ -6,16 +6,25 @@
   "engines": {
     "node": ">=16.15.0 <17"
   },
+  "type": "module",
+
+  "prettier": {
+    "semi": true,
+    "singleQuote": true,
+    "trailingComma": "es5",
+    "bracketSpacing": false,
+    "arrowParens": "avoid"
+  },
   "scripts": {
-    "start-server": "webpack serve --mode development --history-api-fallback",
-    "start-test-server": "webpack serve --port 8081 --mode development --history-api-fallback",
-    "test": "./node_modules/.bin/wdio wdio.shared.conf.ts",
-    "test-headless": "./node_modules/.bin/wdio wdio.headless.conf.ts",
+    "start-server": "NODE_OPTIONS='--experimental-specifier-resolution=node --loader ts-node/esm' webpack serve --mode development --history-api-fallback",
+    "start-test-server": "NODE_OPTIONS='--experimental-specifier-resolution=node --loader ts-node/esm' webpack serve --port 8081 --mode development --history-api-fallback",
+    "test": "NODE_OPTIONS='--experimental-specifier-resolution=node --loader ts-node/esm' ./node_modules/.bin/wdio wdio.shared.conf.ts",
+    "test-headless": "NODE_OPTIONS='--experimental-specifier-resolution=node --loader ts-node/esm' ./node_modules/.bin/wdio wdio.headless.conf.ts",
     "ci": "start-server-and-test start-test-server http-get://localhost:8081 test",
     "ci-headless": "start-server-and-test start-test-server http-get://localhost:8081 test-headless",
     "format": "prettier --write \"src/**/*.js\"",
     "eslint-fix": "eslint --fix \"src/**/*.js\"",
-    "build": "webpack --mode production",
+    "build": "NODE_OPTIONS='--experimental-specifier-resolution=node --loader ts-node/esm' webpack --mode production",
     "lint": "gts lint",
     "clean": "gts clean",
     "compile": "tsc",
@@ -43,7 +52,7 @@
     "@wdio/local-runner": "8.3.5",
     "@wdio/mocha-framework": "8.3.0",
     "@wdio/spec-reporter": "8.3.0",
-    "chromedriver": "110.0.0",
+    "chromedriver": "109.0.0",
     "copy-webpack-plugin": "11.0.0",
     "eslint": "8.34.0",
     "eslint-config-react": "1.1.7",

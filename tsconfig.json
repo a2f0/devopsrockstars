@@ -5,6 +5,7 @@
     "types": ["@wdio/globals/types", "mocha", "expect-webdriverio"],
     "allowJs": false,
     "target": "esnext",
+    "module": "esnext",
     "rootDir": ".",
     "outDir": ".ts-out",
     "skipLibCheck": true,

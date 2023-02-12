@@ -1,7 +1,11 @@
 import {Configuration} from 'webpack';
 import CopyWebpackPlugin from 'copy-webpack-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
+import {dirname} from 'path';
+import {fileURLToPath} from 'url';
 import path from 'path';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const config: Configuration = {
   entry: './src/index.tsx',
