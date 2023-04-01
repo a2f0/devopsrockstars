@@ -60,7 +60,7 @@
     "eslint-plugin-mocha": "10.1.0",
     "eslint-plugin-react": "7.32.2",
     "eslint-plugin-wdio": "8.0.14",
-    "expect-webdriverio": "4.1.1",
+    "expect-webdriverio": "4.1.2",
     "gts": "3.1.1",
     "html-webpack-plugin": "5.5.0",
     "prettier": "2.8.4",
