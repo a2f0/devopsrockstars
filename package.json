@@ -82,7 +82,7 @@
     "react-dom": "18.2.0",
     "react-leaflet": "4.2.0",
     "react-router-dom": "6.8.1",
-    "react-svg": "16.1.4",
+    "react-svg": "16.1.7",
     "styled-components": "5.3.6"
   }
 }
