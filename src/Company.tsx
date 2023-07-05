@@ -1,32 +1,38 @@
+import ContactRow from './ContactRow';
 import React from 'react';
-import SVG from './SVG';
+import styled from 'styled-components';
+
+export const ContactRowContainer = styled.div`
+  margin-top: 10px;
+`;
 
 const Company = React.memo(() => {
   return (
     <>
-      <h1>About Us</h1>
-      <p>We are a consultancy offering services in DevOps and development.</p>
-      <h1>Technologies</h1>
-      <div>
-        <SVG
-          height={100}
-          width={100}
-          path={'/static/image/tags/aws.svg'}
-          initialGrayscale={100}
+      <h1>Contact</h1>
+      <ContactRowContainer>
+        <ContactRow
+          svgHeight={20}
+          svgWidth={20}
+          svgPath={'/static/image/contact/email.svg'}
+          uri={'mailto:info@devopsrockstars.com'}
+          rowDescription={'info [at] devopsrockstars.com'}
         />
-        <SVG
-          height={100}
-          width={100}
-          path={'/static/image/tags/azure.svg'}
-          initialGrayscale={100}
+        <ContactRow
+          svgHeight={20}
+          svgWidth={20}
+          svgPath={'/static/image/contact/vcard.svg'}
+          uri={'/static/contact/devopsrockstars.vcf'}
+          rowDescription={'vCard'}
         />
-        <SVG
-          height={100}
-          width={100}
-          path={'/static/image/tags/google-cloud-platform.svg'}
-          initialGrayscale={100}
+        <ContactRow
+          svgHeight={20}
+          svgWidth={20}
+          svgPath={'/static/image/contact/key.svg'}
+          uri={'/static/contact/pgp.asc'}
+          rowDescription={'GnuPG'}
         />
-      </div>
+      </ContactRowContainer>
     </>
   );
 });

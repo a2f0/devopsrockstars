@@ -1,6 +1,5 @@
 import {Route, BrowserRouter as Router, Routes} from 'react-router-dom';
 import Company from './Company';
-import Contact from './Contact';
 import FlexContainerColumn from './styled-components/FlexContainerColumn';
 import FlexContainerRow from './styled-components/FlexContainerRow';
 import FlexFullHeightMin from './styled-components/FlexFullHeightMin';
@@ -27,7 +26,6 @@ function AppRouter() {
                 <Routes>
                   <Route path="/" element={<Skyline />} />
                   <Route path="/company" element={<Company />} />
-                  <Route path="/contact" element={<Contact />} />
                 </Routes>
               </FlexContainerColumn>
             </FlexMain>

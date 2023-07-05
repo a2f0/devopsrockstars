@@ -23,9 +23,6 @@ const Header = React.memo(() => {
           <MenuItemRight>
             <MenuLink to="/company">company</MenuLink>
           </MenuItemRight>
-          <MenuItemRight>
-            <MenuLink to="/contact">contact</MenuLink>
-          </MenuItemRight>
         </FlexContainerRight>
       </FlexContainerRow>
     </FlexHeader>

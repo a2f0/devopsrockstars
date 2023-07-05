@@ -5,8 +5,8 @@ export default class Base {
   get skyline() {
     return $('#skyline');
   }
-  get awsSvg() {
-    return $('#aws');
+  get vCard() {
+    return $('#vCard');
   }
   open(path: string) {
     return browser.url(`http://localhost:8081/${path}`);

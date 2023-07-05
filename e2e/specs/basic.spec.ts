@@ -14,14 +14,6 @@ describe('index page', () => {
 describe('company page', () => {
   it('loads correctly', async () => {
     await BasePage.open('company');
-    await expect(BasePage.mapDiv).not.toBeDisplayed();
-    await expect(BasePage.awsSvg).toBeDisplayed();
-  });
-});
-
-describe('contact page', () => {
-  it('loads correctly', async () => {
-    await BasePage.open('contact');
-    await expect(BasePage.mapDiv).toBeDisplayed();
+    await expect(BasePage.skyline).not.toBeDisplayed();
   });
 });
