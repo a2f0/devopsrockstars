@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [16]
+        node-version: [18]
     continue-on-error: false
     steps:
       - uses: actions/checkout@v3
@@ -53,7 +53,7 @@ jobs:
     needs: code-quality
     strategy:
       matrix:
-        node-version: [16]
+        node-version: [18]
     continue-on-error: false
     steps:
       - uses: actions/checkout@v3

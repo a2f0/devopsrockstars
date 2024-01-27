@@ -17,7 +17,7 @@ export const config: WebdriverIO.Config = {
       browserName: 'chrome',
     },
   ],
-  logLevel: 'info',
+  logLevel: 'silent',
   bail: 0,
   baseUrl: 'http://localhost',
   waitforTimeout: 10000,
