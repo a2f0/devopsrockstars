@@ -1,11 +1,11 @@
 export default class Base {
-  get mapDiv() {
+  get mapDiv(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#mapdiv');
   }
-  get skyline() {
+  get skyline(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#skyline');
   }
-  get vCard() {
+  get vCard(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#vCard');
   }
   open(path: string) {
