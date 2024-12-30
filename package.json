@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "engines": {
-    "node": ">=18.0.0 <19"
+    "node": ">=22.0.0 <23"
   },
   "type": "module",
   "prettier": {
