@@ -17,8 +17,8 @@
   "scripts": {
     "start-server": "NODE_OPTIONS='--experimental-specifier-resolution=node --loader ts-node/esm' webpack serve --mode development --history-api-fallback",
     "start-test-server": "NODE_OPTIONS='--experimental-specifier-resolution=node --loader ts-node/esm' webpack serve --port 8081 --mode development --history-api-fallback",
-    "test": "NODE_OPTIONS='--experimental-specifier-resolution=node --loader ts-node/esm' ./node_modules/.bin/wdio wdio.shared.conf.ts",
-    "test-headless": "NODE_OPTIONS='--experimental-specifier-resolution=node --loader ts-node/esm' ./node_modules/.bin/wdio wdio.headless.conf.ts",
+    "test": "NODE_OPTIONS='--experimental-specifier-resolution=node' npx wdio wdio.shared.conf.ts",
+    "test-headless": "NODE_OPTIONS='--experimental-specifier-resolution=node' npx wdio wdio.headless.conf.ts",
     "ci": "start-server-and-test start-test-server http-get://localhost:8081 test",
     "ci-headless": "start-server-and-test start-test-server http-get://localhost:8081 test-headless",
     "format": "prettier --write \"src/**/*.js\"",
@@ -67,6 +67,7 @@
     "start-server-and-test": "2.0.3",
     "ts-loader": "9.5.1",
     "ts-node": "10.9.2",
+    "tsx": "4.19.3",
     "typescript": "5.3.3",
     "url-loader": "4.1.1",
     "wdio-chromedriver-service": "8.1.1",
