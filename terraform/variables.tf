@@ -25,11 +25,3 @@ variable "github_token" {
 variable "slack_webhook_url" {
   type = string
 }
-
-variable "vercel_org_id" {
-  type = string
-}
-
-variable "vercel_token" {
-  type = string
-}
