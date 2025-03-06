@@ -70,8 +70,6 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
           aws-region: us-east-1
-      - name: Invalidate CloudFront cache
-        run: aws cloudfront create-invalidation --distribution-id $(aws cloudfront list-distributions --query "DistributionList.Items[?Aliases.Items[?contains(@, 'devopsrockstars.com')]].Id" --output text) --paths "/*"
       - name: deploy to s3
         run: aws s3 sync --acl=public-read --delete ./build s3://devopsrockstars.com
       - name: Post to slack
