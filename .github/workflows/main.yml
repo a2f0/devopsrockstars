@@ -74,20 +74,6 @@ jobs:
         run: aws cloudfront create-invalidation --distribution-id $(aws cloudfront list-distributions --query "DistributionList.Items[?Aliases.Items[?contains(@, 'devopsrockstars.com')]].Id" --output text) --paths "/*"
       - name: deploy to s3
         run: aws s3 sync --acl=public-read --delete ./build s3://devopsrockstars.com
-      - uses: amondnet/vercel-action@v25
-        if: ${{ github.event.ref == 'refs/heads/production' && github.event_name == 'push' }}
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-args: '--prod'
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID}}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID}}
-      # non-production deploy
-      - uses: amondnet/vercel-action@v25.1.0
-        if: ${{ github.event.ref != 'refs/heads/main' && github.event_name == 'push' }}
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID}}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID}}
       - name: Post to slack
         uses: 8398a7/action-slack@v3
         if: ${{ failure() }}
