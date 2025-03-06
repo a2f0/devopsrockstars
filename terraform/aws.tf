@@ -1,5 +1,6 @@
 provider "aws" {
-  region = var.aws_region
+  alias  = "us_east_1"
+  region = "us-east-1"
 }
 
 data "aws_route53_zone" "zone" {
@@ -83,6 +84,7 @@ resource "aws_s3_bucket_policy" "main" {
 }
 
 resource "aws_acm_certificate" "cert" {
+  provider                  = aws.us_east_1
   domain_name               = var.domain
   subject_alternative_names = ["*.${var.domain}"]
   validation_method         = "DNS"
@@ -108,12 +110,16 @@ resource "aws_route53_record" "cert_validation" {
 }
 
 resource "aws_acm_certificate_validation" "cert" {
+  provider                = aws.us_east_1
   certificate_arn         = aws_acm_certificate.cert.arn
   validation_record_fqdns = [for record in aws_route53_record.cert_validation : record.fqdn]
 }
 
 # CloudFront distribution
 resource "aws_cloudfront_distribution" "website" {
+  # Add explicit dependency on certificate validation
+  depends_on = [aws_acm_certificate_validation.cert]
+
   origin {
     domain_name = aws_s3_bucket_website_configuration.main.website_endpoint
     origin_id   = "S3-${var.domain}"
