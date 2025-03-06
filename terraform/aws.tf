@@ -195,3 +195,37 @@ resource "aws_route53_record" "www" {
     evaluate_target_health = false
   }
 }
+
+resource "aws_iam_policy" "s3_sync_policy" {
+  name        = "S3SyncDevopsRockstars"
+  description = "Policy to allow syncing files to devopsrockstars.com S3 bucket"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "s3:PutObject",
+          "s3:PutObjectAcl",
+          "s3:GetObject",
+          "s3:ListBucket",
+          "s3:DeleteObject"
+        ],
+        Resource = [
+          "arn:aws:s3:::${var.domain}",
+          "arn:aws:s3:::${var.domain}/*"
+        ]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_user" "s3_sync_user" {
+  name = "s3-sync-devopsrockstars"
+}
+
+resource "aws_iam_user_policy_attachment" "s3_sync_attachment" {
+  user       = aws_iam_user.s3_sync_user.name
+  policy_arn = aws_iam_policy.s3_sync_policy.arn
+}
