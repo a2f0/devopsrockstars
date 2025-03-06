@@ -103,7 +103,6 @@ resource "aws_route53_record" "cert_validation" {
   allow_overwrite = true
   name            = each.value.name
   records         = [each.value.record]
-  ttl             = 60
   type            = each.value.type
   zone_id         = data.aws_route53_zone.zone.zone_id
 }
@@ -164,11 +163,9 @@ resource "aws_cloudfront_distribution" "website" {
   }
 }
 
-# Update Route53 records to point to CloudFront
 resource "aws_route53_record" "production" {
   allow_overwrite = true
   name            = var.domain
-  ttl             = 60
   type            = "A"
   zone_id         = data.aws_route53_zone.zone.zone_id
 
@@ -182,7 +179,6 @@ resource "aws_route53_record" "production" {
 resource "aws_route53_record" "www" {
   allow_overwrite = true
   name            = "www.${var.domain}"
-  ttl             = 60
   type            = "A"
   zone_id         = data.aws_route53_zone.zone.zone_id
 
