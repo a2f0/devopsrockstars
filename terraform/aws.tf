@@ -229,3 +229,19 @@ resource "aws_iam_user_policy_attachment" "s3_sync_attachment" {
   user       = aws_iam_user.s3_sync_user.name
   policy_arn = aws_iam_policy.s3_sync_policy.arn
 }
+
+resource "aws_iam_access_key" "s3_sync_key" {
+  user = aws_iam_user.s3_sync_user.name
+}
+
+resource "github_actions_secret" "aws_access_key" {
+  repository      = var.github_repository
+  secret_name     = "AWS_ACCESS_KEY"
+  plaintext_value = aws_iam_access_key.s3_sync_key.id
+}
+
+resource "github_actions_secret" "aws_secret_key" {
+  repository      = var.github_repository
+  secret_name     = "AWS_SECRET_KEY"
+  plaintext_value = aws_iam_access_key.s3_sync_key.secret
+}
