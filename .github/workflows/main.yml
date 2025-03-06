@@ -62,7 +62,8 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - name: npm ci
         run: npm ci
-      # production deploy
+      - name: deploy to s3
+        run: aws s3 sync --acl=public-read --delete ./build s3://devopsrockstars.com
       - uses: amondnet/vercel-action@v25
         if: ${{ github.event.ref == 'refs/heads/production' && github.event_name == 'push' }}
         with:
