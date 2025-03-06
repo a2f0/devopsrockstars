@@ -2,11 +2,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 3.0"
-    }
-    vercel = {
-      source  = "chronark/vercel"
-      version = "0.14.2"
+      version = ">= 3.0"
     }
     github = {
       source  = "integrations/github"
