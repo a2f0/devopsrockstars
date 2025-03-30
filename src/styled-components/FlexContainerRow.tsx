@@ -13,5 +13,7 @@ interface IProps {
   children: React.ReactNode;
 }
 
-const FlexContainerRow = ({children}: IProps) => <StyledRow>{children}</StyledRow>;
+const FlexContainerRow = ({children}: IProps) => (
+  <StyledRow>{children}</StyledRow>
+);
 export default FlexContainerRow;

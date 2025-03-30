@@ -7,12 +7,7 @@
     "rootDir": ".",
     "target": "esnext",
     "module": "esnext",
-    "lib": [
-      "esnext",
-      "dom",
-      "dom.iterable",
-      "scripthost"
-    ],
+    "lib": ["esnext", "dom", "dom.iterable", "scripthost"],
     "checkJs": false,
     "allowJs": false,
     "skipLibCheck": true,
@@ -21,12 +16,8 @@
     "jsx": "react",
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
-    "sourceMap": true,
+    "sourceMap": true
   },
-  "include": [
-    "src/image/chicago_skyline.svg",
-    "**/*.ts",
-    "**/*.tsx"
-  ],
+  "include": ["src/image/chicago_skyline.svg", "**/*.ts", "**/*.tsx"],
   "exclude": [".ts-out/**/*"]
 }
