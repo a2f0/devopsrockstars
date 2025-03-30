@@ -87,7 +87,7 @@ const FullScreenMap = React.memo(() => {
           url="https://api.mapbox.com/styles/v1/devopsrockstars/ckhobopaz1o8519lupxgprhji/tiles/256/{z}/{x}/{y}?access_token=pk.eyJ1IjoiZGV2b3Bzcm9ja3N0YXJzIiwiYSI6InpUN3Buak0ifQ.a9f4FaZbPCK6GNJc8ImH7w"
           attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap2</a> contributors'
         />
-        <Marker position={[40.762189, -73.961183]} icon={starIcon}/>
+        <Marker position={[40.762189, -73.961183]} icon={starIcon} />
       </MapContainer>
     </FullScreen>
   );
