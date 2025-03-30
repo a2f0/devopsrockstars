@@ -1,26 +1,27 @@
 {
-  "extends": "./node_modules/gts/tsconfig-google.json",
+  "extends": "@tsconfig/strictest",
 
   "compilerOptions": {
     "types": ["@wdio/globals/types", "mocha", "expect-webdriverio"],
-    "allowJs": false,
+    "outDir": ".ts-out",
+    "rootDir": ".",
     "target": "esnext",
     "module": "esnext",
-    "rootDir": ".",
-    "outDir": ".ts-out",
-    "skipLibCheck": true,
-    "strict": true,
-    "jsx": "react",
-    "moduleResolution": "node",
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "sourceMap": true,
     "lib": [
       "esnext",
       "dom",
       "dom.iterable",
       "scripthost"
-    ]
+    ],
+    "checkJs": false,
+    "allowJs": false,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "strict": true,
+    "jsx": "react",
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "sourceMap": true,
   },
   "include": [
     "src/image/chicago_skyline.svg",
