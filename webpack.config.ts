@@ -1,4 +1,4 @@
-import {Configuration} from 'webpack';
+import type {Configuration} from 'webpack';
 import CopyWebpackPlugin from 'copy-webpack-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import {dirname} from 'path';
