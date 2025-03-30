@@ -17,7 +17,7 @@ const Header = React.memo(() => {
     <FlexHeader>
       <FlexContainerRow>
         <FlexContainerLeft>
-          <MenuItemLeft/>
+          <MenuItemLeft />
         </FlexContainerLeft>
         <FlexContainerRight>
           <MenuItemRight>
