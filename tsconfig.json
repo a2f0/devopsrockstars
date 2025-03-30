@@ -2,7 +2,7 @@
   "extends": "@tsconfig/strictest",
 
   "compilerOptions": {
-    "types": ["@wdio/globals/types", "mocha", "expect-webdriverio"],
+    "types": ["@wdio/globals/types", "@wdio/mocha-framework"],
     "outDir": ".ts-out",
     "rootDir": ".",
     "target": "esnext",
