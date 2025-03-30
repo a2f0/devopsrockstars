@@ -1,11 +1,4 @@
 export const config: WebdriverIO.Config = {
-  autoCompileOpts: {
-    autoCompile: true,
-    tsNodeOpts: {
-      transpileOnly: true,
-      project: 'tsconfig.json',
-    },
-  },
   runner: 'local',
   path: '/',
   specs: ['./e2e/specs/**/*.spec.ts'],
@@ -13,7 +6,6 @@ export const config: WebdriverIO.Config = {
   maxInstances: 10,
   capabilities: [
     {
-      maxInstances: 5,
       browserName: 'chrome',
     },
   ],
