@@ -1,3 +1,4 @@
+// biome-ignore lint: style/useImportType
 import React from 'react';
 import styled from 'styled-components';
 
@@ -12,7 +13,7 @@ interface IProps {
   children: React.ReactNode;
 }
 
-const FlexContainerRow = function ({children}: IProps) {
-  return <StyledRow>{children}</StyledRow>;
-};
+const FlexContainerRow = ({children}: IProps) => (
+  <StyledRow>{children}</StyledRow>
+);
 export default FlexContainerRow;

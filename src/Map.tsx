@@ -72,7 +72,7 @@ const FullScreenMap = React.memo(() => {
         src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
         integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
         crossOrigin=""
-      ></script>
+      />
       {/* https://docs.mapbox.com/studio-manual/overview/publish-your-style/#mapboxjs-and-leaflet */}
       <MapContainer
         attributionControl={false}
@@ -87,7 +87,7 @@ const FullScreenMap = React.memo(() => {
           url="https://api.mapbox.com/styles/v1/devopsrockstars/ckhobopaz1o8519lupxgprhji/tiles/256/{z}/{x}/{y}?access_token=pk.eyJ1IjoiZGV2b3Bzcm9ja3N0YXJzIiwiYSI6InpUN3Buak0ifQ.a9f4FaZbPCK6GNJc8ImH7w"
           attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap2</a> contributors'
         />
-        <Marker position={[40.762189, -73.961183]} icon={starIcon}></Marker>
+        <Marker position={[40.762189, -73.961183]} icon={starIcon} />
       </MapContainer>
     </FullScreen>
   );
