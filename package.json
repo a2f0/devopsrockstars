@@ -7,13 +7,6 @@
     "node": ">=22.0.0 <23"
   },
   "type": "module",
-  "prettier": {
-    "semi": true,
-    "singleQuote": true,
-    "trailingComma": "es5",
-    "bracketSpacing": false,
-    "arrowParens": "avoid"
-  },
   "scripts": {
     "start-server": "NODE_OPTIONS='--experimental-specifier-resolution=node --loader ts-node/esm' webpack serve --mode development --history-api-fallback",
     "start-test-server": "NODE_OPTIONS='--experimental-specifier-resolution=node --loader ts-node/esm' webpack serve --port 8081 --mode development --history-api-fallback",
@@ -21,13 +14,10 @@
     "test-headless": "NODE_OPTIONS='--experimental-specifier-resolution=node' npx wdio wdio.headless.conf.ts",
     "ci": "start-server-and-test start-test-server http-get://localhost:8081 test",
     "ci-headless": "start-server-and-test start-test-server http-get://localhost:8081 test-headless",
-    "format": "prettier --write \"src/**/*.js\"",
-    "eslint-fix": "eslint --fix \"src/**/*.js\"",
+    "format": "biome format --write",
     "build": "NODE_OPTIONS='--experimental-specifier-resolution=node --loader ts-node/esm' webpack --mode production",
-    "lint": "gts lint",
-    "clean": "gts clean",
+    "lint": "biome lint --fix",
     "compile": "tsc",
-    "fix": "gts fix",
     "prepare": "npm run compile",
     "pretest": "npm run compile",
     "posttest": "npm run lint"
