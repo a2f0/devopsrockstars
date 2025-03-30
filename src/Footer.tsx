@@ -37,10 +37,10 @@ const Footer = React.memo(() => {
           </MenuItemLeft>
         </FlexContainerLeft>
         <FlexContainerCenter>
-          <MenuItemCenter></MenuItemCenter>
+          <MenuItemCenter />
         </FlexContainerCenter>
         <FlexContainerRight>
-          <MenuItemRight></MenuItemRight>
+          <MenuItemRight />
         </FlexContainerRight>
       </FlexContainerRow>
     </FlexFooter>
