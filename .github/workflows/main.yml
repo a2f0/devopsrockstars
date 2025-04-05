@@ -2,9 +2,11 @@ name: Github Actions
 
 on:
   push:
-    branches: '**'
+    branches:
+      - '**'
   pull_request:
-    branches: '**'
+    branches:
+      - '**'
 
 jobs:
 
@@ -51,6 +53,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: code-quality
+    if: github.event_name == 'push' && github.ref == 'refs/heads/production'
     strategy:
       matrix:
         node-version: [22]
