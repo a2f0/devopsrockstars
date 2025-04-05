@@ -34,6 +34,11 @@ const config: Configuration = {
   plugins: [
     new HtmlWebpackPlugin({
       template: path.resolve('./index.html'),
+      minify: false,
+      conservativeCollapse: false,
+      collapseWhitespace: false,
+      preserveLineBreaks: true,
+      removeComments: false,
     }),
     new CopyWebpackPlugin({
       patterns: [{from: 'static', to: 'static'}],
