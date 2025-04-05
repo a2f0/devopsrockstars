@@ -2,9 +2,11 @@ name: Code Quality
 
 on:
   push:
-    branches: '**'
+    branches:
+      - aws-test  # Match the branch in Deploy to Production
   pull_request:
-    branches: '**'
+    branches:
+      - aws-test  # Match the branch in Deploy to Production
 
 jobs:
   code-quality:
@@ -34,10 +36,11 @@ jobs:
           pre-commit run --all-files
         env:
           SKIP: no-commit-to-branch
-      - run: npm run ci-headless
+      - name: Run Tests (Headless)
+        run: npm run ci-headless
         env:
           CUSTOM_CHROME_PATH: '/tmp/custom-chrome/chrome'
-      - name: Post to slack
+      - name: Post to Slack on Failure
         uses: 8398a7/action-slack@v3
         if: ${{ failure() }}
         with:

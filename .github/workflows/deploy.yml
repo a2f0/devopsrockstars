@@ -6,11 +6,12 @@ on:
     types:
       - completed
     branches:
-      - aws-test
+      - aws-test  # Ensure this matches the branch where Code Quality runs
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     strategy:
       matrix:
         node-version: [22]
@@ -30,9 +31,9 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
           aws-region: us-east-1
-      - name: deploy to s3
+      - name: Deploy to S3
         run: aws s3 sync --acl=public-read --delete ./build s3://devopsrockstars.com
-      - name: Post to slack
+      - name: Post to Slack on Failure
         uses: 8398a7/action-slack@v3
         if: ${{ failure() }}
         with:
