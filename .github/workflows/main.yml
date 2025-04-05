@@ -26,7 +26,7 @@ jobs:
       - name: npm ci
         run: npm ci
       - name: Set up Python
-        uses: actions/setup-python@v5.0.0
+        uses: actions/setup-python@v5.5.0
         with:
           python-version: '3.13'
           architecture: 'x64'
