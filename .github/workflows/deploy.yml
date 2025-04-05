@@ -18,6 +18,8 @@ jobs:
     continue-on-error: false
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: aws-test
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
