@@ -54,7 +54,6 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: code-quality
-    if: ${{ github.event.ref == 'refs/heads/aws-test' && github.event_name == 'push' }}
     strategy:
       matrix:
         node-version: [22]
