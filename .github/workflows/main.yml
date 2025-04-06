@@ -1,4 +1,4 @@
-name: CI/CD Pipeline
+name: Github Actions
 
 on:
   push:
@@ -50,7 +50,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: code-quality
-    if: github.ref == 'refs/heads/aws-test'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/aws-test'
     strategy:
       matrix:
         node-version: [22]
