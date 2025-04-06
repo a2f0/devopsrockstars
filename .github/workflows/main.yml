@@ -50,7 +50,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: code-quality
-    if: github.event_name == 'push' && github.ref == 'refs/heads/aws-test'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/production'
     strategy:
       matrix:
         node-version: [22]
@@ -72,12 +72,3 @@ jobs:
           aws-region: us-east-1
       - name: deploy to s3
         run: aws s3 sync --acl=public-read --delete ./build s3://devopsrockstars.com
-      - name: Post to slack
-        uses: 8398a7/action-slack@v3
-        if: ${{ failure() }}
-        with:
-          status: ${{ job.status }}
-          fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
