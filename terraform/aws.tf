@@ -147,6 +147,14 @@ resource "aws_cloudfront_distribution" "website" {
     viewer_protocol_policy = "redirect-to-https"
   }
 
+  # Add custom error response for SPA routing
+  custom_error_response {
+    error_code         = 404
+    response_code      = 200
+    response_page_path = "/index.html"
+    error_caching_min_ttl = 0
+  }
+
   price_class = "PriceClass_100"
 
   restrictions {
