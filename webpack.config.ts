@@ -13,6 +13,10 @@ const config: Configuration = {
     path: path.resolve(__dirname, 'build'),
     publicPath: '/',
     filename: '[name].[contenthash].js',
+    module: true,
+    library: {
+      type: 'module',
+    },
   },
   resolve: {
     extensions: ['.ts', '.tsx', '.js', '.jsx'],
@@ -44,6 +48,9 @@ const config: Configuration = {
       patterns: [{from: 'static', to: 'static'}],
     }),
   ],
+  experiments: {
+    outputModule: true,
+  },
 };
 
 export default config;
