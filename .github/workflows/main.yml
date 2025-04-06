@@ -35,8 +35,6 @@ jobs:
         env:
           SKIP: no-commit-to-branch
       - run: npm run ci-headless
-        env:
-          CUSTOM_CHROME_PATH: '/tmp/custom-chrome/chrome'
 
   deploy:
     runs-on: ubuntu-latest
