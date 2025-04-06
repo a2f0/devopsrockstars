@@ -9,7 +9,6 @@ on:
 jobs:
   code-quality:
     runs-on: ubuntu-latest
-    needs: debug
     strategy:
       matrix:
         node-version: [22]
