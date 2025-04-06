@@ -2,14 +2,11 @@ name: Github Actions
 
 on:
   push:
-    branches:
-      - '**'
+    branches: '**'
   pull_request:
-    branches:
-      - '**'
+    branches: '**'
 
 jobs:
-
   code-quality:
     runs-on: ubuntu-latest
     strategy:
@@ -40,15 +37,6 @@ jobs:
       - run: npm run ci-headless
         env:
           CUSTOM_CHROME_PATH: '/tmp/custom-chrome/chrome'
-      - name: Post to slack
-        uses: 8398a7/action-slack@v3
-        if: ${{ failure() }}
-        with:
-          status: ${{ job.status }}
-          fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
   deploy:
     runs-on: ubuntu-latest
@@ -75,9 +63,3 @@ jobs:
           aws-region: us-east-1
       - name: deploy to s3
         run: aws s3 sync --acl=public-read --delete ./build s3://devopsrockstars.com
-      - name: Post to slack
-        uses: 8398a7/action-slack@v3
-        if: ${{ failure() }}
-        with:
-          status: ${{ job.status }}
-          fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
