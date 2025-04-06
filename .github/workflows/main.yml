@@ -1,0 +1,83 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: '**'
+  pull_request:
+    branches: '**'
+
+jobs:
+  code-quality:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [22]
+    continue-on-error: false
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: npm audit
+        run: npm audit --audit-level=critical --production
+      - name: npm ci
+        run: npm ci
+      - name: Set up Python
+        uses: actions/setup-python@v5.5.0
+        with:
+          python-version: '3.13'
+          architecture: 'x64'
+      - name: pre-commit
+        run: |
+          pip install pre-commit
+          pre-commit install
+          pre-commit run --all-files
+        env:
+          SKIP: no-commit-to-branch
+      - run: npm run ci-headless
+        env:
+          CUSTOM_CHROME_PATH: '/tmp/custom-chrome/chrome'
+      - name: Post to slack
+        uses: 8398a7/action-slack@v3
+        if: ${{ failure() }}
+        with:
+          status: ${{ job.status }}
+          fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: code-quality
+    if: github.ref == 'refs/heads/aws-test'
+    strategy:
+      matrix:
+        node-version: [22]
+    continue-on-error: false
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: npm ci
+        run: npm ci
+      - name: Build
+        run: npm run build
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
+          aws-region: us-east-1
+      - name: deploy to s3
+        run: aws s3 sync --acl=public-read --delete ./build s3://devopsrockstars.com
+      - name: Post to slack
+        uses: 8398a7/action-slack@v3
+        if: ${{ failure() }}
+        with:
+          status: ${{ job.status }}
+          fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
