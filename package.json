@@ -31,7 +31,7 @@
     "@types/leaflet": "1.9.17",
     "@types/mocha": "10.0.10",
     "@types/node": "22.14.0",
-    "@types/react": "19.0.12",
+    "@types/react": "19.1.8",
     "@types/react-dom": "19.1.5",
     "@types/react-leaflet": "2.8.3",
     "@types/react-router-dom": "5.3.3",
