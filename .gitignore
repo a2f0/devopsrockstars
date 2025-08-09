@@ -27,3 +27,6 @@ terraform.rc
 *.backend
 /terraform/main.tfvars
 /terraform/terraform.backend
+
+# claude
+.claude

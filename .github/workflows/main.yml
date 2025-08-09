@@ -15,10 +15,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version-file: '.nvmrc'
-      - name: npm audit
-        run: npm audit --audit-level=critical --production
-      - name: npm ci
-        run: npm ci
+      - uses: pnpm/action-setup@v4
+        with:
+          version: latest
+      - name: pnpm audit
+        run: pnpm audit --audit-level=critical --prod
+      - name: pnpm install
+        run: pnpm install --frozen-lockfile
       - name: Set up Python
         uses: actions/setup-python@v5.6.0
         with:
@@ -31,7 +34,7 @@ jobs:
           pre-commit run --all-files
         env:
           SKIP: no-commit-to-branch
-      - run: npm run ci-headless
+      - run: pnpm run ci-headless
 
   deploy:
     runs-on: ubuntu-latest
@@ -43,10 +46,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version-file: '.nvmrc'
-      - name: npm ci
-        run: npm ci
+      - uses: pnpm/action-setup@v4
+        with:
+          version: latest
+      - name: pnpm install
+        run: pnpm install --frozen-lockfile
       - name: Build
-        run: npm run build
+        run: pnpm run build
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:

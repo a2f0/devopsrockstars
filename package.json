@@ -1,6 +1,6 @@
 {
   "name": "devopsrockstars-frontend",
-  "version": "2.0.66",
+  "version": "2.0.67",
   "description": "",
   "main": "index.js",
   "engines": {
@@ -18,14 +18,14 @@
     "build": "NODE_OPTIONS='--experimental-specifier-resolution=node --loader ts-node/esm' webpack --mode production",
     "lint": "biome lint --fix",
     "compile": "tsc",
-    "prepare": "npm run compile",
-    "pretest": "npm run compile",
-    "posttest": "npm run lint"
+    "prepare": "pnpm run compile",
+    "pretest": "pnpm run compile",
+    "posttest": "pnpm run lint"
   },
   "keywords": [],
   "author": "Dan Sullivan",
   "devDependencies": {
-    "@a2f0/check-for-unpinned-dependencies": "1.0.4",
+    "@a2f0/check-for-unpinned-dependencies": "github:a2f0/check-for-unpinned-dependencies#chore-package-maintenance",
     "@biomejs/biome": "1.9.4",
     "@tsconfig/strictest": "2.0.5",
     "@types/leaflet": "1.9.20",
