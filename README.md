@@ -5,24 +5,24 @@
 ```shell
 pip install pre-commit
 pre-commit install
-npm install
-npm run start-server
+pnpm install
+pnpm run start-server
 ```
 
 Testing
 
 ```shell
-npm run ci
-npm run ci-headless
+pnpm run ci
+pnpm run ci-headless
 ```
 
 Start the testing webpack server (on different port than normal development server) and run tests manually.
 
 ```shell
-npm run start-test-server
+pnpm run start-test-server
 # in a different console tab
-npm run test
-npm run test-headless
+pnpm run test
+pnpm run test-headless
 ```
 
 Run a specific spec

@@ -3,6 +3,7 @@ repos:
   rev: v4.1.0
   hooks:
     - id: check-yaml
+      exclude: pnpm-lock\.yaml
     - id: end-of-file-fixer
     - id: trailing-whitespace
     - id: check-merge-conflict
@@ -14,26 +15,26 @@ repos:
   hooks:
     - id: check-for-unpinned-dependencies
       name: check-for-unpinned-dependencies
-      entry: npx check-for-unpinned-dependencies
+      entry: pnpm exec check-for-unpinned-dependencies
       pass_filenames: false
       language: node
     - id: biome format
       name: biome format
-      entry: npx biome format
+      entry: pnpm exec biome format
       pass_filenames: false
       language: node
     - id: biome lint
       name: biome lint
-      entry: npx biome lint
+      entry: pnpm exec biome lint
       pass_filenames: false
       language: node
     - id: audit
-      name: npm audit
-      entry: npm audit --audit-level=critical --production
+      name: pnpm audit
+      entry: pnpm audit --audit-level=critical --prod
       pass_filenames: false
       language: node
     - id: tsc
       name: tsc
-      entry: npx tsc -b
+      entry: pnpm exec tsc -b
       pass_filenames: false
       language: node
