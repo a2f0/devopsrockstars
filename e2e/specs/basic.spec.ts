@@ -1,5 +1,5 @@
-import {BasePage} from '../pageObjects/base';
 import assert from 'node:assert';
+import {BasePage} from '../pageObjects/base';
 
 describe('index page', () => {
   it('loads correctly', async () => {

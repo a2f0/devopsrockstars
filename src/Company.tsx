@@ -1,6 +1,6 @@
-import ContactRow from './ContactRow';
 import React from 'react';
 import styled from 'styled-components';
+import ContactRow from './ContactRow';
 
 export const ContactRowContainer = styled.div`
   margin-top: 10px;
