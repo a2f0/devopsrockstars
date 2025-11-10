@@ -1,9 +1,8 @@
-import type {Configuration} from 'webpack';
+import path, {dirname} from 'node:path';
+import {fileURLToPath} from 'node:url';
 import CopyWebpackPlugin from 'copy-webpack-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
-import {dirname} from 'node:path';
-import {fileURLToPath} from 'node:url';
-import path from 'node:path';
+import type {Configuration} from 'webpack';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 

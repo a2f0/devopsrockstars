@@ -1,6 +1,6 @@
 import React from 'react';
-import skyline from '/static/image/skyline.svg';
 import styled from 'styled-components';
+import skyline from '/static/image/skyline.svg';
 
 const FullScreenSkyline = styled.div`
   z-index: -1337;
