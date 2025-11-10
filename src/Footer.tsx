@@ -1,4 +1,6 @@
+import React from 'react';
 import {Link, useLocation} from 'react-router-dom';
+import {ReactSVG} from 'react-svg';
 import FlexContainerCenter from './styled-components/FlexContainerCenter';
 import FlexContainerLeft from './styled-components/FlexContainerLeft';
 import FlexContainerRight from './styled-components/FlexContainerRight';
@@ -7,8 +9,6 @@ import FlexFooter from './styled-components/FlexFooter';
 import MenuItemCenter from './styled-components/MenuItemCenter';
 import MenuItemLeft from './styled-components/MenuItemLeft';
 import MenuItemRight from './styled-components/MenuItemRight';
-import React from 'react';
-import {ReactSVG} from 'react-svg';
 
 const Footer = React.memo(() => {
   const location = useLocation();
