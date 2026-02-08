@@ -37,6 +37,7 @@ const config: Configuration = {
   plugins: [
     new HtmlWebpackPlugin({
       template: path.resolve('./index.html'),
+      scriptLoading: 'module',
       minify: false,
       conservativeCollapse: false,
       collapseWhitespace: false,
