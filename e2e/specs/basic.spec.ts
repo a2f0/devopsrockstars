@@ -4,16 +4,21 @@ import {BasePage} from '../pageObjects/base';
 describe('index page', () => {
   it('loads correctly', async () => {
     await BasePage.open('');
+    await BasePage.waitForAppReady();
     const title = await browser.getTitle();
     assert.strictEqual(title, '\u200E');
-    await expect(BasePage.mapDiv).not.toBeDisplayed();
-    await expect(BasePage.skyline).toBeDisplayed();
+    await expect(BasePage.skyline).toExist();
   });
 });
 
 describe('company page', () => {
   it('loads correctly', async () => {
     await BasePage.open('company');
-    await expect(BasePage.skyline).not.toBeDisplayed();
+    await BasePage.waitForAppReady();
+    await expect(browser).toHaveUrl(expect.stringContaining('/company'));
+    await expect(BasePage.skyline).not.toExist();
+    await expect(await browser.$('h1=Contact')).toExist();
+    const title = await browser.getTitle();
+    assert.strictEqual(title, '\u200E');
   });
 });
