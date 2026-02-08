@@ -57,7 +57,7 @@ Always pass `-R "$REPO"` to `gh` commands.
 
    ```bash
    HEAD_SHA=$(git rev-parse HEAD)
-   RUN_ID=$(gh run list -R "$REPO" --commit "$HEAD_SHA" --limit 1 --json databaseId -q '.[0].databaseId')
+   RUN_ID=$(gh run list -R "$REPO" --commit "$HEAD_SHA" --workflow main.yml --limit 1 --json databaseId -q '.[0].databaseId')
    gh run view "$RUN_ID" -R "$REPO" --json status,conclusion,jobs
    ```
 
