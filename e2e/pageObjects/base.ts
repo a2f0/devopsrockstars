@@ -11,6 +11,10 @@ export default class Base {
   open(path: string) {
     return browser.url(`http://localhost:8081/${path}`);
   }
+  async waitForAppReady() {
+    const companyLink = await browser.$('a[href="/company"]');
+    await companyLink.waitForExist({timeout: 30000});
+  }
 }
 
 const BasePage = new Base();
