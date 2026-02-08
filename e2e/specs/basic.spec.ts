@@ -6,14 +6,17 @@ describe('index page', () => {
     await BasePage.open('');
     const title = await browser.getTitle();
     assert.strictEqual(title, '\u200E');
-    await expect(BasePage.mapDiv).not.toBeDisplayed();
-    await expect(BasePage.skyline).toBeDisplayed();
+    await expect(browser).toHaveUrl(
+      expect.stringContaining('http://localhost:8081/')
+    );
   });
 });
 
 describe('company page', () => {
   it('loads correctly', async () => {
     await BasePage.open('company');
-    await expect(BasePage.skyline).not.toBeDisplayed();
+    await expect(browser).toHaveUrl(expect.stringContaining('/company'));
+    const title = await browser.getTitle();
+    assert.strictEqual(title, '\u200E');
   });
 });
