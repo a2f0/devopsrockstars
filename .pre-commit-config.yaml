@@ -1,6 +1,6 @@
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.1.0
+  rev: v6.0.0
   hooks:
     - id: check-yaml
       exclude: pnpm-lock\.yaml
@@ -15,26 +15,41 @@ repos:
   hooks:
     - id: check-for-unpinned-dependencies
       name: check-for-unpinned-dependencies
-      entry: pnpm exec check-for-unpinned-dependencies
+      entry: node scripts/check-for-unpinned-dependencies.mjs
       pass_filenames: false
-      language: node
+      language: system
     - id: biome format
       name: biome format
       entry: pnpm exec biome format
       pass_filenames: false
-      language: node
+      language: system
     - id: biome lint
       name: biome lint
       entry: pnpm exec biome lint
       pass_filenames: false
-      language: node
+      language: system
     - id: audit
       name: pnpm audit
       entry: pnpm audit --audit-level=critical --prod
       pass_filenames: false
-      language: node
+      language: system
     - id: tsc
       name: tsc
       entry: pnpm exec tsc -b
       pass_filenames: false
-      language: node
+      language: system
+    - id: markdownlint
+      name: markdownlint
+      entry: pnpm exec markdownlint-cli2
+      pass_filenames: false
+      language: system
+    - id: knip
+      name: knip
+      entry: pnpm exec knip
+      pass_filenames: false
+      language: system
+    - id: depcheck
+      name: depcheck
+      entry: pnpm exec depcheck
+      pass_filenames: false
+      language: system

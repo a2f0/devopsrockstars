@@ -18,40 +18,44 @@ Resolve Gemini review comments directly in GitHub PR threads.
 
 1. Determine repository and PR number for the current branch.
 
-```bash
-REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner)
-PR_NUMBER=$(gh pr view -R "$REPO" --json number -q .number)
-OWNER=${REPO%/*}
-REPO_NAME=${REPO#*/}
-```
+   ```bash
+   REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner)
+   PR_NUMBER=$(gh pr view -R "$REPO" --json number -q .number)
+   OWNER=${REPO%/*}
+   REPO_NAME=${REPO#*/}
+   ```
 
 2. Fetch unresolved review threads for the PR.
-- Use GraphQL `reviewThreads` and paginate with `pageInfo.endCursor`.
-- Focus on unresolved threads with latest comments from `gemini-code-assist`.
+
+   - Use GraphQL `reviewThreads` and paginate with `pageInfo.endCursor`.
+   - Focus on unresolved threads with latest comments from `gemini-code-assist`.
 
 3. Apply fixes for relevant feedback.
-- Make code changes scoped to the feedback.
-- For this repo, validate with the closest impacted commands:
-- `pnpm run compile` (TypeScript)
-- `pnpm run lint` (Biome)
-- `pnpm run test-headless` for WebdriverIO checks when behavior/UI is affected
+
+   - Make code changes scoped to the feedback.
+   - For this repo, validate with the closest impacted commands:
+   - `pnpm run compile` (TypeScript)
+   - `pnpm run lint` (Biome)
+   - `pnpm run test-headless` for WebdriverIO checks when behavior/UI is affected
 
 4. Commit and push.
-- Use a conventional commit message, for example: `fix: address Gemini review feedback`.
-- Push to the PR branch.
+
+   - Use a conventional commit message, for example: `fix: address Gemini review feedback`.
+   - Push to the PR branch.
 
 5. Reply in each addressed thread using REST API.
 
-```bash
-gh api -X POST \
-  -H "Accept: application/vnd.github+json" \
-  "/repos/$OWNER/$REPO_NAME/pulls/comments/$COMMENT_ID/replies" \
-  -f body="@gemini-code-assist Addressed in $COMMIT_SHA: <short summary>."
-```
+   ```bash
+   gh api -X POST \
+     -H "Accept: application/vnd.github+json" \
+     "/repos/$OWNER/$REPO_NAME/pulls/comments/$COMMENT_ID/replies" \
+     -f body="@gemini-code-assist Addressed in $COMMIT_SHA: <short summary>."
+   ```
 
 6. Resolve thread when appropriate.
-- If the concern is fully addressed, resolve the review thread via GraphQL `resolveReviewThread`.
-- If partially addressed or blocked, leave the thread open and explain the blocker.
+
+   - If the concern is fully addressed, resolve the review thread via GraphQL `resolveReviewThread`.
+   - If partially addressed or blocked, leave the thread open and explain the blocker.
 
 7. Repeat until no relevant unresolved Gemini threads remain.
 

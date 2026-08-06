@@ -2,7 +2,7 @@
 import React from 'react';
 import styled from 'styled-components';
 
-export const StyledRow = styled.div`
+const StyledRow = styled.div`
   display: flex;
   justify-content: center;
   flex-drection: row;

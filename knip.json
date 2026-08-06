@@ -1,0 +1,17 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": [
+    "wdio.shared.conf.ts",
+    "wdio.headless.conf.ts",
+    "e2e/specs/**/*.spec.ts"
+  ],
+  "project": ["src/**/*.{ts,tsx}", "e2e/**/*.ts", "*.ts"],
+  "ignoreDependencies": [
+    "@types/mocha",
+    "@wdio/dot-reporter",
+    "@wdio/local-runner",
+    "@wdio/spec-reporter",
+    "depcheck",
+    "markdownlint-cli2"
+  ]
+}

@@ -1,0 +1,16 @@
+# Packages referenced outside of import statements (webpack loader strings,
+# CLI bins, NODE_OPTIONS loaders, pre-commit hooks) that depcheck cannot see.
+ignores:
+  - '@svgr/webpack'
+  - '@types/mocha'
+  - '@wdio/dot-reporter'
+  - '@wdio/local-runner'
+  - '@wdio/spec-reporter'
+  - 'depcheck'
+  - 'knip'
+  - 'markdownlint-cli2'
+  - 'ts-loader'
+  - 'tsx'
+  - 'url-loader'
+  - 'webpack-cli'
+  - 'webpack-dev-server'
