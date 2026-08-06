@@ -15,9 +15,9 @@ repos:
   hooks:
     - id: check-for-unpinned-dependencies
       name: check-for-unpinned-dependencies
-      entry: pnpm exec check-for-unpinned-dependencies
+      entry: node scripts/check-for-unpinned-dependencies.mjs
       pass_filenames: false
-      language: node
+      language: system
     - id: biome format
       name: biome format
       entry: pnpm exec biome format
