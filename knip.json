@@ -7,7 +7,6 @@
   ],
   "project": ["src/**/*.{ts,tsx}", "e2e/**/*.ts", "*.ts"],
   "ignoreDependencies": [
-    "@a2f0/check-for-unpinned-dependencies",
     "@types/mocha",
     "@wdio/dot-reporter",
     "@wdio/local-runner",

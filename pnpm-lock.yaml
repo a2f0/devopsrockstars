@@ -33,9 +33,6 @@ importers:
         specifier: 6.5.0
         version: 6.5.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
     devDependencies:
-      '@a2f0/check-for-unpinned-dependencies':
-        specifier: github:a2f0/check-for-unpinned-dependencies#chore-package-maintenance
-        version: git+ssh://git@github.com/a2f0/check-for-unpinned-dependencies.git#53e9a7262c70e1fb60d0f10bd3af388de849a8d3
       '@biomejs/biome':
         specifier: 2.5.7
         version: 2.5.7
@@ -116,11 +113,6 @@ importers:
         version: 6.0.0(supports-color@8.1.1)(webpack-cli@7.2.2)(webpack@5.109.2)
 
 packages:
-
-  '@a2f0/check-for-unpinned-dependencies@git+ssh://git@github.com/a2f0/check-for-unpinned-dependencies.git#53e9a7262c70e1fb60d0f10bd3af388de849a8d3':
-    resolution: {commit: 53e9a7262c70e1fb60d0f10bd3af388de849a8d3, repo: git@github.com:a2f0/check-for-unpinned-dependencies.git, type: git}
-    version: 1.0.6
-    hasBin: true
 
   '@babel/code-frame@7.29.7':
     resolution: {integrity: sha512-Aup7aUOfpbAUg2ROOJN6Iw5f9DMBlzu0mIkm/malLQFN/YQgO48wCj0Kxa3sEHJvPVFg7siR+qRInwXd2qhQKw==}
@@ -4931,8 +4923,6 @@ packages:
     resolution: {integrity: sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ==}
 
 snapshots:
-
-  '@a2f0/check-for-unpinned-dependencies@git+ssh://git@github.com/a2f0/check-for-unpinned-dependencies.git#53e9a7262c70e1fb60d0f10bd3af388de849a8d3': {}
 
   '@babel/code-frame@7.29.7':
     dependencies:

@@ -1,7 +1,6 @@
 # Packages referenced outside of import statements (webpack loader strings,
 # CLI bins, NODE_OPTIONS loaders, pre-commit hooks) that depcheck cannot see.
 ignores:
-  - '@a2f0/check-for-unpinned-dependencies'
   - '@svgr/webpack'
   - '@types/mocha'
   - '@wdio/dot-reporter'
