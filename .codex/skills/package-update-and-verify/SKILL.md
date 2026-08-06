@@ -11,41 +11,41 @@ Execute a full dependency refresh workflow and do not declare success until comp
 
 1. Use `pnpm` workflow for this repository.
 
-- Update dependencies with `pnpm up --latest`.
-- Keep lockfile and `package.json` in sync.
+   - Update dependencies with `pnpm up --latest`.
+   - Keep lockfile and `package.json` in sync.
 
-1. Snapshot current state.
+2. Snapshot current state.
 
-- Record `git status --short`.
-- Inspect scripts in `package.json` before running validations.
+   - Record `git status --short`.
+   - Inspect scripts in `package.json` before running validations.
 
-1. Refresh dependencies.
+3. Refresh dependencies.
 
-- Run `pnpm up --latest`.
-- Run `pnpm install`.
-- If the user asks for stricter scope (for example, no major bumps), honor that scope.
+   - Run `pnpm up --latest`.
+   - Run `pnpm install`.
+   - If the user asks for stricter scope (for example, no major bumps), honor that scope.
 
-1. Ensure TypeScript compiles.
+4. Ensure TypeScript compiles.
 
-- Run `pnpm run compile`.
-- Fix compile issues introduced by upgrades.
+   - Run `pnpm run compile`.
+   - Fix compile issues introduced by upgrades.
 
-1. Ensure lint passes.
+5. Ensure lint passes.
 
-- Run `pnpm run lint`.
-- Fix dependency-related lint/config breakages.
+   - Run `pnpm run lint`.
+   - Fix dependency-related lint/config breakages.
 
-1. Ensure tests pass.
+6. Ensure tests pass.
 
-- Primary project test path: `pnpm run test-headless` (WebdriverIO headless).
-- If broader confidence is needed, also run `pnpm run ci-headless`.
-- Fix dependency-related test failures and rerun until green.
+   - Primary project test path: `pnpm run test-headless` (WebdriverIO headless).
+   - If broader confidence is needed, also run `pnpm run ci-headless`.
+   - Fix dependency-related test failures and rerun until green.
 
-1. Report and hand off.
+7. Report and hand off.
 
-- Summarize updated dependency groups and any notable major-version migrations.
-- Report exact verification commands executed and their status.
-- List files changed (at minimum `package.json` and `pnpm-lock.yaml`).
+   - Summarize updated dependency groups and any notable major-version migrations.
+   - Report exact verification commands executed and their status.
+   - List files changed (at minimum `package.json` and `pnpm-lock.yaml`).
 
 ## Execution Rules
 
