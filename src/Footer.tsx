@@ -1,5 +1,5 @@
 import React from 'react';
-import {Link, useLocation} from 'react-router-dom';
+import {Link, useLocation} from 'react-router';
 import {ReactSVG} from 'react-svg';
 import FlexContainerCenter from './styled-components/FlexContainerCenter';
 import FlexContainerLeft from './styled-components/FlexContainerLeft';

@@ -1,4 +1,4 @@
-export default class Base {
+class Base {
   get mapDiv(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#mapdiv');
   }
