@@ -25,22 +25,25 @@ OWNER=${REPO%/*}
 REPO_NAME=${REPO#*/}
 ```
 
-2. Fetch unresolved review threads for the PR.
+1. Fetch unresolved review threads for the PR.
+
 - Use GraphQL `reviewThreads` and paginate with `pageInfo.endCursor`.
 - Focus on unresolved threads with latest comments from `gemini-code-assist`.
 
-3. Apply fixes for relevant feedback.
+1. Apply fixes for relevant feedback.
+
 - Make code changes scoped to the feedback.
 - For this repo, validate with the closest impacted commands:
 - `pnpm run compile` (TypeScript)
 - `pnpm run lint` (Biome)
 - `pnpm run test-headless` for WebdriverIO checks when behavior/UI is affected
 
-4. Commit and push.
+1. Commit and push.
+
 - Use a conventional commit message, for example: `fix: address Gemini review feedback`.
 - Push to the PR branch.
 
-5. Reply in each addressed thread using REST API.
+1. Reply in each addressed thread using REST API.
 
 ```bash
 gh api -X POST \
@@ -49,11 +52,12 @@ gh api -X POST \
   -f body="@gemini-code-assist Addressed in $COMMIT_SHA: <short summary>."
 ```
 
-6. Resolve thread when appropriate.
+1. Resolve thread when appropriate.
+
 - If the concern is fully addressed, resolve the review thread via GraphQL `resolveReviewThread`.
 - If partially addressed or blocked, leave the thread open and explain the blocker.
 
-7. Repeat until no relevant unresolved Gemini threads remain.
+1. Repeat until no relevant unresolved Gemini threads remain.
 
 ## Response Quality
 

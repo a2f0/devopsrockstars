@@ -6,7 +6,7 @@ interface IRowProps {
   isActive: boolean;
 }
 
-export const Row = styled.div<IRowProps>`
+const Row = styled.div<IRowProps>`
   pointer-events: auto;
   width: fit-content;
   ${({isActive}) =>
@@ -25,18 +25,13 @@ export const Row = styled.div<IRowProps>`
     `}
 `;
 
-export const SvgInline = styled.div`
+const SvgInline = styled.div`
   display: inline-block;
 `;
 
-export const DescriptionInline = styled.div`
+const DescriptionInline = styled.div`
   display: inline-block;
   margin-left: 10px;
-`;
-
-export const ContactLink = styled.a`
-  text-decoration: none;
-  pointer-events: auto;
 `;
 
 interface IProps {

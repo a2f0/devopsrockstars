@@ -1,0 +1,10 @@
+{
+  "config": {
+    // Prose line length is not enforced.
+    "MD013": false,
+    // Allow duplicate headings under different parent sections.
+    "MD024": { "siblings_only": true }
+  },
+  "globs": ["**/*.md", ".codex/**/*.md"],
+  "ignores": ["node_modules/**", "terraform/**", "build/**", ".ts-out/**"]
+}

@@ -1,6 +1,6 @@
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.1.0
+  rev: v6.0.0
   hooks:
     - id: check-yaml
       exclude: pnpm-lock\.yaml
@@ -38,3 +38,18 @@ repos:
       entry: pnpm exec tsc -b
       pass_filenames: false
       language: node
+    - id: markdownlint
+      name: markdownlint
+      entry: pnpm exec markdownlint-cli2
+      pass_filenames: false
+      language: system
+    - id: knip
+      name: knip
+      entry: pnpm exec knip
+      pass_filenames: false
+      language: system
+    - id: depcheck
+      name: depcheck
+      entry: pnpm exec depcheck
+      pass_filenames: false
+      language: system
