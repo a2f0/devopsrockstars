@@ -60,5 +60,12 @@
     "react-router": "8.3.0",
     "react-svg": "19.0.0",
     "styled-components": "6.5.0"
+  },
+  "pnpm": {
+    "ignoredBuiltDependencies": [
+      "edgedriver",
+      "esbuild",
+      "geckodriver"
+    ]
   }
 }
