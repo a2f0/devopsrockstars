@@ -22,22 +22,22 @@ repos:
       name: biome format
       entry: pnpm exec biome format
       pass_filenames: false
-      language: node
+      language: system
     - id: biome lint
       name: biome lint
       entry: pnpm exec biome lint
       pass_filenames: false
-      language: node
+      language: system
     - id: audit
       name: pnpm audit
       entry: pnpm audit --audit-level=critical --prod
       pass_filenames: false
-      language: node
+      language: system
     - id: tsc
       name: tsc
       entry: pnpm exec tsc -b
       pass_filenames: false
-      language: node
+      language: system
     - id: markdownlint
       name: markdownlint
       entry: pnpm exec markdownlint-cli2
