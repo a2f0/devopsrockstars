@@ -1,12 +1,14 @@
 # Build scripts for these packages are intentionally not run: chrome-only
-# e2e passes without the driver downloads, and esbuild works via its
-# optional platform packages. allowBuilds is read by pnpm 11+,
+# e2e passes without the driver downloads, and esbuild and workerd work via
+# their optional platform packages. allowBuilds is read by pnpm 11+,
 # ignoredBuiltDependencies by pnpm 10.
 allowBuilds:
   edgedriver: false
   esbuild: false
   geckodriver: false
+  workerd: false
 ignoredBuiltDependencies:
   - edgedriver
   - esbuild
   - geckodriver
+  - workerd
