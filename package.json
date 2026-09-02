@@ -15,8 +15,14 @@
     "ci-headless": "start-server-and-test start-test-server http-get://localhost:8081 test-headless",
     "format": "biome format --write",
     "build": "NODE_OPTIONS='--import tsx' webpack --mode production",
+    "dev:cloudflare": "pnpm run build && wrangler dev --local",
+    "deploy:cloudflare": "pnpm run build && wrangler deploy",
+    "db:migrate:local": "wrangler d1 migrations apply devopsrockstars-store --local",
+    "db:migrate:remote": "wrangler d1 migrations apply devopsrockstars-store --remote",
     "lint": "biome lint --fix",
+    "lint:md": "markdownlint-cli2",
     "compile": "tsc",
+    "unit": "tsx --test worker/**/*.test.ts",
     "prepare": "pnpm run compile",
     "pretest": "pnpm run compile",
     "posttest": "pnpm run lint"
@@ -49,10 +55,12 @@
     "url-loader": "4.1.1",
     "webpack": "5.109.2",
     "webpack-cli": "7.2.2",
-    "webpack-dev-server": "6.0.0"
+    "webpack-dev-server": "6.0.0",
+    "wrangler": "4.128.0"
   },
   "dependencies": {
     "@svgr/webpack": "8.1.0",
+    "@stripe/stripe-js": "9.15.0",
     "leaflet": "1.9.4",
     "react": "19.2.8",
     "react-dom": "19.2.8",

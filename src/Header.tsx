@@ -12,6 +12,11 @@ const MenuLink = styled(Link)`
   font-size: 24px;
 `;
 
+const MenuNav = styled.nav`
+  display: flex;
+  gap: 20px;
+`;
+
 const Header = React.memo(() => {
   return (
     <FlexHeader>
@@ -21,7 +26,10 @@ const Header = React.memo(() => {
         </FlexContainerLeft>
         <FlexContainerRight>
           <MenuItemRight>
-            <MenuLink to="/company">company</MenuLink>
+            <MenuNav aria-label="Main navigation">
+              <MenuLink to="/store">store</MenuLink>
+              <MenuLink to="/company">company</MenuLink>
+            </MenuNav>
           </MenuItemRight>
         </FlexContainerRight>
       </FlexContainerRow>

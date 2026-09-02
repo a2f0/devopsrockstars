@@ -6,6 +6,9 @@ import Footer from './Footer';
 import Header from './Header';
 import FullScreenMap from './Map';
 import Skyline from './Skyline';
+import Checkout from './store/Checkout';
+import Receipt from './store/Receipt';
+import Store from './store/Store';
 import FlexContainerColumn from './styled-components/FlexContainerColumn';
 import FlexContainerRow from './styled-components/FlexContainerRow';
 import FlexFullHeightMin from './styled-components/FlexFullHeightMin';
@@ -26,6 +29,9 @@ function AppRouter() {
                 <Routes>
                   <Route path="/" element={<Skyline />} />
                   <Route path="/company" element={<Company />} />
+                  <Route path="/store" element={<Store />} />
+                  <Route path="/store/checkout" element={<Checkout />} />
+                  <Route path="/store/receipt" element={<Receipt />} />
                 </Routes>
               </FlexContainerColumn>
             </FlexMain>
