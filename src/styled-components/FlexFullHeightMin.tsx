@@ -2,7 +2,7 @@ import styled from 'styled-components';
 
 const FlexFullHeightMin = styled.div`
   display: flex;
-  width: 960px;
+  width: min(960px, calc(100% - 20px));
   min-height: 100vh;
   margin-left: 10px;
   margin-right: 10px;

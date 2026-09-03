@@ -3,6 +3,8 @@ dist/
 node_modules/
 .DS_Store
 .ts-out
+.dev.vars
+.wrangler
 
 # vercel
 .vercel

@@ -1,0 +1,4 @@
+STRIPE_PUBLISHABLE_KEY=pk_test_replace_me
+STRIPE_SECRET_KEY=sk_test_replace_me
+STRIPE_WEBHOOK_SECRET=whsec_replace_me
+CHECKOUT_HASH_SECRET=replace_with_a_long_random_value

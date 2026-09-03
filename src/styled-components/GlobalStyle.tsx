@@ -6,7 +6,8 @@ const GlobalStyle = createGlobalStyle`
     --foreground-color: white;
   }
 
-  html { pointer-events: none;
+  html {
+    pointer-events: none;
     margin-left: calc(100vw - 100%);
     margin-right: 0;
   }
@@ -17,6 +18,10 @@ const GlobalStyle = createGlobalStyle`
     margin:0;
     font-family: Open-Sans, Helvetica, Sans-Serif;
     font-size: 20px;
+  }
+
+  button, input, select, form {
+    pointer-events: auto;
   }
 
   a {
