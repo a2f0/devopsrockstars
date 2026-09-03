@@ -23,6 +23,7 @@ import {
   selectReviewBaseRef,
 } from '../src/git/prContext';
 import {assertNoAiAttribution} from '../src/pr/assertNoAiAttribution';
+import {qualifiedPrHead} from '../src/pr/openPr';
 import {
   appendPrNumberSuffix,
   stripPrNumberSuffix,
@@ -148,6 +149,14 @@ test('selects an open PR only from the branch push repository', () => {
       })),
     /does not match current push branch/
   );
+});
+
+test('qualifies PR creation heads with the push repository owner', () => {
+  assert.equal(
+    qualifiedPrHead('fork-owner/repo', 'feature'),
+    'fork-owner:feature'
+  );
+  assert.throws(() => qualifiedPrHead('invalid', 'feature'), /Invalid push/);
 });
 
 test('validates review effort', () => {

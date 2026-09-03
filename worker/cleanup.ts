@@ -13,6 +13,15 @@ interface CleanupDependencies {
   readonly retrievePaymentIntent: typeof retrievePaymentIntent;
 }
 
+interface RetrievedPayment {
+  readonly amountReceived: number | null;
+  readonly currency: string | null;
+  readonly id: string;
+  readonly orderId: string | null;
+  readonly source: string | null;
+  readonly status: string;
+}
+
 const defaultDependencies: CleanupDependencies = {
   cancelPaymentIntent,
   retrievePaymentIntent,
@@ -26,6 +35,34 @@ async function markCanceled(env: Env, orderId: string, now: string) {
   )
     .bind(now, now, orderId)
     .run();
+}
+
+async function recordReconciliationAlert(
+  env: Env,
+  order: ExpiredOrderRow,
+  payment: RetrievedPayment,
+  now: string
+) {
+  const alertId = `cleanup:${payment.id}`;
+  await env.DB.batch([
+    env.DB.prepare(
+      `INSERT OR IGNORE INTO stripe_events (id, type, processed_at)
+       VALUES (?, 'cleanup.payment_intent.succeeded', ?)`
+    ).bind(alertId, now),
+    env.DB.prepare(
+      `INSERT OR IGNORE INTO stripe_event_alerts (
+         event_id, reason, action, order_id, payment_intent_id,
+         amount_received, currency, created_at
+       ) VALUES (?, 'payment_mismatch', 'refund', ?, ?, ?, ?, ?)`
+    ).bind(
+      alertId,
+      order.id,
+      payment.id,
+      payment.amountReceived,
+      payment.currency,
+      now
+    ),
+  ]);
 }
 
 async function reconcileUncanceledPayment(
@@ -59,6 +96,13 @@ async function reconcileUncanceledPayment(
     )
       .bind(now, now, order.id)
       .run();
+    return true;
+  }
+  if (payment.status === 'succeeded') {
+    await recordReconciliationAlert(env, order, payment, now);
+    console.error(
+      `Succeeded payment ${payment.id} requires reconciliation for expired order ${order.id}.`
+    );
     return true;
   }
   return false;

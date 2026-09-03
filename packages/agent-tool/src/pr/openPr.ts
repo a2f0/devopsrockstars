@@ -10,6 +10,14 @@ import {assertNoAiAttribution} from './assertNoAiAttribution';
 import {singleLineSubject} from './subjectLine';
 import {validateCommitSubject} from './validateCommitSubject';
 
+export function qualifiedPrHead(pushRepo: string, branch: string): string {
+  const parts = pushRepo.split('/');
+  if (parts.length !== 2 || parts.some(part => part.length === 0)) {
+    throw new Error(`Invalid push repository slug '${pushRepo}'.`);
+  }
+  return `${parts[0]}:${branch}`;
+}
+
 /** Read the PR body from stdin, or "" when stdin is a terminal/empty. */
 function readBody(): string {
   // With no pipe/redirect, fd 0 is an open TTY and a blocking read would hang.
@@ -48,6 +56,7 @@ export function openPr(rootDir: string, titleArg: string | undefined): number {
   // Pin the base to the repo default branch; without --base, gh honors a
   // branch.<name>.gh-merge-base git config that could target another branch.
   const baseArgs = defaultBranch.length > 0 ? ['--base', defaultBranch] : [];
+  const head = qualifiedPrHead(pushRepo, branch);
   const result = spawnSync(
     'gh',
     [
@@ -58,7 +67,7 @@ export function openPr(rootDir: string, titleArg: string | undefined): number {
       '--body',
       body,
       '--head',
-      branch,
+      head,
       ...baseArgs,
       '-R',
       repo,

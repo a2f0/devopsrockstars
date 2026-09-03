@@ -57,6 +57,7 @@ const Checkout = React.memo(() => {
     pendingCheckout?.checkout ?? null
   );
   const [busy, setBusy] = useState(false);
+  const [canceling, setCanceling] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [clock, setClock] = useState(Date.now);
 
@@ -160,6 +161,24 @@ const Checkout = React.memo(() => {
       setCheckout(null);
     } else {
       navigate(`/store/receipt?order=${checkout.orderId}`);
+    }
+  };
+
+  const cancelWithoutPaymentForm = async () => {
+    if (canceling) return;
+    setCanceling(true);
+    setError(null);
+    try {
+      await abandonPayment();
+    } catch (cancelError) {
+      console.error('Failed to cancel checkout:', cancelError);
+      setError(
+        cancelError instanceof Error
+          ? cancelError.message
+          : 'Checkout could not be canceled.'
+      );
+    } finally {
+      setCanceling(false);
     }
   };
 
@@ -315,20 +334,38 @@ const Checkout = React.memo(() => {
               <span>{formatMoney(total, currency)}</span>
             </SummaryRow>
           </OrderSummary>
-          {checkout && storefront?.stripePublishableKey ? (
+          {checkout ? (
             <>
               <SectionTitle>Payment</SectionTitle>
-              <StripePayment
-                checkout={checkout}
-                onCancel={abandonPayment}
-                paymentExpired={paymentExpired}
-                publishableKey={storefront.stripePublishableKey}
-                shipping={shipping}
-                onConfirmed={() => {
-                  clearPendingCheckout();
-                  navigate(`/store/receipt?order=${checkout.orderId}`);
-                }}
-              />
+              {storefront?.stripePublishableKey ? (
+                <StripePayment
+                  checkout={checkout}
+                  onCancel={abandonPayment}
+                  paymentExpired={paymentExpired}
+                  publishableKey={storefront.stripePublishableKey}
+                  shipping={shipping}
+                  onConfirmed={() => {
+                    clearPendingCheckout();
+                    navigate(`/store/receipt?order=${checkout.orderId}`);
+                  }}
+                />
+              ) : (
+                <>
+                  <Status $error>
+                    The payment form is unavailable. You can cancel this
+                    reservation and try again.
+                  </Status>
+                  <FormActions>
+                    <Button
+                      type="button"
+                      disabled={canceling}
+                      onClick={() => void cancelWithoutPaymentForm()}
+                    >
+                      {canceling ? 'Canceling…' : 'Cancel checkout'}
+                    </Button>
+                  </FormActions>
+                </>
+              )}
               {paymentExpired ? (
                 <Status $error>
                   This reservation expired. Cancel it to return to the store.

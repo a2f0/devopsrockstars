@@ -346,6 +346,47 @@ test('cleanup reconciles an already-succeeded expired PaymentIntent', async t =>
   ]);
 });
 
+test('cleanup records a durable alert for a mismatched succeeded payment', async t => {
+  t.mock.method(console, 'error', () => undefined);
+  const database = new FakeDatabase();
+  database.allValues = [
+    {
+      currency: 'usd',
+      id: '12345678-1234-1234-1234-123456789abc',
+      stripe_payment_intent_id: 'pi_store',
+      total_amount: 4000,
+    },
+  ];
+
+  await cleanupExpiredOrders(
+    {DB: database, STRIPE_SECRET_KEY: 'sk_test'},
+    Date.parse('2026-09-03T17:00:00.000Z'),
+    {
+      cancelPaymentIntent: async () => false,
+      retrievePaymentIntent: async () => ({
+        amountReceived: 3999,
+        currency: 'usd',
+        id: 'pi_store',
+        orderId: '12345678-1234-1234-1234-123456789abc',
+        source: 'devopsrockstars_store',
+        status: 'succeeded',
+      }),
+    }
+  );
+
+  const alert = database.batches[0]?.find(statement =>
+    statement.query.includes('INSERT OR IGNORE INTO stripe_event_alerts')
+  );
+  assert.deepEqual(alert?.values, [
+    'cleanup:pi_store',
+    '12345678-1234-1234-1234-123456789abc',
+    'pi_store',
+    3999,
+    'usd',
+    '2026-09-03T17:00:00.000Z',
+  ]);
+});
+
 test('cleanup cancels expired orders with and without PaymentIntents', async () => {
   for (const paymentIntentId of [null, 'pi_store']) {
     const database = new FakeDatabase();
