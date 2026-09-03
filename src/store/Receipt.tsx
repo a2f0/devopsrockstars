@@ -4,7 +4,6 @@ import {loadOrder} from './api';
 import {useStoreCart} from './cart';
 import type {StoreOrderResponse} from './contracts';
 import {formatMoney} from './format';
-import {clearPendingCheckout, readOrderToken} from './storage';
 import {
   ActionLink,
   FormActions,
@@ -13,6 +12,7 @@ import {
   StoreHeading,
   StoreShell,
 } from './StoreStyles';
+import {clearPendingCheckout, readOrderToken} from './storage';
 
 const Receipt = React.memo(() => {
   const [searchParams] = useSearchParams();

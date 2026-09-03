@@ -52,6 +52,16 @@ describe('store page', () => {
         clientSecret: 'pi_store_secret_test',
         currency: 'usd',
         expiresAt,
+        lines: [
+          {
+            currency: 'usd',
+            productName: 'DevOps Rockstars 59FIFTY',
+            quantity: 1,
+            unitAmount: 2000,
+            variantId: 'hat-5950-7-1-4',
+            variantLabel: '7 1/4',
+          },
+        ],
         orderId,
         orderToken: 'order-token',
         totalAmount: 2000,

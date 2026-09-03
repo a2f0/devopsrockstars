@@ -4,10 +4,12 @@ import {cleanupExpiredOrders} from './cleanup';
 import {sha256} from './crypto';
 import {
   apiError,
-  hasSameOrigin,
+  corsPreflight,
+  hasAllowedOrigin,
   json,
   RequestBodyError,
   readJson,
+  withCors,
 } from './http';
 import {cancelOrder, loadOrder, OrderCancellationError} from './orders';
 import type {Env, ExecutionContextLike, ScheduledControllerLike} from './types';
@@ -24,7 +26,7 @@ export async function route(request: Request, env: Env) {
     return json(await loadCatalog(env));
   }
   if (request.method === 'POST' && url.pathname === '/api/checkouts') {
-    if (!hasSameOrigin(request)) {
+    if (!hasAllowedOrigin(request, env.STOREFRONT_ORIGINS)) {
       return apiError(
         'forbidden',
         'Cross-site checkout requests are blocked.',
@@ -78,7 +80,7 @@ export async function route(request: Request, env: Env) {
     url.pathname
   );
   if (request.method === 'POST' && cancelMatch?.[1]) {
-    if (!hasSameOrigin(request)) {
+    if (!hasAllowedOrigin(request, env.STOREFRONT_ORIGINS)) {
       return apiError(
         'forbidden',
         'Cross-site cancellation requests are blocked.',
@@ -108,33 +110,39 @@ export async function route(request: Request, env: Env) {
   return apiError('not_found', 'The API route was not found.', 404);
 }
 
-async function fetchHandler(request: Request, env: Env) {
+export async function fetchHandler(request: Request, env: Env) {
+  if (
+    request.method === 'OPTIONS' &&
+    new URL(request.url).pathname.startsWith('/api/')
+  ) {
+    return corsPreflight(request, env.STOREFRONT_ORIGINS);
+  }
+  let response: Response;
   try {
-    return await route(request, env);
+    response = await route(request, env);
   } catch (error) {
     if (error instanceof RequestBodyError) {
       const message =
         error.code === 'request_too_large'
           ? 'The checkout request is too large.'
           : 'The request body must be valid JSON.';
-      return apiError(error.code, message, 400);
+      response = apiError(error.code, message, 400);
+    } else if (error instanceof CheckoutValidationError) {
+      response = apiError(error.code, error.message, 400);
+    } else if (error instanceof CheckoutCreationError) {
+      response = apiError(error.code, error.message, error.status);
+    } else if (error instanceof OrderCancellationError) {
+      response = apiError(error.code, error.message, error.status);
+    } else {
+      console.error('Unhandled store API error:', error);
+      response = apiError(
+        'internal_error',
+        'The store could not complete the request.',
+        500
+      );
     }
-    if (error instanceof CheckoutValidationError) {
-      return apiError(error.code, error.message, 400);
-    }
-    if (error instanceof CheckoutCreationError) {
-      return apiError(error.code, error.message, error.status);
-    }
-    if (error instanceof OrderCancellationError) {
-      return apiError(error.code, error.message, error.status);
-    }
-    console.error('Unhandled store API error:', error);
-    return apiError(
-      'internal_error',
-      'The store could not complete the request.',
-      500
-    );
   }
+  return withCors(request, env.STOREFRONT_ORIGINS, response);
 }
 
 export default {

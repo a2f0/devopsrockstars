@@ -1,8 +1,4 @@
-import type {
-  CartItemInput,
-  CreateCheckoutResponse,
-  ShippingInput,
-} from './contracts';
+import type {CreateCheckoutResponse, ShippingInput} from './contracts';
 
 const CHECKOUT_CLIENT_KEY = 'devopsrockstars.store.checkout-client';
 const PENDING_CHECKOUT_KEY = 'devopsrockstars.store.pending-checkout';
@@ -10,9 +6,8 @@ const ORDER_TOKEN_PREFIX = 'devopsrockstars.store.order.';
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
 
-export interface PendingCheckout {
+interface PendingCheckout {
   readonly checkout: CreateCheckoutResponse;
-  readonly items: readonly CartItemInput[];
   readonly shipping: ShippingInput;
 }
 
@@ -53,13 +48,15 @@ function property(value: unknown, key: string) {
   return valueRecord ? Reflect.get(valueRecord, key) : undefined;
 }
 
-function isCartItem(value: unknown): value is CartItemInput {
-  const variantId = property(value, 'variantId');
-  const quantity = property(value, 'quantity');
+function isCheckoutLine(value: unknown) {
   return (
-    typeof variantId === 'string' &&
-    Number.isSafeInteger(quantity) &&
-    Number(quantity) > 0
+    ['currency', 'productName', 'variantId', 'variantLabel'].every(
+      key => typeof property(value, key) === 'string'
+    ) &&
+    Number.isSafeInteger(property(value, 'quantity')) &&
+    Number(property(value, 'quantity')) > 0 &&
+    Number.isSafeInteger(property(value, 'unitAmount')) &&
+    Number(property(value, 'unitAmount')) >= 0
   );
 }
 
@@ -79,23 +76,21 @@ function isShipping(value: unknown): value is ShippingInput {
 }
 
 function isCheckout(value: unknown): value is CreateCheckoutResponse {
+  const lines = property(value, 'lines');
   return (
     ['clientSecret', 'currency', 'expiresAt', 'orderId', 'orderToken'].every(
       key => typeof property(value, key) === 'string'
-    ) && Number.isSafeInteger(property(value, 'totalAmount'))
+    ) &&
+    Array.isArray(lines) &&
+    lines.length > 0 &&
+    lines.every(isCheckoutLine) &&
+    Number.isSafeInteger(property(value, 'totalAmount'))
   );
 }
 
 function isPendingCheckout(value: unknown): value is PendingCheckout {
   const checkout = property(value, 'checkout');
-  const items = property(value, 'items');
-  return (
-    isCheckout(checkout) &&
-    Array.isArray(items) &&
-    items.length > 0 &&
-    items.every(isCartItem) &&
-    isShipping(property(value, 'shipping'))
-  );
+  return isCheckout(checkout) && isShipping(property(value, 'shipping'));
 }
 
 export function getCheckoutClientToken() {

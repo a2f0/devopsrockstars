@@ -3,13 +3,13 @@ import {test} from 'node:test';
 
 import type {CreateCheckoutRequest} from '../src/store/contracts';
 import {
-  type CheckoutDependencies,
   CheckoutCreationError,
+  type CheckoutDependencies,
   startCheckout,
 } from './checkout';
 import {cleanupExpiredOrders} from './cleanup';
 import {sha256} from './crypto';
-import {route} from './index';
+import {fetchHandler, route} from './index';
 import {cancelOrder, loadOrder} from './orders';
 import {StripeRequestError} from './stripe';
 import type {
@@ -148,6 +148,16 @@ test('checkout reserves inventory in one batch before creating payment', async (
 
   assert.equal(checkout.totalAmount, 4000);
   assert.equal(checkout.expiresAt, '2026-09-03T12:10:00.000Z');
+  assert.deepEqual(checkout.lines, [
+    {
+      currency: 'usd',
+      productName: 'DevOps Rockstars 59FIFTY',
+      quantity: 2,
+      unitAmount: 2000,
+      variantId: 'hat-5950-7-1-4',
+      variantLabel: '7 1/4',
+    },
+  ]);
   assert.equal(database.batches.length, 1);
   assert.equal(database.batches[0]?.length, 3);
   assert.equal(database.batches[0]?.[0]?.values[2], 'client-hash');
@@ -732,6 +742,47 @@ test('checkout route rejects cross-site requests before doing work', async () =>
 
   assert.equal(response.status, 403);
   assert.equal(database.statements.length, 0);
+});
+
+test('worker permits configured storefront origins and returns CORS headers', async () => {
+  const allowedOrigins =
+    'https://devopsrockstars.com,https://www.devopsrockstars.com';
+  const preflight = await fetchHandler(
+    new Request('https://store.example/api/checkouts', {
+      method: 'OPTIONS',
+      headers: {Origin: 'https://www.devopsrockstars.com'},
+    }),
+    {DB: new FakeDatabase(), STOREFRONT_ORIGINS: allowedOrigins}
+  );
+
+  assert.equal(preflight.status, 204);
+  assert.equal(
+    preflight.headers.get('Access-Control-Allow-Origin'),
+    'https://www.devopsrockstars.com'
+  );
+
+  const errorResponse = await fetchHandler(
+    new Request('https://store.example/api/checkouts', {
+      method: 'POST',
+      headers: {
+        Origin: 'https://devopsrockstars.com',
+        'X-Checkout-Client': '12345678-1234-4234-8234-123456789abc',
+      },
+      body: '{',
+    }),
+    {
+      CHECKOUT_HASH_SECRET: 'hash-secret',
+      CHECKOUT_RATE_LIMITER: {limit: async () => ({success: true})},
+      DB: new FakeDatabase(),
+      STOREFRONT_ORIGINS: allowedOrigins,
+    }
+  );
+
+  assert.equal(errorResponse.status, 400);
+  assert.equal(
+    errorResponse.headers.get('Access-Control-Allow-Origin'),
+    'https://devopsrockstars.com'
+  );
 });
 
 test('checkout rate limiting happens before JSON parsing', async () => {

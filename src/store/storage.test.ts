@@ -50,11 +50,20 @@ function pendingCheckout(expiresAt: string) {
       clientSecret: 'pi_store_secret_test',
       currency: 'usd',
       expiresAt,
+      lines: [
+        {
+          currency: 'usd',
+          productName: 'DevOps Rockstars 59FIFTY',
+          quantity: 2,
+          unitAmount: 2000,
+          variantId: 'hat-5950-7-1-4',
+          variantLabel: '7 1/4',
+        },
+      ],
       orderId: '12345678-1234-4234-8234-123456789abc',
       orderToken: 'order-token',
       totalAmount: 4000,
     },
-    items: [{variantId: 'hat-5950-7-1-4', quantity: 2}],
     shipping: {
       name: 'Grace Hopper',
       email: 'grace@example.com',

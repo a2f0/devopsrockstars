@@ -43,10 +43,20 @@ export interface CreateCheckoutRequest {
   readonly shipping: ShippingInput;
 }
 
+interface CheckoutLineSnapshot {
+  readonly currency: string;
+  readonly productName: string;
+  readonly quantity: number;
+  readonly unitAmount: number;
+  readonly variantId: string;
+  readonly variantLabel: string;
+}
+
 export interface CreateCheckoutResponse {
   readonly clientSecret: string;
   readonly currency: string;
   readonly expiresAt: string;
+  readonly lines: readonly CheckoutLineSnapshot[];
   readonly orderId: string;
   readonly orderToken: string;
   readonly totalAmount: number;

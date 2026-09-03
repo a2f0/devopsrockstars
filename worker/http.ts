@@ -59,12 +59,60 @@ export async function readJson(request: Request): Promise<unknown> {
   }
 }
 
-export function hasSameOrigin(request: Request) {
+function configuredOrigins(allowedOrigins?: string) {
+  return new Set(
+    allowedOrigins
+      ?.split(',')
+      .map(origin => origin.trim())
+      .filter(Boolean) ?? []
+  );
+}
+
+export function hasAllowedOrigin(request: Request, allowedOrigins?: string) {
   const origin = request.headers.get('Origin');
   const fetchSite = request.headers.get('Sec-Fetch-Site');
   return (
-    (origin === null || origin === new URL(request.url).origin) &&
-    fetchSite !== 'cross-site'
+    (origin === null && fetchSite !== 'cross-site') ||
+    origin === new URL(request.url).origin ||
+    (origin !== null && configuredOrigins(allowedOrigins).has(origin))
+  );
+}
+
+export function withCors(
+  request: Request,
+  allowedOrigins: string | undefined,
+  response: Response
+) {
+  const origin = request.headers.get('Origin');
+  if (!origin || !configuredOrigins(allowedOrigins).has(origin)) {
+    return response;
+  }
+  const headers = new Headers(response.headers);
+  headers.set('Access-Control-Allow-Origin', origin);
+  headers.set('Vary', 'Origin');
+  return new Response(response.body, {
+    headers,
+    status: response.status,
+    statusText: response.statusText,
+  });
+}
+
+export function corsPreflight(request: Request, allowedOrigins?: string) {
+  if (!hasAllowedOrigin(request, allowedOrigins)) {
+    return apiError('forbidden', 'Cross-site requests are blocked.', 403);
+  }
+  return withCors(
+    request,
+    allowedOrigins,
+    new Response(null, {
+      status: 204,
+      headers: {
+        'Access-Control-Allow-Headers':
+          'Content-Type, X-Checkout-Client, X-Order-Token',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Max-Age': '86400',
+      },
+    })
   );
 }
 

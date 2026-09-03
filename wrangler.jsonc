@@ -3,6 +3,9 @@
   "name": "devopsrockstars-store",
   "main": "./worker/index.ts",
   "compatibility_date": "2026-08-31",
+  "vars": {
+    "STOREFRONT_ORIGINS": "https://devopsrockstars.com,https://www.devopsrockstars.com"
+  },
   "assets": {
     "directory": "./build",
     "binding": "ASSETS",

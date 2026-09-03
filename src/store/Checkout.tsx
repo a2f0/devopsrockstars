@@ -9,13 +9,6 @@ import type {
 } from './contracts';
 import {formatMoney} from './format';
 import {
-  clearPendingCheckout,
-  getCheckoutClientToken,
-  readPendingCheckout,
-  storeOrderToken,
-  storePendingCheckout,
-} from './storage';
-import {
   ActionLink,
   Button,
   CheckoutGrid,
@@ -33,6 +26,13 @@ import {
   SummaryRow,
 } from './StoreStyles';
 import StripePayment from './StripePayment';
+import {
+  clearPendingCheckout,
+  getCheckoutClientToken,
+  readPendingCheckout,
+  storeOrderToken,
+  storePendingCheckout,
+} from './storage';
 
 const EMPTY_SHIPPING: ShippingInput = {
   name: '',
@@ -56,11 +56,20 @@ const Checkout = React.memo(() => {
   const [checkout, setCheckout] = useState<CreateCheckoutResponse | null>(
     pendingCheckout?.checkout ?? null
   );
-  const [reservedItems, setReservedItems] = useState<
-    readonly {readonly variantId: string; readonly quantity: number}[] | null
-  >(pendingCheckout?.items ?? null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [clock, setClock] = useState(Date.now);
+
+  useEffect(() => {
+    if (!checkout) return;
+    const delay = Date.parse(checkout.expiresAt) - Date.now();
+    if (delay <= 0) {
+      setClock(Date.now());
+      return;
+    }
+    const timeout = setTimeout(() => setClock(Date.now()), delay);
+    return () => clearTimeout(timeout);
+  }, [checkout]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -84,16 +93,23 @@ const Checkout = React.memo(() => {
       ),
     [storefront]
   );
-  const displayedItems = checkout && reservedItems ? reservedItems : cart.items;
-  const visibleItems = displayedItems.flatMap(item => {
+  const visibleItems = cart.items.flatMap(item => {
     const entry = variants.get(item.variantId);
     return entry ? [{...item, ...entry}] : [];
   });
-  const total = visibleItems.reduce(
-    (sum, item) => sum + item.variant.unitAmount * item.quantity,
-    0
-  );
-  const currency = visibleItems[0]?.variant.currency ?? 'usd';
+  const catalogLines = visibleItems.map(item => ({
+    currency: item.variant.currency,
+    productName: item.product.name,
+    quantity: item.quantity,
+    unitAmount: item.variant.unitAmount,
+    variantId: item.variantId,
+    variantLabel: item.variant.label,
+  }));
+  const orderLines = checkout?.lines ?? catalogLines;
+  const total =
+    checkout?.totalAmount ??
+    orderLines.reduce((sum, item) => sum + item.unitAmount * item.quantity, 0);
+  const currency = checkout?.currency ?? orderLines[0]?.currency ?? 'usd';
   const checkoutItems = visibleItems.map(item => ({
     variantId: item.variantId,
     quantity: item.quantity,
@@ -122,8 +138,7 @@ const Checkout = React.memo(() => {
         getCheckoutClientToken()
       );
       storeOrderToken(result.orderId, result.orderToken);
-      storePendingCheckout({checkout: result, items: checkoutItems, shipping});
-      setReservedItems(checkoutItems);
+      storePendingCheckout({checkout: result, shipping});
       setCheckout(result);
     } catch (checkoutError) {
       console.error('Failed to start checkout:', checkoutError);
@@ -143,13 +158,16 @@ const Checkout = React.memo(() => {
     clearPendingCheckout();
     if (order.status === 'canceled') {
       setCheckout(null);
-      setReservedItems(null);
     } else {
       navigate(`/store/receipt?order=${checkout.orderId}`);
     }
   };
 
-  if (displayedItems.length === 0) {
+  const paymentExpired = checkout
+    ? Date.parse(checkout.expiresAt) <= clock
+    : false;
+
+  if (!checkout && cart.items.length === 0) {
     return (
       <StoreShell>
         <StoreHeading>checkout</StoreHeading>
@@ -278,16 +296,13 @@ const Checkout = React.memo(() => {
         <Section>
           <SectionTitle>Your order</SectionTitle>
           <OrderSummary>
-            {visibleItems.map(item => (
+            {orderLines.map(item => (
               <SummaryRow key={item.variantId}>
                 <span>
-                  {item.product.name} — {item.variant.label} × {item.quantity}
+                  {item.productName} — {item.variantLabel} × {item.quantity}
                 </span>
                 <span>
-                  {formatMoney(
-                    item.variant.unitAmount * item.quantity,
-                    item.variant.currency
-                  )}
+                  {formatMoney(item.unitAmount * item.quantity, item.currency)}
                 </span>
               </SummaryRow>
             ))}
@@ -306,6 +321,7 @@ const Checkout = React.memo(() => {
               <StripePayment
                 checkout={checkout}
                 onCancel={abandonPayment}
+                paymentExpired={paymentExpired}
                 publishableKey={storefront.stripePublishableKey}
                 shipping={shipping}
                 onConfirmed={() => {
@@ -313,10 +329,16 @@ const Checkout = React.memo(() => {
                   navigate(`/store/receipt?order=${checkout.orderId}`);
                 }}
               />
-              <Status>
-                Reserved until{' '}
-                {new Date(checkout.expiresAt).toLocaleTimeString()}.
-              </Status>
+              {paymentExpired ? (
+                <Status $error>
+                  This reservation expired. Cancel it to return to the store.
+                </Status>
+              ) : (
+                <Status>
+                  Reserved until{' '}
+                  {new Date(checkout.expiresAt).toLocaleTimeString()}.
+                </Status>
+              )}
             </>
           ) : null}
           {error ? <Status $error>{error}</Status> : null}

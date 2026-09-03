@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {readJson, RequestBodyError} from './http';
+import {RequestBodyError, readJson} from './http';
 
 test('reads a JSON request body', async () => {
   const request = new Request('https://store.example/api/checkouts', {

@@ -16,6 +16,17 @@ class StoreApiError extends Error {
   }
 }
 
+const PRODUCTION_API_ORIGIN =
+  'https://devopsrockstars-store.dansullivan.workers.dev';
+
+function apiUrl(path: string) {
+  const hostname = globalThis.location?.hostname;
+  return hostname === 'devopsrockstars.com' ||
+    hostname === 'www.devopsrockstars.com'
+    ? new URL(path, PRODUCTION_API_ORIGIN).href
+    : path;
+}
+
 async function readResponse<T>(response: Response): Promise<T> {
   let body: unknown;
   try {
@@ -43,7 +54,10 @@ async function readResponse<T>(response: Response): Promise<T> {
 }
 
 export async function loadStorefront(signal?: AbortSignal) {
-  const response = await fetch('/api/storefront', signal ? {signal} : {});
+  const response = await fetch(
+    apiUrl('/api/storefront'),
+    signal ? {signal} : {}
+  );
   return readResponse<StorefrontResponse>(response);
 }
 
@@ -51,7 +65,7 @@ export async function createCheckout(
   request: CreateCheckoutRequest,
   checkoutClientToken: string
 ) {
-  const response = await fetch('/api/checkouts', {
+  const response = await fetch(apiUrl('/api/checkouts'), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -67,16 +81,19 @@ export async function loadOrder(
   orderToken: string,
   signal?: AbortSignal
 ) {
-  const response = await fetch(`/api/orders/${encodeURIComponent(orderId)}`, {
-    headers: {'X-Order-Token': orderToken},
-    ...(signal ? {signal} : {}),
-  });
+  const response = await fetch(
+    apiUrl(`/api/orders/${encodeURIComponent(orderId)}`),
+    {
+      headers: {'X-Order-Token': orderToken},
+      ...(signal ? {signal} : {}),
+    }
+  );
   return readResponse<StoreOrderResponse>(response);
 }
 
 export async function cancelCheckout(orderId: string, orderToken: string) {
   const response = await fetch(
-    `/api/orders/${encodeURIComponent(orderId)}/cancel`,
+    apiUrl(`/api/orders/${encodeURIComponent(orderId)}/cancel`),
     {
       method: 'POST',
       headers: {'X-Order-Token': orderToken},

@@ -28,13 +28,21 @@ interface MountedPayment {
 interface Props {
   readonly checkout: CreateCheckoutResponse;
   readonly onCancel: () => Promise<void>;
+  readonly paymentExpired: boolean;
   readonly publishableKey: string;
   readonly shipping: ShippingInput;
   readonly onConfirmed: () => void;
 }
 
 const StripePayment = React.memo(
-  ({checkout, onCancel, publishableKey, shipping, onConfirmed}: Props) => {
+  ({
+    checkout,
+    onCancel,
+    paymentExpired,
+    publishableKey,
+    shipping,
+    onConfirmed,
+  }: Props) => {
     const hostRef = useRef<HTMLDivElement | null>(null);
     const mountedRef = useRef<MountedPayment | null>(null);
     const [ready, setReady] = useState(false);
@@ -109,7 +117,7 @@ const StripePayment = React.memo(
 
     const confirm = async () => {
       const mounted = mountedRef.current;
-      if (!mounted || busyAction) return;
+      if (!mounted || busyAction || paymentExpired) return;
       setBusyAction('paying');
       setError(null);
       try {
@@ -189,7 +197,7 @@ const StripePayment = React.memo(
         <FormActions>
           <Button
             type="button"
-            disabled={!ready || busyAction !== null}
+            disabled={!ready || busyAction !== null || paymentExpired}
             onClick={confirm}
           >
             {busyAction === 'paying' ? 'Processing…' : `Pay order`}
