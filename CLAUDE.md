@@ -69,7 +69,7 @@ store backend.
 
 - `packages/frontend` — React application, assets, Webpack, and browser tests
 - `packages/backend` — Cloudflare Worker, D1 migrations, and Wrangler config
-- `packages/store-contracts` — shared API request and response types
+- `packages/shared-types` — shared API request and response types
 - `packages/agent-tool` — repository shipping automation
 
 ### Core Stack

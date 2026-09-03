@@ -2,7 +2,7 @@ import type {
   StorefrontResponse,
   StoreProduct,
   StoreVariant,
-} from '@devopsrockstars/store-contracts';
+} from '@devopsrockstars/shared-types';
 import type {Env} from './types';
 
 interface CatalogRow {

@@ -1,5 +1,5 @@
 import {useCallback, useState} from 'react';
-import type {CartItemInput} from '@devopsrockstars/store-contracts';
+import type {CartItemInput} from '@devopsrockstars/shared-types';
 
 const CART_KEY = 'devopsrockstars.store.cart';
 
