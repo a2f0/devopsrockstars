@@ -17,6 +17,16 @@
       "migrations_dir": "migrations"
     }
   ],
+  "ratelimits": [
+    {
+      "name": "CHECKOUT_RATE_LIMITER",
+      "namespace_id": "5950753",
+      "simple": {
+        "limit": 2,
+        "period": 60
+      }
+    }
+  ],
   "triggers": {
     "crons": ["*/10 * * * *"]
   },

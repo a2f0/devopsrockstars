@@ -155,6 +155,7 @@ async function cancelOrder(
 
 function reservationStatements(input: {
   readonly accessTokenHash: string;
+  readonly clientHash: string;
   readonly currency: string;
   readonly expiresAt: string;
   readonly lines: ReturnType<typeof calculateOrder>['lines'];
@@ -168,15 +169,16 @@ function reservationStatements(input: {
   const statements: D1PreparedStatement[] = [
     input.env.DB.prepare(
       `INSERT INTO orders (
-         id, access_token_hash, status, currency, subtotal_amount,
+         id, access_token_hash, checkout_client_hash, status, currency, subtotal_amount,
          shipping_amount, total_amount, email, shipping_name,
          shipping_address_line1, shipping_address_line2, shipping_city,
          shipping_state, shipping_postal_code, shipping_country,
          reservation_expires_at, created_at, updated_at
-       ) VALUES (?, ?, 'creating_payment', ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+       ) VALUES (?, ?, ?, 'creating_payment', ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).bind(
       input.orderId,
       input.accessTokenHash,
+      input.clientHash,
       input.currency,
       input.totalAmount,
       input.totalAmount,
@@ -224,6 +226,7 @@ function reservationStatements(input: {
 export async function startCheckout(
   env: Env,
   request: CreateCheckoutRequest,
+  clientHash: string,
   dependencies: CheckoutDependencies = defaultDependencies
 ): Promise<CreateCheckoutResponse> {
   const secretKey = env.STRIPE_SECRET_KEY?.trim();
@@ -252,6 +255,7 @@ export async function startCheckout(
     await env.DB.batch(
       reservationStatements({
         accessTokenHash,
+        clientHash,
         currency: order.currency,
         expiresAt,
         lines: order.lines,
@@ -268,6 +272,13 @@ export async function startCheckout(
         'out_of_stock',
         'That size just sold out. Please choose another size.',
         409
+      );
+    }
+    if (String(error).includes('checkout_rate_limited')) {
+      throw new CheckoutCreationError(
+        'checkout_rate_limited',
+        'A checkout is already active for this connection.',
+        429
       );
     }
     throw error;

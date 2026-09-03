@@ -78,6 +78,10 @@ const Checkout = React.memo(() => {
     0
   );
   const currency = visibleItems[0]?.variant.currency ?? 'usd';
+  const checkoutItems = visibleItems.map(item => ({
+    variantId: item.variantId,
+    quantity: item.quantity,
+  }));
 
   const update = (field: keyof ShippingInput, value: string) => {
     setShipping(current => ({...current, [field]: value}));
@@ -90,10 +94,14 @@ const Checkout = React.memo(() => {
       setError('Checkout is not configured yet.');
       return;
     }
+    if (checkoutItems.length === 0) {
+      setError('The items in your cart are no longer available.');
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
-      const result = await createCheckout({items: cart.items, shipping});
+      const result = await createCheckout({items: checkoutItems, shipping});
       storeOrderToken(result.orderId, result.orderToken);
       setCheckout(result);
     } catch (checkoutError) {
@@ -223,7 +231,10 @@ const Checkout = React.memo(() => {
             {!checkout ? (
               <FormActions>
                 <ActionLink to="/store">Back</ActionLink>
-                <Button type="submit" disabled={busy || !storefront}>
+                <Button
+                  type="submit"
+                  disabled={busy || !storefront || checkoutItems.length === 0}
+                >
                   {busy ? 'Reserving…' : 'Continue to payment'}
                 </Button>
               </FormActions>

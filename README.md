@@ -99,6 +99,10 @@ starts, restored when an order is canceled, and protected from double-restock
 by the order-status transition trigger. A ten-minute cron cancels reservations
 that have been abandoned for thirty minutes.
 
+Checkout creation is limited to two attempts per minute and one active
+reservation per client address. The edge limit uses Cloudflare's
+`CHECKOUT_RATE_LIMITER` binding; D1 enforces the exact active-reservation cap.
+
 Signed Stripe events without the store's source metadata are acknowledged and
 ignored. Store events that cannot be applied safely are recorded in
 `stripe_event_alerts`; entries with `action = 'refund'` require operator action.

@@ -8,9 +8,16 @@ import {
   startCheckout,
 } from './checkout';
 import {sha256} from './crypto';
+import {route} from './index';
 import {loadOrder} from './orders';
 import {StripeRequestError} from './stripe';
-import type {D1Database, D1PreparedStatement, D1Result, Env} from './types';
+import type {
+  D1Database,
+  D1PreparedStatement,
+  D1Result,
+  Env,
+  RateLimit,
+} from './types';
 import {processEvent, type StripeEvent} from './webhook';
 
 function result<T>(results: readonly T[] = [], changes = 1): D1Result<T> {
@@ -133,12 +140,14 @@ test('checkout reserves inventory in one batch before creating payment', async (
   const checkout = await startCheckout(
     checkoutEnv(database),
     checkoutRequest(),
+    'client-hash',
     dependencies()
   );
 
   assert.equal(checkout.totalAmount, 4000);
   assert.equal(database.batches.length, 1);
   assert.equal(database.batches[0]?.length, 3);
+  assert.equal(database.batches[0]?.[0]?.values[2], 'client-hash');
   const inventoryUpdate = database.batches[0]?.find(statement =>
     statement.query.includes('inventory_quantity = inventory_quantity - ?')
   );
@@ -159,6 +168,7 @@ test('checkout maps an atomic negative-inventory rollback to out of stock', asyn
     startCheckout(
       checkoutEnv(database),
       checkoutRequest(),
+      'client-hash',
       dependencies({
         createPaymentIntent: async () => {
           createPaymentCalls += 1;
@@ -172,6 +182,25 @@ test('checkout maps an atomic negative-inventory rollback to out of stock', asyn
   assert.equal(createPaymentCalls, 0);
 });
 
+test('checkout maps the active-reservation trigger to a rate limit', async () => {
+  const database = new FakeDatabase();
+  database.allValues = [availableVariant()];
+  database.batchFailure = new Error('checkout_rate_limited');
+
+  await assert.rejects(
+    startCheckout(
+      checkoutEnv(database),
+      checkoutRequest(),
+      'client-hash',
+      dependencies()
+    ),
+    (error: unknown) =>
+      error instanceof CheckoutCreationError &&
+      error.code === 'checkout_rate_limited' &&
+      error.status === 429
+  );
+});
+
 test('checkout cancels its reservation when Stripe creation fails', async () => {
   const database = new FakeDatabase();
   database.allValues = [availableVariant()];
@@ -180,6 +209,7 @@ test('checkout cancels its reservation when Stripe creation fails', async () => 
     startCheckout(
       checkoutEnv(database),
       checkoutRequest(),
+      'client-hash',
       dependencies({
         createPaymentIntent: async () => {
           throw new StripeRequestError('PaymentIntent creation', 503);
@@ -209,6 +239,7 @@ test('checkout records an orphaned PaymentIntent when cancellation fails', async
     startCheckout(
       checkoutEnv(database),
       checkoutRequest(),
+      'client-hash',
       dependencies({
         cancelPaymentIntent: async (_secret, intentId) => {
           canceledIntents.push(intentId);
@@ -415,4 +446,36 @@ test('order lookup requires the matching bearer token hash', async () => {
     await loadOrder(env, '12345678-1234-1234-1234-123456789abc', 'wrong-token'),
     null
   );
+});
+
+test('checkout route applies the Cloudflare rate limit before creating work', async () => {
+  const database = new FakeDatabase();
+  const keys: string[] = [];
+  const rateLimiter: RateLimit = {
+    async limit({key}) {
+      keys.push(key);
+      return {success: false};
+    },
+  };
+  const request = new Request('https://store.example/api/checkouts', {
+    method: 'POST',
+    headers: {'CF-Connecting-IP': '203.0.113.10'},
+    body: JSON.stringify(checkoutRequest()),
+  });
+
+  const response = await route(request, {
+    DB: database,
+    CHECKOUT_RATE_LIMITER: rateLimiter,
+  });
+
+  assert.equal(response.status, 429);
+  assert.deepEqual(keys, ['checkout:203.0.113.10']);
+  assert.deepEqual(await response.json(), {
+    error: {
+      code: 'checkout_rate_limited',
+      message:
+        'Too many checkout attempts. Please wait a minute and try again.',
+    },
+  });
+  assert.equal(database.statements.length, 0);
 });

@@ -18,7 +18,12 @@ export interface D1Database {
   prepare(query: string): D1PreparedStatement;
 }
 
+export interface RateLimit {
+  limit(input: {readonly key: string}): Promise<{readonly success: boolean}>;
+}
+
 export interface Env {
+  readonly CHECKOUT_RATE_LIMITER?: RateLimit;
   readonly DB: D1Database;
   readonly STRIPE_PUBLISHABLE_KEY?: string;
   readonly STRIPE_SECRET_KEY?: string;

@@ -1,6 +1,7 @@
 import {loadCatalog} from './catalog';
 import {CheckoutCreationError, startCheckout} from './checkout';
 import {cleanupExpiredOrders} from './cleanup';
+import {sha256} from './crypto';
 import {
   apiError,
   hasSameOrigin,
@@ -13,7 +14,9 @@ import type {Env, ExecutionContextLike, ScheduledControllerLike} from './types';
 import {CheckoutValidationError, validateCheckout} from './validation';
 import {handleStripeWebhook} from './webhook';
 
-async function route(request: Request, env: Env) {
+const CHECKOUT_RATE_LIMIT_KEY = 'checkout:';
+
+export async function route(request: Request, env: Env) {
   const url = new URL(request.url);
   if (request.method === 'GET' && url.pathname === '/api/storefront') {
     return json(await loadCatalog(env));
@@ -26,8 +29,29 @@ async function route(request: Request, env: Env) {
         403
       );
     }
+    if (!env.CHECKOUT_RATE_LIMITER) {
+      return apiError(
+        'checkout_unavailable',
+        'Checkout abuse protection is not configured.',
+        503
+      );
+    }
+    const clientAddress =
+      request.headers.get('CF-Connecting-IP')?.trim() || 'unknown';
+    const rateLimitKey = `${CHECKOUT_RATE_LIMIT_KEY}${clientAddress}`;
+    const rateLimit = await env.CHECKOUT_RATE_LIMITER.limit({
+      key: rateLimitKey,
+    });
+    if (!rateLimit.success) {
+      return apiError(
+        'checkout_rate_limited',
+        'Too many checkout attempts. Please wait a minute and try again.',
+        429
+      );
+    }
     const checkout = validateCheckout(await readJson(request));
-    return json(await startCheckout(env, checkout), 201);
+    const clientHash = await sha256(rateLimitKey);
+    return json(await startCheckout(env, checkout, clientHash), 201);
   }
   if (request.method === 'POST' && url.pathname === '/api/webhooks/stripe') {
     return handleStripeWebhook(env, request);

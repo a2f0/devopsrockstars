@@ -24,7 +24,11 @@ function readCart(): CartItemInput[] {
 }
 
 function writeCart(items: readonly CartItemInput[]) {
-  sessionStorage.setItem(CART_KEY, JSON.stringify(items));
+  try {
+    sessionStorage.setItem(CART_KEY, JSON.stringify(items));
+  } catch {
+    // The in-memory cart remains usable when browser storage is unavailable.
+  }
 }
 
 export function useStoreCart() {
