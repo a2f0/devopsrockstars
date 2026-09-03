@@ -13,6 +13,8 @@
     "test-headless": "NODE_OPTIONS='--experimental-specifier-resolution=node' npx wdio wdio.headless.conf.ts",
     "ci": "start-server-and-test start-test-server http-get://localhost:8081 test",
     "ci-headless": "start-server-and-test start-test-server http-get://localhost:8081 test-headless",
+    "agent-tool": "tsx packages/agent-tool/src/index.ts",
+    "agent-tool:test": "tsx --test packages/agent-tool/test/*.test.ts",
     "format": "biome format --write",
     "build": "NODE_OPTIONS='--import tsx' webpack --mode production",
     "dev:cloudflare": "pnpm run build && wrangler dev --local",
@@ -22,7 +24,7 @@
     "lint": "biome lint --fix",
     "lint:md": "markdownlint-cli2",
     "compile": "tsc",
-    "unit": "tsx --test worker/**/*.test.ts",
+    "unit": "tsx --test worker/**/*.test.ts packages/agent-tool/test/*.test.ts",
     "prepare": "pnpm run compile",
     "pretest": "pnpm run compile",
     "posttest": "pnpm run lint"
