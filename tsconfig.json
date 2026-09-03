@@ -18,6 +18,6 @@
     "allowSyntheticDefaultImports": true,
     "sourceMap": true
   },
-  "include": ["src/image/chicago_skyline.svg", "**/*.ts", "**/*.tsx"],
+  "include": ["packages/**/*.ts", "packages/**/*.tsx"],
   "exclude": [".ts-out/**/*"]
 }

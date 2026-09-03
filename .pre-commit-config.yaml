@@ -50,6 +50,6 @@ repos:
       language: system
     - id: depcheck
       name: depcheck
-      entry: pnpm exec depcheck
+      entry: pnpm run depcheck
       pass_filenames: false
       language: system

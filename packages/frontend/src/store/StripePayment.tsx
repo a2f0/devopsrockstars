@@ -5,7 +5,10 @@ import type {
 } from '@stripe/stripe-js';
 import {loadStripe} from '@stripe/stripe-js/pure';
 import React, {useEffect, useRef, useState} from 'react';
-import type {CreateCheckoutResponse, ShippingInput} from './contracts';
+import type {
+  CreateCheckoutResponse,
+  ShippingInput,
+} from '@devopsrockstars/store-contracts';
 import {Button, FormActions, PaymentHost, Status} from './StoreStyles';
 
 let stripeKey: string | null = null;

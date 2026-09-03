@@ -58,9 +58,9 @@ jobs:
       - name: Build
         run: pnpm run build
       - name: Apply Cloudflare migrations
-        run: pnpm exec wrangler d1 migrations apply devopsrockstars-store --remote
+        run: pnpm run db:migrate:remote
       - name: Deploy Cloudflare Worker
-        run: pnpm exec wrangler deploy
+        run: pnpm --filter @devopsrockstars/backend deploy
 
   deploy:
     runs-on: ubuntu-latest
@@ -88,8 +88,8 @@ jobs:
       - name: deploy to s3
         run: |
           # First sync all assets (excluding index.html)
-          aws s3 sync --acl=public-read ./build s3://devopsrockstars.com --exclude "index.html"
+          aws s3 sync --acl=public-read ./packages/frontend/build s3://devopsrockstars.com --exclude "index.html"
           # Then copy index.html separately
-          aws s3 cp --acl=public-read ./build/index.html s3://devopsrockstars.com/index.html
+          aws s3 cp --acl=public-read ./packages/frontend/build/index.html s3://devopsrockstars.com/index.html
           # Finally cleanup old files
-          aws s3 sync --acl=public-read --delete ./build s3://devopsrockstars.com
+          aws s3 sync --acl=public-read --delete ./packages/frontend/build s3://devopsrockstars.com

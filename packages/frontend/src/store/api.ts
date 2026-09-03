@@ -4,7 +4,7 @@ import type {
   StoreErrorResponse,
   StorefrontResponse,
   StoreOrderResponse,
-} from './contracts';
+} from '@devopsrockstars/store-contracts';
 
 class StoreApiError extends Error {
   readonly code: string;

@@ -1,0 +1,15 @@
+{
+  "name": "@devopsrockstars/backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "db:migrate:local": "wrangler d1 migrations apply devopsrockstars-store --local",
+    "db:migrate:remote": "wrangler d1 migrations apply devopsrockstars-store --remote",
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev --local"
+  },
+  "dependencies": {
+    "@devopsrockstars/store-contracts": "workspace:*"
+  }
+}

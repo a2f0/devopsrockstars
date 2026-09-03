@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 
-import type {CreateCheckoutRequest} from '../src/store/contracts';
+import type {CreateCheckoutRequest} from '@devopsrockstars/store-contracts';
 import {
   CheckoutCreationError,
   type CheckoutDependencies,

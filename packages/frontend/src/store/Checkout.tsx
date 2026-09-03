@@ -6,7 +6,7 @@ import type {
   CreateCheckoutResponse,
   ShippingInput,
   StorefrontResponse,
-} from './contracts';
+} from '@devopsrockstars/store-contracts';
 import {formatMoney} from './format';
 import {
   ActionLink,

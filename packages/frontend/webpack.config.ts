@@ -7,7 +7,7 @@ import type {Configuration} from 'webpack';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const config: Configuration = {
-  entry: './src/index.tsx',
+  entry: path.resolve(__dirname, 'src/index.tsx'),
   output: {
     path: path.resolve(__dirname, 'build'),
     publicPath: '/',
@@ -36,7 +36,7 @@ const config: Configuration = {
   devtool: 'source-map',
   plugins: [
     new HtmlWebpackPlugin({
-      template: path.resolve('./index.html'),
+      template: path.resolve(__dirname, 'index.html'),
       scriptLoading: 'module',
       minify: false,
       conservativeCollapse: false,
@@ -45,7 +45,7 @@ const config: Configuration = {
       removeComments: false,
     }),
     new CopyWebpackPlugin({
-      patterns: [{from: 'static', to: 'static'}],
+      patterns: [{from: path.resolve(__dirname, 'static'), to: 'static'}],
     }),
   ],
   experiments: {
