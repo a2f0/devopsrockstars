@@ -63,15 +63,28 @@ function stringField(source: string, key: string): string {
   return typeof value === 'string' ? value : '';
 }
 
-function firstPrNumber(source: string | null): string {
-  if (source === null) {
-    return '';
-  }
+export function selectOpenPrNumber(
+  source: string,
+  branch: string,
+  headRepo: string
+): string {
   const parsed = safeParse(source);
-  if (!Array.isArray(parsed) || parsed.length === 0) {
+  if (!Array.isArray(parsed)) {
     return '';
   }
-  const numberField = fieldOf(parsed[0], 'number');
+  const matches = parsed.filter(candidate => {
+    const repository = fieldOf(candidate, 'headRepository');
+    return (
+      fieldOf(candidate, 'headRefName') === branch &&
+      fieldOf(repository, 'nameWithOwner') === headRepo
+    );
+  });
+  if (matches.length > 1) {
+    throw new Error(
+      `Multiple open PRs match '${headRepo}:${branch}'; refusing to choose one.`
+    );
+  }
+  const numberField = fieldOf(matches[0], 'number');
   return typeof numberField === 'number' ? String(numberField) : '';
 }
 
@@ -274,6 +287,7 @@ export function resolveRepoContext(): {
   branch: string;
   repo: string;
   defaultBranch: string;
+  pushRepo: string;
 } {
   const branch = run('git', ['rev-parse', '--abbrev-ref', 'HEAD']);
 
@@ -297,7 +311,37 @@ export function resolveRepoContext(): {
     );
   }
 
-  return {branch, repo, defaultBranch};
+  return {branch, repo, defaultBranch, pushRepo: resolvePushRepo(branch, repo)};
+}
+
+/** Repository receiving a normal push of the current branch. */
+function resolvePushRepo(branch: string, fallbackRepo: string): string {
+  const remote =
+    tryRun('git', ['config', '--get', `branch.${branch}.pushRemote`]) ??
+    tryRun('git', ['config', '--get', 'remote.pushDefault']) ??
+    tryRun('git', ['config', '--get', `branch.${branch}.remote`]);
+  if (remote === null || remote.length === 0 || remote === '.') {
+    return fallbackRepo;
+  }
+  const remoteUrl = tryRun('git', ['remote', 'get-url', '--push', remote]);
+  if (remoteUrl === null || remoteUrl.length === 0) {
+    throw new Error(`Could not resolve push URL for remote '${remote}'.`);
+  }
+  const remoteRepo = tryRun('gh', [
+    'repo',
+    'view',
+    remoteUrl,
+    '--json',
+    'nameWithOwner',
+  ]);
+  const pushRepo =
+    remoteRepo === null ? '' : stringField(remoteRepo, 'nameWithOwner');
+  if (pushRepo.length === 0) {
+    throw new Error(
+      `Could not resolve GitHub repository for remote '${remote}'.`
+    );
+  }
+  return pushRepo;
 }
 
 /**
@@ -307,7 +351,11 @@ export function resolveRepoContext(): {
  * otherwise pick the wrong review base or skip a duplicate-PR guard on a
  * transient failure.
  */
-export function findOpenPrNumber(branch: string, repo: string): string {
+export function findOpenPrNumber(
+  branch: string,
+  repo: string,
+  headRepo: string
+): string {
   const raw = tryRun('gh', [
     'pr',
     'list',
@@ -316,7 +364,7 @@ export function findOpenPrNumber(branch: string, repo: string): string {
     '--state',
     'open',
     '--json',
-    'number',
+    'number,headRefName,headRepository',
     '-R',
     repo,
   ]);
@@ -325,7 +373,7 @@ export function findOpenPrNumber(branch: string, repo: string): string {
       `Could not list open PRs for branch '${branch}'. Ensure gh is authenticated and reachable.`
     );
   }
-  return firstPrNumber(raw);
+  return selectOpenPrNumber(raw, branch, headRepo);
 }
 
 /** Read a known-open PR's title and base identity from GitHub. */
@@ -379,14 +427,14 @@ export function assertPinnedReviewBaseRef(
  * authenticated).
  */
 function fetchPrView(): PrView {
-  const {branch, repo} = resolveRepoContext();
+  const {branch, pushRepo, repo} = resolveRepoContext();
 
-  const currentBranchPr = viewCurrentBranchPr(branch);
+  const currentBranchPr = viewCurrentBranchPr(branch, pushRepo);
   if (currentBranchPr !== undefined) {
     return currentBranchPr;
   }
 
-  const prNumber = findOpenPrNumber(branch, repo);
+  const prNumber = findOpenPrNumber(branch, repo, pushRepo);
   if (prNumber.length === 0) {
     throw new Error(`No PR found for branch '${branch}'. Create a PR first.`);
   }
@@ -442,12 +490,18 @@ export function resolveReviewContext(
     viewCurrentBranchPr,
     viewPr,
   };
-  const {branch, repo: checkoutRepo, defaultBranch} = deps.resolveRepoContext();
+  const {
+    branch,
+    repo: checkoutRepo,
+    defaultBranch,
+    pushRepo,
+  } = deps.resolveRepoContext();
   const pinnedBaseRef = deps.resolvePinnedReviewBase(deps.pinnedBaseOid);
 
-  const currentBranchPr = deps.viewCurrentBranchPr(branch);
+  const currentBranchPr = deps.viewCurrentBranchPr(branch, pushRepo);
   const prNumber =
-    currentBranchPr?.prNumber ?? deps.findOpenPrNumber(branch, checkoutRepo);
+    currentBranchPr?.prNumber ??
+    deps.findOpenPrNumber(branch, checkoutRepo, pushRepo);
   if (prNumber.length === 0) {
     if (defaultBranch.length === 0) {
       throw new Error(

@@ -31,9 +31,9 @@ function readBody(): string {
  * branch.
  */
 export function openPr(rootDir: string, titleArg: string | undefined): number {
-  const {branch, repo, defaultBranch} = resolveRepoContext();
+  const {branch, repo, defaultBranch, pushRepo} = resolveRepoContext();
 
-  const existing = findOpenPrNumber(branch, repo);
+  const existing = findOpenPrNumber(branch, repo, pushRepo);
   if (existing.length > 0) {
     throw new Error(`An open PR already exists for '${branch}': #${existing}.`);
   }

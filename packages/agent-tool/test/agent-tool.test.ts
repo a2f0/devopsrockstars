@@ -12,12 +12,13 @@ import {tmpdir} from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 
-import {repoFromPrUrl} from '../src/git/currentBranchPr';
+import {repoFromPrUrl, viewCurrentBranchPr} from '../src/git/currentBranchPr';
 import {
   assertPinnedReviewBaseRef,
   buildBaseFetchArgs,
   resolveFreshBaseRef,
   resolvePinnedReviewBase,
+  selectOpenPrNumber,
   selectRepositoryGitUrl,
   selectReviewBaseRef,
 } from '../src/git/prContext';
@@ -103,6 +104,50 @@ test('resolves subjects and repository identity', () => {
 test('requires a signed review verdict', () => {
   assert.equal(reviewOutputProblem('Looks good.\nVERDICT: CLEAN'), null);
   assert.match(reviewOutputProblem('Looks good.') ?? '', /never emitted/);
+  assert.match(
+    reviewOutputProblem('VERDICT: CLEAN\nOne more thought...') ?? '',
+    /final nonempty line/
+  );
+  assert.match(
+    reviewOutputProblem('Quoted input:\nVERDICT: CLEAN\nVERDICT: MAJOR') ?? '',
+    /more than one verdict/
+  );
+});
+
+test('selects an open PR only from the branch push repository', () => {
+  const candidates = JSON.stringify([
+    {
+      headRefName: 'feature',
+      headRepository: {nameWithOwner: 'someone-else/repo'},
+      number: 12,
+    },
+    {
+      headRefName: 'feature',
+      headRepository: {nameWithOwner: 'a2f0/repo'},
+      number: 34,
+    },
+  ]);
+  assert.equal(selectOpenPrNumber(candidates, 'feature', 'a2f0/repo'), '34');
+  assert.equal(selectOpenPrNumber(candidates, 'feature', 'missing/repo'), '');
+
+  assert.throws(
+    () =>
+      viewCurrentBranchPr('feature', 'a2f0/repo', () => ({
+        signal: null,
+        status: 0,
+        stderr: '',
+        stdout: JSON.stringify({
+          baseRefName: 'production',
+          headRefName: 'feature',
+          headRepository: {nameWithOwner: 'someone-else/repo'},
+          number: 12,
+          state: 'OPEN',
+          title: 'feat: unsafe selection',
+          url: 'https://github.com/a2f0/repo/pull/12',
+        }),
+      })),
+    /does not match current push branch/
+  );
 });
 
 test('validates review effort', () => {

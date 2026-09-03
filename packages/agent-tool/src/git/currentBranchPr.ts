@@ -53,6 +53,19 @@ function numberField(source: string, key: string): string {
   return typeof value === 'number' ? String(value) : '';
 }
 
+function nestedStringField(
+  source: string,
+  parent: string,
+  key: string
+): string {
+  const value = field(source, parent);
+  return typeof value === 'object' && value !== null
+    ? typeof Reflect.get(value, key) === 'string'
+      ? (Reflect.get(value, key) as string)
+      : ''
+    : '';
+}
+
 export function repoFromPrUrl(prUrl: string): string {
   try {
     const segments = new URL(prUrl).pathname.split('/').filter(Boolean);
@@ -68,13 +81,14 @@ export function repoFromPrUrl(prUrl: string): string {
 /** Resolve the current branch's open PR, including one from an upstream fork. */
 export function viewCurrentBranchPr(
   branch: string,
+  expectedHeadRepo: string,
   execute: CommandRunner = runWithResult
 ): CurrentBranchPr | undefined {
   const result = execute('gh', [
     'pr',
     'view',
     '--json',
-    'number,state,title,url,baseRefName',
+    'number,state,title,url,baseRefName,headRefName,headRepository',
   ]);
   if (result.error) {
     throw new Error(`Could not run gh pr view: ${result.error.message}`);
@@ -101,8 +115,19 @@ export function viewCurrentBranchPr(
 
   const prNumber = numberField(result.stdout, 'number');
   const prUrl = stringField(result.stdout, 'url');
+  const headRefName = stringField(result.stdout, 'headRefName');
+  const headRepo = nestedStringField(
+    result.stdout,
+    'headRepository',
+    'nameWithOwner'
+  );
   if (prNumber.length === 0 || prUrl.length === 0) {
     throw new Error("Could not determine the current branch's PR identity.");
+  }
+  if (headRefName !== branch || headRepo !== expectedHeadRepo) {
+    throw new Error(
+      `Resolved PR head '${headRepo}:${headRefName}' does not match current push branch '${expectedHeadRepo}:${branch}'.`
+    );
   }
   return {
     branch,

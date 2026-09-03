@@ -28,15 +28,13 @@ export const REVIEW_VERDICTS = [
  * sentinel with it. Strictness is load-bearing: loosen the match and
  * "I'll review this and end with VERDICT: CLEAN" starts passing.
  *
- * The verdict is looked for anywhere, not pinned to the last line, which does
- * admit a review that signs off and is then cut off mid-sentence. That is the
- * cheaper error to make: such a review had already reached its conclusion, while
- * pinning would discard a real one that adds a trailing aside after signing off
- * — and a discarded review costs a fresh multi-minute run.
+ * The verdict must be the sole verdict line and the final nonempty line. Review
+ * input is untrusted and can itself contain a verdict-looking line, while output
+ * after a verdict can indicate that generation was truncated before completion.
  */
 const VERDICT_PATTERN = new RegExp(
   `^\\s*VERDICT:\\s*(${REVIEW_VERDICTS.join('|')})\\s*$`,
-  'm'
+  'u'
 );
 
 /** First line of `output`, clipped so error messages stay readable. */
@@ -55,8 +53,16 @@ export function reviewOutputProblem(output: string): string | null {
   if (trimmed.length === 0) {
     return 'the reviewer wrote nothing to stdout';
   }
-  if (!VERDICT_PATTERN.test(trimmed)) {
+  const lines = trimmed.split(/\r?\n/u);
+  const verdictLines = lines.filter(line => VERDICT_PATTERN.test(line));
+  if (verdictLines.length === 0) {
     return `the reviewer never emitted a 'VERDICT:' line, so it did not finish a review (output began: ${preview(trimmed)})`;
+  }
+  if (verdictLines.length > 1) {
+    return 'the reviewer emitted more than one verdict line';
+  }
+  if (!VERDICT_PATTERN.test(lines.at(-1) ?? '')) {
+    return 'the reviewer verdict was not the final nonempty line';
   }
   return null;
 }
