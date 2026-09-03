@@ -6,7 +6,7 @@
   browser tests
 - `packages/backend` — Cloudflare Worker, D1 migrations, and Wrangler
   configuration
-- `packages/store-contracts` — API types shared by the frontend and backend
+- `packages/shared-types` — API types shared by the frontend and backend
 - `packages/agent-tool` — guarded review, pull request, and merge tooling
 
 Root scripts orchestrate the packages, so the existing development, test, and

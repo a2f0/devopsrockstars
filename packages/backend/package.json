@@ -10,6 +10,6 @@
     "dev": "wrangler dev --local"
   },
   "dependencies": {
-    "@devopsrockstars/store-contracts": "workspace:*"
+    "@devopsrockstars/shared-types": "workspace:*"
   }
 }

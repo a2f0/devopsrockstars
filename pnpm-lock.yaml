@@ -94,15 +94,15 @@ importers:
 
   packages/backend:
     dependencies:
-      '@devopsrockstars/store-contracts':
+      '@devopsrockstars/shared-types':
         specifier: workspace:*
-        version: link:../store-contracts
+        version: link:../shared-types
 
   packages/frontend:
     dependencies:
-      '@devopsrockstars/store-contracts':
+      '@devopsrockstars/shared-types':
         specifier: workspace:*
-        version: link:../store-contracts
+        version: link:../shared-types
       '@stripe/stripe-js':
         specifier: 9.15.0
         version: 9.15.0
@@ -132,7 +132,7 @@ importers:
         specifier: 8.1.0
         version: 8.1.0(typescript@6.0.3)
 
-  packages/store-contracts: {}
+  packages/shared-types: {}
 
 packages:
 

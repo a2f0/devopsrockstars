@@ -1,7 +1,7 @@
 import type {
   CreateCheckoutResponse,
   ShippingInput,
-} from '@devopsrockstars/store-contracts';
+} from '@devopsrockstars/shared-types';
 
 const CHECKOUT_CLIENT_KEY = 'devopsrockstars.store.checkout-client';
 const PENDING_CHECKOUT_KEY = 'devopsrockstars.store.pending-checkout';

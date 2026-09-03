@@ -22,7 +22,7 @@
       ],
       "project": ["src/**/*.{ts,tsx}", "e2e/**/*.ts", "*.ts"]
     },
-    "packages/store-contracts": {
+    "packages/shared-types": {
       "project": ["src/**/*.ts"]
     }
   },

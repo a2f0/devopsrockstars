@@ -1,7 +1,7 @@
 import type {
   CreateCheckoutRequest,
   CreateCheckoutResponse,
-} from '@devopsrockstars/store-contracts';
+} from '@devopsrockstars/shared-types';
 import {randomToken, sha256} from './crypto';
 import {
   cancelPaymentIntent,

@@ -1,7 +1,7 @@
 import type {
   StoreOrderResponse,
   StoreOrderStatus,
-} from '@devopsrockstars/store-contracts';
+} from '@devopsrockstars/shared-types';
 import {constantTimeEqual, sha256} from './crypto';
 import {cancelPaymentIntent, StripeRequestError} from './stripe';
 import type {Env} from './types';

@@ -1,4 +1,4 @@
-import type {ShippingInput} from '@devopsrockstars/store-contracts';
+import type {ShippingInput} from '@devopsrockstars/shared-types';
 
 const STRIPE_ORIGIN = 'https://api.stripe.com';
 const STRIPE_API_VERSION = '2026-02-25.clover';
