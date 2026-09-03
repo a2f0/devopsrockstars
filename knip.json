@@ -3,15 +3,23 @@
   "entry": [
     "wdio.shared.conf.ts",
     "wdio.headless.conf.ts",
-    "e2e/specs/**/*.spec.ts"
+    "e2e/specs/**/*.spec.ts",
+    "packages/agent-tool/test/**/*.test.ts",
+    "src/store/**/*.test.ts",
+    "worker/**/*.test.ts"
   ],
-  "project": ["src/**/*.{ts,tsx}", "e2e/**/*.ts", "*.ts"],
+  "project": [
+    "src/**/*.{ts,tsx}",
+    "worker/**/*.ts",
+    "e2e/**/*.ts",
+    "packages/agent-tool/**/*.ts",
+    "*.ts"
+  ],
   "ignoreDependencies": [
     "@types/mocha",
     "@wdio/dot-reporter",
     "@wdio/local-runner",
     "@wdio/spec-reporter",
-    "depcheck",
-    "markdownlint-cli2"
+    "depcheck"
   ]
 }
