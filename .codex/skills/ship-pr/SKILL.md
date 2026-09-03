@@ -108,11 +108,22 @@ fi
 BASE_HTTPS_URL=$(gh repo view "$REPO" --json url -q .url)
 BASE_HOST=${BASE_HTTPS_URL#*://}
 BASE_HOST=${BASE_HOST%%/*}
-case $(gh config get git_protocol --host "$BASE_HOST") in
-  ssh) BASE_REPO_URL=$(gh repo view "$REPO" --json sshUrl -q .sshUrl) ;;
-  https) BASE_REPO_URL="$BASE_HTTPS_URL" ;;
-  *) echo "Unsupported git protocol" >&2; exit 1 ;;
-esac
+BASE_REPO_URL=""
+for REMOTE_NAME in $(git remote); do
+  REMOTE_URL=$(git remote get-url "$REMOTE_NAME")
+  REMOTE_REPO=$(gh repo view "$REMOTE_URL" --json nameWithOwner -q .nameWithOwner 2>/dev/null || true)
+  if test "$REMOTE_REPO" = "$REPO"; then
+    BASE_REPO_URL="$REMOTE_URL"
+    break
+  fi
+done
+if test -z "$BASE_REPO_URL"; then
+  case $(gh config get git_protocol --host "$BASE_HOST") in
+    ssh) BASE_REPO_URL=$(gh repo view "$REPO" --json sshUrl -q .sshUrl) ;;
+    https) BASE_REPO_URL="$BASE_HTTPS_URL" ;;
+    *) echo "Unsupported git protocol" >&2; exit 1 ;;
+  esac
+fi
 BASE_OID=$(git ls-remote "$BASE_REPO_URL" "refs/heads/$BASE_REF" | awk 'NR == 1 { print $1 }')
 test -n "$BASE_OID"
 git fetch "$BASE_REPO_URL" "$BASE_OID"

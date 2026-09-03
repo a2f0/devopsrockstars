@@ -131,6 +131,29 @@ export function selectRepositoryGitUrl(
 }
 
 function resolveRepositoryGitUrl(repo: string): string {
+  const remotes = run('git', ['remote'])
+    .split(/\s+/)
+    .filter(remote => remote.length > 0);
+  for (const remote of remotes) {
+    const remoteUrl = tryRun('git', ['remote', 'get-url', remote]);
+    if (remoteUrl === null || remoteUrl.length === 0) {
+      continue;
+    }
+    const remoteRepoRaw = tryRun('gh', [
+      'repo',
+      'view',
+      remoteUrl,
+      '--json',
+      'nameWithOwner',
+    ]);
+    if (
+      remoteRepoRaw !== null &&
+      stringField(remoteRepoRaw, 'nameWithOwner') === repo
+    ) {
+      return remoteUrl;
+    }
+  }
+
   const repoRaw = run('gh', ['repo', 'view', repo, '--json', 'url,sshUrl']);
   const httpsUrl = stringField(repoRaw, 'url');
   const sshUrl = stringField(repoRaw, 'sshUrl');
