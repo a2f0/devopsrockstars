@@ -23,7 +23,6 @@ const SearchField = styled.input`
   width: min(250px, calc(100% - 24px));
   box-sizing: border-box;
   margin: 0 auto;
-  text-align: center;
 `;
 
 const HiddenSubmit = styled.button`
@@ -59,7 +58,7 @@ const Search = React.memo(() => {
           alt="DevOpsRockstars"
         />
       </SearchLogo>
-      <SearchField aria-label="Search" name="query" type="search" />
+      <SearchField aria-label="Search" name="query" type="text" />
       <HiddenSubmit type="submit">Search</HiddenSubmit>
       {submitted && (
         <SearchStatus role="status">
