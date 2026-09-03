@@ -22,6 +22,7 @@
     "deploy:cloudflare": "pnpm run build && pnpm --filter @devopsrockstars/backend deploy",
     "db:migrate:local": "pnpm --filter @devopsrockstars/backend db:migrate:local",
     "db:migrate:remote": "pnpm --filter @devopsrockstars/backend db:migrate:remote",
+    "depcheck": "depcheck && pnpm --recursive exec depcheck",
     "lint": "biome lint --fix",
     "lint:md": "markdownlint-cli2",
     "compile": "tsc",
