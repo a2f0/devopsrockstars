@@ -1,6 +1,6 @@
 ---
 name: address-gemini-feedback
-description: Triage and resolve Gemini PR review feedback on the current branch for devopsrockstars-frontend. Use when a PR has Gemini review comments, code changes are needed, and Codex should apply fixes, run validation, push updates, and reply in the original review threads.
+description: Triage and resolve Gemini PR review feedback on the current branch for devopsrockstars. Use when a PR has Gemini review comments, code changes are needed, and Codex should apply fixes, run validation, push updates, and reply in the original review threads.
 ---
 
 # Address Gemini Feedback

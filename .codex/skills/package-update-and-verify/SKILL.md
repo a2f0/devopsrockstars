@@ -1,6 +1,6 @@
 ---
 name: package-update-and-verify
-description: Update dependencies in devopsrockstars-frontend and verify project health end-to-end. Use when asked to update all dependencies (or most dependencies), refresh pnpm lockfiles, ensure TypeScript compiles, and confirm tests pass before finishing.
+description: Update dependencies in devopsrockstars and verify project health end-to-end. Use when asked to update all dependencies (or most dependencies), refresh pnpm lockfiles, ensure TypeScript compiles, and confirm tests pass before finishing.
 ---
 
 # Package Update And Verify

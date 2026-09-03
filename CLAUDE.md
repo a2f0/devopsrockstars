@@ -42,7 +42,8 @@ pnpm run ci                  # Full CI: start server + run tests
 pnpm run ci-headless        # Full CI in headless mode
 
 # Run specific test spec
-npx wdio wdio.shared.conf.ts --spec=./e2e/specs/basic.spec.ts
+pnpm --filter @devopsrockstars/frontend exec wdio wdio.shared.conf.ts \
+  --spec=./e2e/specs/basic.spec.ts
 ```
 
 ## Package Management
@@ -61,7 +62,15 @@ Always use `pnpm` commands instead of `npm`:
 
 ## Architecture Overview
 
-This is a React-based single-page application for DevOpsRockstars LLC with the following key characteristics:
+This is a pnpm monorepo for the DevOps Rockstars React site and Cloudflare
+store backend.
+
+### Workspace packages
+
+- `packages/frontend` — React application, assets, Webpack, and browser tests
+- `packages/backend` — Cloudflare Worker, D1 migrations, and Wrangler config
+- `packages/store-contracts` — shared API request and response types
+- `packages/agent-tool` — repository shipping automation
 
 ### Core Stack
 
@@ -80,16 +89,17 @@ This is a React-based single-page application for DevOpsRockstars LLC with the f
 
 ### Key Components
 
-- `src/index.tsx` - Main router and app entry point
-- `src/Header.tsx` - Navigation header with company link
-- `src/Footer.tsx` - Footer (hidden on main page)
-- `src/Skyline.tsx` - Main page content
-- `src/Company.tsx` - Company information page
-- `src/Map.tsx` - Full-screen Leaflet map component
+- `packages/frontend/src/index.tsx` - Main router and app entry point
+- `packages/frontend/src/Header.tsx` - Navigation header with company link
+- `packages/frontend/src/Footer.tsx` - Footer (hidden on main page)
+- `packages/frontend/src/Skyline.tsx` - Main page content
+- `packages/frontend/src/Company.tsx` - Company information page
+- `packages/frontend/src/Map.tsx` - Full-screen Leaflet map component
 
 ### Styled Components System
 
-Located in `src/styled-components/`, provides reusable layout primitives:
+Located in `packages/frontend/src/styled-components/`, these files provide
+reusable layout primitives:
 
 - Flex container components for different alignments
 - Header/Footer/Main layout components
@@ -98,9 +108,9 @@ Located in `src/styled-components/`, provides reusable layout primitives:
 
 ### Static Assets
 
-- SVG icons and logos in `static/image/`
-- Contact files (vCard, PGP key) in `static/contact/`
-- Favicon in `static/favicon/`
+- SVG icons and logos in `packages/frontend/static/image/`
+- Contact files in `packages/frontend/static/contact/`
+- Favicon in `packages/frontend/static/favicon/`
 
 ## Configuration Details
 
@@ -127,7 +137,7 @@ Located in `src/styled-components/`, provides reusable layout primitives:
 
 - WebDriverIO with Mocha framework
 - Chrome browser automation
-- Page object model in `e2e/pageObjects/`
+- Page object model in `packages/frontend/e2e/pageObjects/`
 - Tests validate page loading and component visibility
 
 ## Pre-commit Hooks
@@ -136,6 +146,7 @@ The project uses pre-commit hooks. After installation, hooks run automatically o
 
 ## Deployment
 
-- Production deployment via Vercel using GitHub Actions
+- Production frontend deployment to Amazon S3 via GitHub Actions
+- Store API deployment to Cloudflare Workers via GitHub Actions
 - Terraform configuration for infrastructure in `terraform/` directory
-- Build artifacts generated in `build/` directory
+- Frontend build artifacts generated in `packages/frontend/build/`

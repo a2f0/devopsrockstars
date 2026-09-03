@@ -1,13 +1,13 @@
 {
-  "$schema": "./node_modules/wrangler/config-schema.json",
+  "$schema": "../../node_modules/wrangler/config-schema.json",
   "name": "devopsrockstars-store",
-  "main": "./worker/index.ts",
+  "main": "./src/index.ts",
   "compatibility_date": "2026-08-31",
   "vars": {
     "STOREFRONT_ORIGINS": "https://devopsrockstars.com,https://www.devopsrockstars.com"
   },
   "assets": {
-    "directory": "./build",
+    "directory": "../frontend/build",
     "binding": "ASSETS",
     "not_found_handling": "single-page-application",
     "run_worker_first": ["/api/*"]
@@ -17,7 +17,7 @@
       "binding": "DB",
       "database_name": "devopsrockstars-store",
       "database_id": "3c4ece27-9b96-4978-b747-77a9fa67b7e2",
-      "migrations_dir": "migrations"
+      "migrations_dir": "./migrations"
     }
   ],
   "ratelimits": [
