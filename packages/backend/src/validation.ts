@@ -2,7 +2,7 @@ import type {
   CartItemInput,
   CreateCheckoutRequest,
   ShippingInput,
-} from '@devopsrockstars/store-contracts';
+} from '@devopsrockstars/shared-types';
 
 const STATE_CODES = new Set([
   'AK',

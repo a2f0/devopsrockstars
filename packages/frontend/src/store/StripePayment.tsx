@@ -8,7 +8,7 @@ import React, {useEffect, useRef, useState} from 'react';
 import type {
   CreateCheckoutResponse,
   ShippingInput,
-} from '@devopsrockstars/store-contracts';
+} from '@devopsrockstars/shared-types';
 import {Button, FormActions, PaymentHost, Status} from './StoreStyles';
 
 let stripeKey: string | null = null;

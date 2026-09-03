@@ -14,7 +14,7 @@
     "@svgr/webpack": "8.1.0"
   },
   "dependencies": {
-    "@devopsrockstars/store-contracts": "workspace:*",
+    "@devopsrockstars/shared-types": "workspace:*",
     "@stripe/stripe-js": "9.15.0",
     "leaflet": "1.9.4",
     "react": "19.2.8",
