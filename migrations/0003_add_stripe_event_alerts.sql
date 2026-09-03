@@ -16,6 +16,7 @@ WHEN NEW.checkout_client_hash IS NOT NULL
     FROM orders
     WHERE checkout_client_hash = NEW.checkout_client_hash
       AND status IN ('creating_payment', 'awaiting_payment')
+      AND reservation_expires_at > NEW.created_at
   )
 BEGIN
   SELECT RAISE(ABORT, 'checkout_already_active');
@@ -29,6 +30,7 @@ WHEN NEW.checkout_network_hash IS NOT NULL
     FROM orders
     WHERE checkout_network_hash = NEW.checkout_network_hash
       AND status IN ('creating_payment', 'awaiting_payment')
+      AND reservation_expires_at > NEW.created_at
   ) >= 2
 BEGIN
   SELECT RAISE(ABORT, 'checkout_network_busy');
@@ -40,6 +42,7 @@ WHEN (
   SELECT COUNT(*)
   FROM orders
   WHERE status IN ('creating_payment', 'awaiting_payment')
+    AND reservation_expires_at > NEW.created_at
 ) >= 20
 BEGIN
   SELECT RAISE(ABORT, 'checkout_store_busy');

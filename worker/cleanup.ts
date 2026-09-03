@@ -70,10 +70,6 @@ export async function cleanupExpiredOrders(
   dependencies: CleanupDependencies = defaultDependencies
 ) {
   const secretKey = env.STRIPE_SECRET_KEY?.trim();
-  if (!secretKey) {
-    console.error('Expired orders cannot be cleaned up without Stripe.');
-    return;
-  }
   const now = new Date(scheduledTime).toISOString();
   const expired = await env.DB.prepare(
     `SELECT id, stripe_payment_intent_id, currency, total_amount
@@ -89,6 +85,12 @@ export async function cleanupExpiredOrders(
   for (const order of expired.results) {
     try {
       if (order.stripe_payment_intent_id) {
+        if (!secretKey) {
+          console.error(
+            `Expired order ${order.id} cannot be reconciled without Stripe.`
+          );
+          continue;
+        }
         try {
           if (
             await dependencies.cancelPaymentIntent(

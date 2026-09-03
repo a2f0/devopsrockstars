@@ -19,7 +19,7 @@ import type {
   Env,
   RateLimit,
 } from './types';
-import {processEvent, type StripeEvent} from './webhook';
+import {handleStripeWebhook, processEvent, type StripeEvent} from './webhook';
 
 function result<T>(results: readonly T[] = [], changes = 1): D1Result<T> {
   return {meta: {changes}, results, success: true};
@@ -370,6 +370,27 @@ test('cleanup cancels expired orders with and without PaymentIntents', async () 
   }
 });
 
+test('cleanup expires no-intent orders without Stripe configuration', async () => {
+  const database = new FakeDatabase();
+  database.allValues = [
+    {
+      currency: 'usd',
+      id: '12345678-1234-1234-1234-123456789abc',
+      stripe_payment_intent_id: null,
+      total_amount: 4000,
+    },
+  ];
+  await cleanupExpiredOrders(
+    {DB: database},
+    Date.parse('2026-09-03T17:00:00.000Z')
+  );
+  assert.ok(
+    database.runs.some(statement =>
+      statement.query.includes("SET status = 'canceled'")
+    )
+  );
+});
+
 function stripeEvent(
   type: string,
   object: Record<string, unknown>
@@ -540,6 +561,17 @@ test('webhook records amount or currency mismatches without marking paid', async
   }
 });
 
+test('webhook rejects an oversized body before signature work', async () => {
+  const response = await handleStripeWebhook(
+    {DB: new FakeDatabase(), STRIPE_WEBHOOK_SECRET: 'whsec_test'},
+    new Request('https://store.example/api/webhooks/stripe', {
+      method: 'POST',
+      body: new Uint8Array(65_537),
+    })
+  );
+  assert.equal(response.status, 400);
+});
+
 test('order lookup requires the matching bearer token hash', async () => {
   const database = new FakeDatabase();
   database.firstValue = {
@@ -601,6 +633,30 @@ test('order cancellation authenticates and releases its reservation', async () =
       statement.query.includes("SET status = 'canceled'")
     )
   );
+});
+
+test('order cancellation returns status when Stripe says payment advanced', async () => {
+  const database = new FakeDatabase();
+  database.firstValue = {
+    access_token_hash: await sha256('correct-token'),
+    currency: 'usd',
+    id: '12345678-1234-1234-1234-123456789abc',
+    reservation_expires_at: '2026-09-03T17:00:00.000Z',
+    status: 'awaiting_payment',
+    stripe_payment_intent_id: 'pi_store',
+    total_amount: 4000,
+  };
+  const order = await cancelOrder(
+    {DB: database, STRIPE_SECRET_KEY: 'sk_test'},
+    '12345678-1234-1234-1234-123456789abc',
+    'correct-token',
+    async () => {
+      throw new StripeRequestError('PaymentIntent cancellation', 400);
+    }
+  );
+
+  assert.equal(order?.status, 'awaiting_payment');
+  assert.equal(database.runs.length, 0);
 });
 
 test('checkout route applies the Cloudflare rate limit before creating work', async () => {

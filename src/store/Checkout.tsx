@@ -139,10 +139,14 @@ const Checkout = React.memo(() => {
 
   const abandonPayment = async () => {
     if (!checkout) return;
-    await cancelCheckout(checkout.orderId, checkout.orderToken);
+    const order = await cancelCheckout(checkout.orderId, checkout.orderToken);
     clearPendingCheckout();
-    setCheckout(null);
-    setReservedItems(null);
+    if (order.status === 'canceled') {
+      setCheckout(null);
+      setReservedItems(null);
+    } else {
+      navigate(`/store/receipt?order=${checkout.orderId}`);
+    }
   };
 
   if (displayedItems.length === 0) {

@@ -107,6 +107,7 @@ export async function cancelOrder(
     } catch (error) {
       if (error instanceof OrderCancellationError) throw error;
       if (error instanceof StripeRequestError) {
+        if (error.status === 400) return response(order);
         throw new OrderCancellationError(
           'payment_provider_unavailable',
           'The payment provider could not cancel this checkout.',

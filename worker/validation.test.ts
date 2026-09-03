@@ -65,3 +65,9 @@ test('reports invalid variant IDs as cart errors', () => {
       error instanceof CheckoutValidationError && error.code === 'invalid_cart'
   );
 });
+
+test('accepts an omitted optional address line', () => {
+  const input = validCheckout();
+  Reflect.deleteProperty(input.shipping, 'addressLine2');
+  assert.equal(validateCheckout(input).shipping.addressLine2, '');
+});

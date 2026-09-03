@@ -164,6 +164,7 @@ function readShipping(value: unknown): ShippingInput {
     throw new CheckoutValidationError('invalid_shipping', 'State is invalid.');
   }
   const postalCode = text(field(shipping, 'postalCode'), 'ZIP code', 10);
+  const addressLine2 = field(shipping, 'addressLine2');
   if (!/^[0-9]{5}(?:-[0-9]{4})?$/u.test(postalCode)) {
     throw new CheckoutValidationError(
       'invalid_shipping',
@@ -180,12 +181,10 @@ function readShipping(value: unknown): ShippingInput {
     name: text(field(shipping, 'name'), 'Name', 100),
     email,
     addressLine1: text(field(shipping, 'addressLine1'), 'Address', 100),
-    addressLine2: text(
-      field(shipping, 'addressLine2'),
-      'Address 2',
-      100,
-      false
-    ),
+    addressLine2:
+      addressLine2 === undefined
+        ? ''
+        : text(addressLine2, 'Address 2', 100, false),
     city: text(field(shipping, 'city'), 'City', 100),
     state,
     postalCode,

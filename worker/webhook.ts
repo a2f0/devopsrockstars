@@ -1,5 +1,5 @@
 import {constantTimeEqual, toHex} from './crypto';
-import {json} from './http';
+import {json, readBody} from './http';
 import type {D1PreparedStatement, Env} from './types';
 
 const SIGNATURE_TOLERANCE_SECONDS = 300;
@@ -319,7 +319,12 @@ export async function handleStripeWebhook(env: Env, request: Request) {
     return json({error: 'Webhook is not configured.'}, 503);
   }
   const signature = request.headers.get('Stripe-Signature');
-  const payload = await request.text();
+  let payload: string;
+  try {
+    payload = await readBody(request, 65_536);
+  } catch {
+    return json({error: 'Webhook payload is too large or unreadable.'}, 400);
+  }
   if (
     !signature ||
     !(await verifyStripeSignature(payload, signature, secret))

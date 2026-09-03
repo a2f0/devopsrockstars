@@ -24,7 +24,7 @@
     "lint": "biome lint --fix",
     "lint:md": "markdownlint-cli2",
     "compile": "tsc",
-    "unit": "tsx --test worker/**/*.test.ts src/store/**/*.test.ts packages/agent-tool/test/*.test.ts",
+    "unit": "tsx --test 'worker/**/*.test.ts' 'src/store/**/*.test.ts' 'packages/agent-tool/test/*.test.ts'",
     "prepare": "pnpm run compile",
     "pretest": "pnpm run compile",
     "posttest": "pnpm run lint"

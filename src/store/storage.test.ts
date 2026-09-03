@@ -78,7 +78,7 @@ test('persists and resumes an unexpired checkout', () => {
 
 test('discards expired or malformed pending checkouts', () => {
   storePendingCheckout(
-    pendingCheckout(new Date(Date.now() - 60_000).toISOString())
+    pendingCheckout(new Date(Date.now() - 3 * 60_000).toISOString())
   );
   assert.equal(readPendingCheckout(), null);
   sessionStorage.setItem(
@@ -86,6 +86,12 @@ test('discards expired or malformed pending checkouts', () => {
     JSON.stringify({checkout: {clientSecret: 'untrusted'}})
   );
   assert.equal(readPendingCheckout(), null);
+});
+
+test('keeps a recently expired checkout available for cancellation', () => {
+  const pending = pendingCheckout(new Date(Date.now() - 60_000).toISOString());
+  storePendingCheckout(pending);
+  assert.deepEqual(readPendingCheckout(), pending);
 });
 
 test('keeps a random checkout client token stable for the page session', () => {

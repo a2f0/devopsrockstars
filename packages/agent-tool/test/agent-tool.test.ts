@@ -332,9 +332,19 @@ test('review snapshots contain only immutable tracked commit content', () => {
     const tracked = path.join(repository, 'tracked.txt');
     writeFileSync(tracked, 'committed\n');
     execFileSync('git', ['add', 'tracked.txt'], {cwd: repository});
-    execFileSync('git', ['commit', '-m', 'test: create fixture'], {
-      cwd: repository,
-    });
+    execFileSync(
+      'git',
+      [
+        '-c',
+        'commit.gpgsign=false',
+        '-c',
+        'core.hooksPath=/dev/null',
+        'commit',
+        '-m',
+        'test: create fixture',
+      ],
+      {cwd: repository}
+    );
     const commit = execFileSync('git', ['rev-parse', 'HEAD'], {
       cwd: repository,
       encoding: 'utf8',

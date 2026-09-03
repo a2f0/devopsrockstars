@@ -14,8 +14,7 @@ export function apiError(code: string, message: string, status: number) {
   return json({error: {code, message}} satisfies StoreErrorResponse, status);
 }
 
-export async function readJson(request: Request): Promise<unknown> {
-  const maxBytes = 32_768;
+export async function readBody(request: Request, maxBytes: number) {
   const declaredLength = Number(request.headers.get('Content-Length') ?? 0);
   if (declaredLength > maxBytes) {
     throw new RequestBodyError('request_too_large');
@@ -43,9 +42,19 @@ export async function readJson(request: Request): Promise<unknown> {
   } finally {
     reader.releaseLock();
   }
+  return body;
+}
+
+export async function readJson(request: Request): Promise<unknown> {
   try {
-    return JSON.parse(body) as unknown;
-  } catch {
+    return JSON.parse(await readBody(request, 32_768)) as unknown;
+  } catch (error) {
+    if (
+      error instanceof RequestBodyError &&
+      error.code === 'request_too_large'
+    ) {
+      throw error;
+    }
     throw new RequestBodyError('invalid_json');
   }
 }

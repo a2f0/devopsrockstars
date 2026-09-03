@@ -126,7 +126,7 @@ export function readPendingCheckout(): PendingCheckout | null {
     if (
       !isPendingCheckout(pending) ||
       !Number.isFinite(expiration) ||
-      expiration <= Date.now()
+      expiration + 2 * 60_000 <= Date.now()
     ) {
       removeValue(PENDING_CHECKOUT_KEY);
       return null;

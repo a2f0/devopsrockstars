@@ -30,19 +30,29 @@ function writeCart(items: readonly CartItemInput[]) {
   }
 }
 
+export function addCartItem(
+  current: readonly CartItemInput[],
+  variantId: string
+) {
+  if (current.reduce((sum, item) => sum + item.quantity, 0) >= 2) {
+    return current;
+  }
+  const existing = current.find(item => item.variantId === variantId);
+  return existing
+    ? current.map(item =>
+        item.variantId === variantId
+          ? {...item, quantity: Math.min(item.quantity + 1, 2)}
+          : item
+      )
+    : [...current, {variantId, quantity: 1}];
+}
+
 export function useStoreCart() {
   const [items, setItems] = useState<readonly CartItemInput[]>(readCart);
 
   const add = useCallback((variantId: string) => {
     setItems(current => {
-      const existing = current.find(item => item.variantId === variantId);
-      const next = existing
-        ? current.map(item =>
-            item.variantId === variantId
-              ? {...item, quantity: Math.min(item.quantity + 1, 2)}
-              : item
-          )
-        : [...current, {variantId, quantity: 1}];
+      const next = addCartItem(current, variantId);
       writeCart(next);
       return next;
     });
