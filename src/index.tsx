@@ -5,6 +5,7 @@ import Company from './Company';
 import Footer from './Footer';
 import Header from './Header';
 import FullScreenMap from './Map';
+import Search from './Search';
 import Skyline from './Skyline';
 import Checkout from './store/Checkout';
 import Receipt from './store/Receipt';
@@ -29,6 +30,7 @@ function AppRouter() {
                 <Routes>
                   <Route path="/" element={<Skyline />} />
                   <Route path="/company" element={<Company />} />
+                  <Route path="/search" element={<Search />} />
                   <Route path="/store" element={<Store />} />
                   <Route path="/store/checkout" element={<Checkout />} />
                   <Route path="/store/receipt" element={<Receipt />} />

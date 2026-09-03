@@ -27,6 +27,7 @@ const Header = React.memo(() => {
         <FlexContainerRight>
           <MenuItemRight>
             <MenuNav aria-label="Main navigation">
+              <MenuLink to="/search">search</MenuLink>
               <MenuLink to="/store">store</MenuLink>
               <MenuLink to="/company">company</MenuLink>
             </MenuNav>
