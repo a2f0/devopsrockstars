@@ -9,7 +9,7 @@ import {
   RequestBodyError,
   readJson,
 } from './http';
-import {loadOrder} from './orders';
+import {cancelOrder, loadOrder, OrderCancellationError} from './orders';
 import type {Env, ExecutionContextLike, ScheduledControllerLike} from './types';
 import {CheckoutValidationError, validateCheckout} from './validation';
 import {handleStripeWebhook} from './webhook';
@@ -31,7 +31,6 @@ export async function route(request: Request, env: Env) {
         403
       );
     }
-    const checkout = validateCheckout(await readJson(request));
     const checkoutClientToken =
       request.headers.get('X-Checkout-Client')?.trim() ?? '';
     if (!CHECKOUT_CLIENT_PATTERN.test(checkoutClientToken)) {
@@ -41,7 +40,8 @@ export async function route(request: Request, env: Env) {
         400
       );
     }
-    if (!env.CHECKOUT_RATE_LIMITER) {
+    const hashSecret = env.CHECKOUT_HASH_SECRET?.trim();
+    if (!env.CHECKOUT_RATE_LIMITER || !hashSecret) {
       return apiError(
         'checkout_unavailable',
         'Checkout abuse protection is not configured.',
@@ -61,11 +61,38 @@ export async function route(request: Request, env: Env) {
         429
       );
     }
+    const checkout = validateCheckout(await readJson(request));
     const clientHash = await sha256(`checkout-client:${checkoutClientToken}`);
-    return json(await startCheckout(env, checkout, clientHash), 201);
+    const networkHash = await sha256(
+      `checkout-network:${hashSecret}:${clientAddress}`
+    );
+    return json(
+      await startCheckout(env, checkout, clientHash, networkHash),
+      201
+    );
   }
   if (request.method === 'POST' && url.pathname === '/api/webhooks/stripe') {
     return handleStripeWebhook(env, request);
+  }
+  const cancelMatch = /^\/api\/orders\/([0-9a-f-]{36})\/cancel$/iu.exec(
+    url.pathname
+  );
+  if (request.method === 'POST' && cancelMatch?.[1]) {
+    if (!hasSameOrigin(request)) {
+      return apiError(
+        'forbidden',
+        'Cross-site cancellation requests are blocked.',
+        403
+      );
+    }
+    const order = await cancelOrder(
+      env,
+      cancelMatch[1],
+      request.headers.get('X-Order-Token') ?? ''
+    );
+    return order
+      ? json(order)
+      : apiError('order_not_found', 'The order could not be found.', 404);
   }
   const orderMatch = /^\/api\/orders\/([0-9a-f-]{36})$/iu.exec(url.pathname);
   if (request.method === 'GET' && orderMatch?.[1]) {
@@ -96,6 +123,9 @@ async function fetchHandler(request: Request, env: Env) {
       return apiError(error.code, error.message, 400);
     }
     if (error instanceof CheckoutCreationError) {
+      return apiError(error.code, error.message, error.status);
+    }
+    if (error instanceof OrderCancellationError) {
       return apiError(error.code, error.message, error.status);
     }
     console.error('Unhandled store API error:', error);

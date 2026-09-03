@@ -10,7 +10,7 @@ import {
 import {cleanupExpiredOrders} from './cleanup';
 import {sha256} from './crypto';
 import {route} from './index';
-import {loadOrder} from './orders';
+import {cancelOrder, loadOrder} from './orders';
 import {StripeRequestError} from './stripe';
 import type {
   D1Database,
@@ -142,13 +142,16 @@ test('checkout reserves inventory in one batch before creating payment', async (
     checkoutEnv(database),
     checkoutRequest(),
     'client-hash',
+    'network-hash',
     dependencies()
   );
 
   assert.equal(checkout.totalAmount, 4000);
+  assert.equal(checkout.expiresAt, '2026-09-03T12:10:00.000Z');
   assert.equal(database.batches.length, 1);
   assert.equal(database.batches[0]?.length, 3);
   assert.equal(database.batches[0]?.[0]?.values[2], 'client-hash');
+  assert.equal(database.batches[0]?.[0]?.values[3], 'network-hash');
   const inventoryUpdate = database.batches[0]?.find(statement =>
     statement.query.includes('inventory_quantity = inventory_quantity - ?')
   );
@@ -170,6 +173,7 @@ test('checkout maps an atomic negative-inventory rollback to out of stock', asyn
       checkoutEnv(database),
       checkoutRequest(),
       'client-hash',
+      'network-hash',
       dependencies({
         createPaymentIntent: async () => {
           createPaymentCalls += 1;
@@ -193,6 +197,7 @@ test('checkout maps the active-reservation trigger to an active order', async ()
       checkoutEnv(database),
       checkoutRequest(),
       'client-hash',
+      'network-hash',
       dependencies()
     ),
     (error: unknown) =>
@@ -200,6 +205,30 @@ test('checkout maps the active-reservation trigger to an active order', async ()
       error.code === 'checkout_already_active' &&
       error.status === 409
   );
+});
+
+test('checkout maps network and global reservation caps', async () => {
+  for (const [databaseMessage, code, status] of [
+    ['checkout_network_busy', 'checkout_rate_limited', 429],
+    ['checkout_store_busy', 'checkout_unavailable', 503],
+  ] as const) {
+    const database = new FakeDatabase();
+    database.allValues = [availableVariant()];
+    database.batchFailure = new Error(databaseMessage);
+    await assert.rejects(
+      startCheckout(
+        checkoutEnv(database),
+        checkoutRequest(),
+        'client-hash',
+        'network-hash',
+        dependencies()
+      ),
+      (error: unknown) =>
+        error instanceof CheckoutCreationError &&
+        error.code === code &&
+        error.status === status
+    );
+  }
 });
 
 test('checkout cancels its reservation when Stripe creation fails', async () => {
@@ -211,6 +240,7 @@ test('checkout cancels its reservation when Stripe creation fails', async () => 
       checkoutEnv(database),
       checkoutRequest(),
       'client-hash',
+      'network-hash',
       dependencies({
         createPaymentIntent: async () => {
           throw new StripeRequestError('PaymentIntent creation', 503);
@@ -241,6 +271,7 @@ test('checkout records an orphaned PaymentIntent when cancellation fails', async
       checkoutEnv(database),
       checkoutRequest(),
       'client-hash',
+      'network-hash',
       dependencies({
         cancelPaymentIntent: async (_secret, intentId) => {
           canceledIntents.push(intentId);
@@ -305,6 +336,40 @@ test('cleanup reconciles an already-succeeded expired PaymentIntent', async t =>
   ]);
 });
 
+test('cleanup cancels expired orders with and without PaymentIntents', async () => {
+  for (const paymentIntentId of [null, 'pi_store']) {
+    const database = new FakeDatabase();
+    database.allValues = [
+      {
+        currency: 'usd',
+        id: '12345678-1234-1234-1234-123456789abc',
+        stripe_payment_intent_id: paymentIntentId,
+        total_amount: 4000,
+      },
+    ];
+    let cancelCalls = 0;
+    await cleanupExpiredOrders(
+      {DB: database, STRIPE_SECRET_KEY: 'sk_test'},
+      Date.parse('2026-09-03T17:00:00.000Z'),
+      {
+        cancelPaymentIntent: async () => {
+          cancelCalls += 1;
+          return true;
+        },
+        retrievePaymentIntent: async () => {
+          throw new Error('retrieval should not run');
+        },
+      }
+    );
+    assert.equal(cancelCalls, paymentIntentId ? 1 : 0);
+    assert.ok(
+      database.runs.some(statement =>
+        statement.query.includes("SET status = 'canceled'")
+      )
+    );
+  }
+});
+
 function stripeEvent(
   type: string,
   object: Record<string, unknown>
@@ -366,6 +431,21 @@ test('webhook marks a matching awaiting order paid idempotently', async () => {
   assert.ok(
     database.batches[0]?.some(statement =>
       statement.query.includes("SET status = 'paid'")
+    )
+  );
+});
+
+test('webhook cancels a matching awaiting order', async () => {
+  const database = new FakeDatabase();
+  database.firstValue = eventOrder('awaiting_payment');
+  await processEvent(
+    {DB: database},
+    stripeEvent('payment_intent.canceled', storeIntent())
+  );
+
+  assert.ok(
+    database.batches[0]?.some(statement =>
+      statement.query.includes("SET status = 'canceled'")
     )
   );
 });
@@ -492,6 +572,37 @@ test('order lookup requires the matching bearer token hash', async () => {
   );
 });
 
+test('order cancellation authenticates and releases its reservation', async () => {
+  const database = new FakeDatabase();
+  database.firstValue = {
+    access_token_hash: await sha256('correct-token'),
+    currency: 'usd',
+    id: '12345678-1234-1234-1234-123456789abc',
+    reservation_expires_at: '2026-09-03T17:00:00.000Z',
+    status: 'awaiting_payment',
+    stripe_payment_intent_id: 'pi_store',
+    total_amount: 4000,
+  };
+  const canceled: string[] = [];
+  const order = await cancelOrder(
+    {DB: database, STRIPE_SECRET_KEY: 'sk_test'},
+    '12345678-1234-1234-1234-123456789abc',
+    'correct-token',
+    async (_secret, intentId) => {
+      canceled.push(intentId);
+      return true;
+    }
+  );
+
+  assert.equal(order?.status, 'canceled');
+  assert.deepEqual(canceled, ['pi_store']);
+  assert.ok(
+    database.runs.some(statement =>
+      statement.query.includes("SET status = 'canceled'")
+    )
+  );
+});
+
 test('checkout route applies the Cloudflare rate limit before creating work', async () => {
   const database = new FakeDatabase();
   const keys: string[] = [];
@@ -511,6 +622,7 @@ test('checkout route applies the Cloudflare rate limit before creating work', as
   });
 
   const response = await route(request, {
+    CHECKOUT_HASH_SECRET: 'hash-secret',
     DB: database,
     CHECKOUT_RATE_LIMITER: rateLimiter,
   });
@@ -549,4 +661,46 @@ test('checkout route rejects an invalid browser token before rate limiting', asy
   assert.equal(response.status, 400);
   assert.deepEqual(keys, []);
   assert.equal(database.statements.length, 0);
+});
+
+test('checkout route rejects cross-site requests before doing work', async () => {
+  const database = new FakeDatabase();
+  const response = await route(
+    new Request('https://store.example/api/checkouts', {
+      method: 'POST',
+      headers: {Origin: 'https://attacker.example'},
+      body: JSON.stringify(checkoutRequest()),
+    }),
+    {DB: database}
+  );
+
+  assert.equal(response.status, 403);
+  assert.equal(database.statements.length, 0);
+});
+
+test('checkout rate limiting happens before JSON parsing', async () => {
+  const keys: string[] = [];
+  const response = await route(
+    new Request('https://store.example/api/checkouts', {
+      method: 'POST',
+      headers: {
+        'CF-Connecting-IP': '203.0.113.10',
+        'X-Checkout-Client': '12345678-1234-4234-8234-123456789abc',
+      },
+      body: '{',
+    }),
+    {
+      CHECKOUT_HASH_SECRET: 'hash-secret',
+      CHECKOUT_RATE_LIMITER: {
+        async limit({key}) {
+          keys.push(key);
+          return {success: false};
+        },
+      },
+      DB: new FakeDatabase(),
+    }
+  );
+
+  assert.equal(response.status, 429);
+  assert.deepEqual(keys, ['checkout:203.0.113.10']);
 });

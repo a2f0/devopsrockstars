@@ -1,5 +1,3 @@
-PRAGMA foreign_keys = ON;
-
 CREATE TABLE products (
   id TEXT PRIMARY KEY,
   slug TEXT NOT NULL UNIQUE,

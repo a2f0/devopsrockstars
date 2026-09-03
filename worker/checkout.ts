@@ -10,7 +10,7 @@ import {
 } from './stripe';
 import type {D1PreparedStatement, Env} from './types';
 
-const RESERVATION_MINUTES = 30;
+const RESERVATION_MINUTES = 10;
 
 export interface CheckoutDependencies {
   readonly cancelPaymentIntent: typeof cancelPaymentIntent;
@@ -162,6 +162,7 @@ async function cancelOrder(
 function reservationStatements(input: {
   readonly accessTokenHash: string;
   readonly clientHash: string;
+  readonly networkHash: string;
   readonly currency: string;
   readonly expiresAt: string;
   readonly lines: ReturnType<typeof calculateOrder>['lines'];
@@ -175,16 +176,18 @@ function reservationStatements(input: {
   const statements: D1PreparedStatement[] = [
     input.env.DB.prepare(
       `INSERT INTO orders (
-         id, access_token_hash, checkout_client_hash, status, currency, subtotal_amount,
+         id, access_token_hash, checkout_client_hash, checkout_network_hash,
+         status, currency, subtotal_amount,
          shipping_amount, total_amount, email, shipping_name,
          shipping_address_line1, shipping_address_line2, shipping_city,
          shipping_state, shipping_postal_code, shipping_country,
          reservation_expires_at, created_at, updated_at
-       ) VALUES (?, ?, ?, 'creating_payment', ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+       ) VALUES (?, ?, ?, ?, 'creating_payment', ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).bind(
       input.orderId,
       input.accessTokenHash,
       input.clientHash,
+      input.networkHash,
       input.currency,
       input.totalAmount,
       input.totalAmount,
@@ -233,6 +236,7 @@ export async function startCheckout(
   env: Env,
   request: CreateCheckoutRequest,
   clientHash: string,
+  networkHash: string,
   dependencies: CheckoutDependencies = defaultDependencies
 ): Promise<CreateCheckoutResponse> {
   const secretKey = env.STRIPE_SECRET_KEY?.trim();
@@ -265,6 +269,7 @@ export async function startCheckout(
         currency: order.currency,
         expiresAt,
         lines: order.lines,
+        networkHash,
         now: now.toISOString(),
         orderId,
         request,
@@ -285,6 +290,20 @@ export async function startCheckout(
         'checkout_already_active',
         'A checkout is already active in this browser.',
         409
+      );
+    }
+    if (String(error).includes('checkout_network_busy')) {
+      throw new CheckoutCreationError(
+        'checkout_rate_limited',
+        'Too many checkouts are already active on this connection.',
+        429
+      );
+    }
+    if (String(error).includes('checkout_store_busy')) {
+      throw new CheckoutCreationError(
+        'checkout_unavailable',
+        'The store is busy. Please try again in a few minutes.',
+        503
       );
     }
     throw error;

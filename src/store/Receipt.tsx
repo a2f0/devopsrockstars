@@ -44,7 +44,7 @@ const Receipt = React.memo(() => {
           result.status === 'awaiting_payment' ||
           result.status === 'creating_payment'
         ) {
-          if (Date.parse(result.expiresAt) > Date.now()) {
+          if (Date.parse(result.expiresAt) + 2 * 60_000 > Date.now()) {
             timeout = setTimeout(refresh, 1500);
           } else {
             setError('This order expired before payment was confirmed.');

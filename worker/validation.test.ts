@@ -29,9 +29,9 @@ test('normalizes a valid checkout', () => {
 
 test('combines duplicate variants before enforcing quantity limits', () => {
   const input = validCheckout();
-  input.items.push({variantId: 'hat-5950-7-1-4', quantity: 2});
+  input.items.push({variantId: 'hat-5950-7-1-4', quantity: 1});
   assert.deepEqual(validateCheckout(input).items, [
-    {variantId: 'hat-5950-7-1-4', quantity: 3},
+    {variantId: 'hat-5950-7-1-4', quantity: 2},
   ]);
 });
 
@@ -46,9 +46,19 @@ test('rejects an invalid shipping region', () => {
   );
 });
 
-test('rejects more than five hats in one size', () => {
+test('rejects more than two items', () => {
   const input = validCheckout();
   input.items[0] = {variantId: 'hat-5950-7-1-4', quantity: 6};
+  assert.throws(
+    () => validateCheckout(input),
+    (error: unknown) =>
+      error instanceof CheckoutValidationError && error.code === 'invalid_cart'
+  );
+});
+
+test('reports invalid variant IDs as cart errors', () => {
+  const input = validCheckout();
+  input.items[0] = {variantId: '', quantity: 1};
   assert.throws(
     () => validateCheckout(input),
     (error: unknown) =>

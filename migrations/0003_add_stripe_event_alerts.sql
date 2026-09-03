@@ -1,8 +1,12 @@
 ALTER TABLE orders ADD COLUMN payment_cancel_failed_at TEXT;
 ALTER TABLE orders ADD COLUMN checkout_client_hash TEXT;
+ALTER TABLE orders ADD COLUMN checkout_network_hash TEXT;
 
 CREATE INDEX orders_checkout_session_status
 ON orders(checkout_client_hash, status);
+
+CREATE INDEX orders_checkout_network_status
+ON orders(checkout_network_hash, status);
 
 CREATE TRIGGER limit_active_checkout_reservations
 BEFORE INSERT ON orders
@@ -15,6 +19,30 @@ WHEN NEW.checkout_client_hash IS NOT NULL
   )
 BEGIN
   SELECT RAISE(ABORT, 'checkout_already_active');
+END;
+
+CREATE TRIGGER limit_active_checkout_network
+BEFORE INSERT ON orders
+WHEN NEW.checkout_network_hash IS NOT NULL
+  AND (
+    SELECT COUNT(*)
+    FROM orders
+    WHERE checkout_network_hash = NEW.checkout_network_hash
+      AND status IN ('creating_payment', 'awaiting_payment')
+  ) >= 2
+BEGIN
+  SELECT RAISE(ABORT, 'checkout_network_busy');
+END;
+
+CREATE TRIGGER limit_active_checkout_global
+BEFORE INSERT ON orders
+WHEN (
+  SELECT COUNT(*)
+  FROM orders
+  WHERE status IN ('creating_payment', 'awaiting_payment')
+) >= 20
+BEGIN
+  SELECT RAISE(ABORT, 'checkout_store_busy');
 END;
 
 CREATE TABLE stripe_event_alerts (

@@ -84,7 +84,7 @@ export function viewCurrentBranchPr(
   }
   if (result.status !== 0) {
     const failure = result.stderr.trim();
-    if (failure === `no pull requests found for branch "${branch}"`) {
+    if (/no pull requests found for branch/iu.test(failure)) {
       return undefined;
     }
     throw new Error(

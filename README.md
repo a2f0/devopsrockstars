@@ -82,6 +82,7 @@ resources and Stripe webhook are configured.
    pnpm exec wrangler secret put STRIPE_PUBLISHABLE_KEY
    pnpm exec wrangler secret put STRIPE_SECRET_KEY
    pnpm exec wrangler secret put STRIPE_WEBHOOK_SECRET
+   pnpm exec wrangler secret put CHECKOUT_HASH_SECRET
    ```
 
 4. Register `https://<store-domain>/api/webhooks/stripe` in Stripe for
@@ -99,13 +100,15 @@ The Worker serves the webpack output as a single-page application and handles
 only `/api/*` dynamically. D1 owns products, variants, inventory, orders, and
 processed Stripe event IDs. Inventory is reserved atomically when checkout
 starts, restored when an order is canceled, and protected from double-restock
-by the order-status transition trigger. A ten-minute cron cancels reservations
-that have been abandoned for thirty minutes.
+by the order-status transition trigger. A one-minute cron cancels reservations
+that have been abandoned for ten minutes, and customers can release a
+reservation immediately from checkout.
 
-Checkout creation is limited to two attempts per minute and one active
-reservation per browser session. The edge limit uses Cloudflare's
-`CHECKOUT_RATE_LIMITER` binding; D1 prevents accidental duplicate reservations
-for the same resumable checkout session.
+Checkout creation is limited to two attempts per minute, two active
+reservations per salted network hash, twenty active reservations globally, and
+two items per order. The edge limit uses Cloudflare's `CHECKOUT_RATE_LIMITER`
+binding; D1 enforces the active-reservation caps and prevents accidental
+duplicates for the same resumable browser session.
 
 Signed Stripe events without the store's source metadata are acknowledged and
 ignored. Store events that cannot be applied safely are recorded in

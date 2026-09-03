@@ -73,3 +73,14 @@ export async function loadOrder(
   });
   return readResponse<StoreOrderResponse>(response);
 }
+
+export async function cancelCheckout(orderId: string, orderToken: string) {
+  const response = await fetch(
+    `/api/orders/${encodeURIComponent(orderId)}/cancel`,
+    {
+      method: 'POST',
+      headers: {'X-Order-Token': orderToken},
+    }
+  );
+  return readResponse<StoreOrderResponse>(response);
+}

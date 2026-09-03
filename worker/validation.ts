@@ -87,19 +87,19 @@ function field(value: Record<string, unknown>, key: string) {
   return Reflect.get(value, key) as unknown;
 }
 
-function text(value: unknown, field: string, maximum: number, required = true) {
+function text(
+  value: unknown,
+  field: string,
+  maximum: number,
+  required = true,
+  code = 'invalid_shipping'
+) {
   if (typeof value !== 'string') {
-    throw new CheckoutValidationError(
-      'invalid_shipping',
-      `${field} is invalid.`
-    );
+    throw new CheckoutValidationError(code, `${field} is invalid.`);
   }
   const normalized = value.trim();
   if ((required && !normalized) || normalized.length > maximum) {
-    throw new CheckoutValidationError(
-      'invalid_shipping',
-      `${field} is invalid.`
-    );
+    throw new CheckoutValidationError(code, `${field} is invalid.`);
   }
   return normalized;
 }
@@ -114,7 +114,13 @@ function readItems(value: unknown): readonly CartItemInput[] {
   const quantities = new Map<string, number>();
   for (const rawItem of value) {
     const item = object(rawItem);
-    const variantId = text(field(item, 'variantId'), 'Variant', 100);
+    const variantId = text(
+      field(item, 'variantId'),
+      'Variant',
+      100,
+      true,
+      'invalid_cart'
+    );
     const quantity = field(item, 'quantity');
     if (
       typeof quantity !== 'number' ||
@@ -129,19 +135,19 @@ function readItems(value: unknown): readonly CartItemInput[] {
     quantities.set(variantId, (quantities.get(variantId) ?? 0) + quantity);
   }
   const items = [...quantities].map(([variantId, quantity]) => {
-    if (quantity > 5) {
+    if (quantity > 2) {
       throw new CheckoutValidationError(
         'invalid_cart',
-        'No more than 5 of one size can be purchased at once.'
+        'No more than 2 of one item can be purchased at once.'
       );
     }
     return {variantId, quantity};
   });
   const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
-  if (totalQuantity > 10) {
+  if (totalQuantity > 2) {
     throw new CheckoutValidationError(
       'invalid_cart',
-      'No more than 10 items can be purchased at once.'
+      'No more than 2 items can be purchased at once.'
     );
   }
   return items;

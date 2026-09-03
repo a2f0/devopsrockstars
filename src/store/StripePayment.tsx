@@ -27,17 +27,20 @@ interface MountedPayment {
 
 interface Props {
   readonly checkout: CreateCheckoutResponse;
+  readonly onCancel: () => Promise<void>;
   readonly publishableKey: string;
   readonly shipping: ShippingInput;
   readonly onConfirmed: () => void;
 }
 
 const StripePayment = React.memo(
-  ({checkout, publishableKey, shipping, onConfirmed}: Props) => {
+  ({checkout, onCancel, publishableKey, shipping, onConfirmed}: Props) => {
     const hostRef = useRef<HTMLDivElement | null>(null);
     const mountedRef = useRef<MountedPayment | null>(null);
     const [ready, setReady] = useState(false);
-    const [busy, setBusy] = useState(false);
+    const [busyAction, setBusyAction] = useState<'canceling' | 'paying' | null>(
+      null
+    );
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
@@ -106,14 +109,14 @@ const StripePayment = React.memo(
 
     const confirm = async () => {
       const mounted = mountedRef.current;
-      if (!mounted || busy) return;
-      setBusy(true);
+      if (!mounted || busyAction) return;
+      setBusyAction('paying');
       setError(null);
       try {
         const submitted = await mounted.elements.submit();
         if (submitted.error) {
           setError(submitted.error.message ?? 'Check your payment details.');
-          setBusy(false);
+          setBusyAction(null);
           return;
         }
         const returnUrl = new URL('/store/receipt', globalThis.location.href);
@@ -143,7 +146,7 @@ const StripePayment = React.memo(
           setError(
             result.error.message ?? 'Your payment could not be completed.'
           );
-          setBusy(false);
+          setBusyAction(null);
           return;
         }
         onConfirmed();
@@ -155,7 +158,24 @@ const StripePayment = React.memo(
         setError(
           'The payment provider could not complete the request. Please try again.'
         );
-        setBusy(false);
+        setBusyAction(null);
+      }
+    };
+
+    const abandon = async () => {
+      if (busyAction) return;
+      setBusyAction('canceling');
+      setError(null);
+      try {
+        await onCancel();
+      } catch (cancelError) {
+        console.error('Failed to cancel checkout:', cancelError);
+        setError(
+          cancelError instanceof Error
+            ? cancelError.message
+            : 'Checkout could not be canceled.'
+        );
+        setBusyAction(null);
       }
     };
 
@@ -167,8 +187,19 @@ const StripePayment = React.memo(
         ) : null}
         {error ? <Status $error>{error}</Status> : null}
         <FormActions>
-          <Button type="button" disabled={!ready || busy} onClick={confirm}>
-            {busy ? 'Processing…' : `Pay order`}
+          <Button
+            type="button"
+            disabled={!ready || busyAction !== null}
+            onClick={confirm}
+          >
+            {busyAction === 'paying' ? 'Processing…' : `Pay order`}
+          </Button>
+          <Button
+            type="button"
+            disabled={busyAction !== null}
+            onClick={abandon}
+          >
+            {busyAction === 'canceling' ? 'Canceling…' : 'Cancel checkout'}
           </Button>
         </FormActions>
       </>

@@ -1,6 +1,6 @@
 import React, {useEffect, useMemo, useState} from 'react';
 import {useNavigate} from 'react-router';
-import {createCheckout, loadStorefront} from './api';
+import {cancelCheckout, createCheckout, loadStorefront} from './api';
 import {useStoreCart} from './cart';
 import type {
   CreateCheckoutResponse,
@@ -9,6 +9,7 @@ import type {
 } from './contracts';
 import {formatMoney} from './format';
 import {
+  clearPendingCheckout,
   getCheckoutClientToken,
   readPendingCheckout,
   storeOrderToken,
@@ -134,6 +135,14 @@ const Checkout = React.memo(() => {
     } finally {
       setBusy(false);
     }
+  };
+
+  const abandonPayment = async () => {
+    if (!checkout) return;
+    await cancelCheckout(checkout.orderId, checkout.orderToken);
+    clearPendingCheckout();
+    setCheckout(null);
+    setReservedItems(null);
   };
 
   if (displayedItems.length === 0) {
@@ -292,11 +301,13 @@ const Checkout = React.memo(() => {
               <SectionTitle>Payment</SectionTitle>
               <StripePayment
                 checkout={checkout}
+                onCancel={abandonPayment}
                 publishableKey={storefront.stripePublishableKey}
                 shipping={shipping}
-                onConfirmed={() =>
-                  navigate(`/store/receipt?order=${checkout.orderId}`)
-                }
+                onConfirmed={() => {
+                  clearPendingCheckout();
+                  navigate(`/store/receipt?order=${checkout.orderId}`);
+                }}
               />
               <Status>
                 Reserved until{' '}

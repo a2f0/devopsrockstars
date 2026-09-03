@@ -5,6 +5,7 @@
     "wdio.headless.conf.ts",
     "e2e/specs/**/*.spec.ts",
     "packages/agent-tool/test/**/*.test.ts",
+    "src/store/**/*.test.ts",
     "worker/**/*.test.ts"
   ],
   "project": [

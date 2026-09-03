@@ -27,7 +27,7 @@ interface PaymentIntentResult {
   readonly id: string;
 }
 
-export interface PaymentIntentState {
+interface PaymentIntentState {
   readonly amountReceived: number | null;
   readonly currency: string | null;
   readonly id: string;
@@ -80,11 +80,18 @@ async function requestStripe(input: {
     throw new StripeRequestError(input.operation, 0);
   }
   if (!response.ok) {
-    console.error(
-      `Stripe ${input.operation} failed:`,
-      response.status,
-      await response.text()
-    );
+    let responseBody: unknown = null;
+    try {
+      responseBody = await response.json();
+    } catch {
+      // Stripe can return a non-JSON gateway response.
+    }
+    const stripeError = property(responseBody, 'error');
+    console.error(`Stripe ${input.operation} failed:`, {
+      code: property(stripeError, 'code'),
+      status: response.status,
+      type: property(stripeError, 'type'),
+    });
     throw new StripeRequestError(input.operation, response.status);
   }
   return response.json() as Promise<unknown>;

@@ -39,7 +39,7 @@ export function useStoreCart() {
       const next = existing
         ? current.map(item =>
             item.variantId === variantId
-              ? {...item, quantity: Math.min(item.quantity + 1, 5)}
+              ? {...item, quantity: Math.min(item.quantity + 1, 2)}
               : item
           )
         : [...current, {variantId, quantity: 1}];

@@ -8,7 +8,7 @@ interface ExpiredOrderRow {
   readonly total_amount: number;
 }
 
-export interface CleanupDependencies {
+interface CleanupDependencies {
   readonly cancelPaymentIntent: typeof cancelPaymentIntent;
   readonly retrievePaymentIntent: typeof retrievePaymentIntent;
 }
@@ -81,7 +81,7 @@ export async function cleanupExpiredOrders(
      WHERE status IN ('creating_payment', 'awaiting_payment')
        AND reservation_expires_at <= ?
      ORDER BY reservation_expires_at
-     LIMIT 25`
+     LIMIT 100`
   )
     .bind(now)
     .all<ExpiredOrderRow>();

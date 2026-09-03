@@ -2,7 +2,7 @@
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "devopsrockstars-store",
   "main": "./worker/index.ts",
-  "compatibility_date": "2026-09-02",
+  "compatibility_date": "2026-08-31",
   "assets": {
     "directory": "./build",
     "binding": "ASSETS",
@@ -28,7 +28,7 @@
     }
   ],
   "triggers": {
-    "crons": ["*/10 * * * *"]
+    "crons": ["* * * * *"]
   },
   "observability": {
     "enabled": true

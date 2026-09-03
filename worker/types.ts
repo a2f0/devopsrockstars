@@ -24,6 +24,7 @@ export interface RateLimit {
 
 export interface Env {
   readonly CHECKOUT_RATE_LIMITER?: RateLimit;
+  readonly CHECKOUT_HASH_SECRET?: string;
   readonly DB: D1Database;
   readonly STRIPE_PUBLISHABLE_KEY?: string;
   readonly STRIPE_SECRET_KEY?: string;
