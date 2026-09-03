@@ -60,7 +60,7 @@ jobs:
       - name: Apply Cloudflare migrations
         run: pnpm run db:migrate:remote
       - name: Deploy Cloudflare Worker
-        run: pnpm --filter @devopsrockstars/backend deploy
+        run: pnpm --filter @devopsrockstars/backend run deploy
 
   deploy:
     runs-on: ubuntu-latest

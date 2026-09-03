@@ -19,7 +19,7 @@
     "format": "biome format --write",
     "build": "pnpm --filter @devopsrockstars/frontend build",
     "dev:cloudflare": "pnpm run build && pnpm --filter @devopsrockstars/backend dev",
-    "deploy:cloudflare": "pnpm run build && pnpm --filter @devopsrockstars/backend deploy",
+    "deploy:cloudflare": "pnpm run build && pnpm --filter @devopsrockstars/backend run deploy",
     "db:migrate:local": "pnpm --filter @devopsrockstars/backend db:migrate:local",
     "db:migrate:remote": "pnpm --filter @devopsrockstars/backend db:migrate:remote",
     "depcheck": "depcheck && pnpm --recursive exec depcheck",
