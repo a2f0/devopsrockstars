@@ -17,7 +17,18 @@ class StoreApiError extends Error {
 }
 
 async function readResponse<T>(response: Response): Promise<T> {
-  const body: unknown = await response.json();
+  let body: unknown;
+  try {
+    body = await response.json();
+  } catch {
+    if (!response.ok) {
+      throw new StoreApiError('request_failed', 'The store request failed.');
+    }
+    throw new StoreApiError(
+      'invalid_response',
+      'The store returned an invalid response.'
+    );
+  }
   if (!response.ok) {
     const errorBody =
       typeof body === 'object' && body !== null

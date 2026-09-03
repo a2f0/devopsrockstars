@@ -10,7 +10,7 @@ interface StripeSignature {
   readonly signatures: readonly string[];
 }
 
-interface StripeEvent {
+export interface StripeEvent {
   readonly id: string;
   readonly type: string;
   readonly object: Record<string, unknown>;
@@ -23,6 +23,13 @@ interface EventOrderRow {
   readonly stripe_payment_intent_id: string | null;
   readonly total_amount: number;
 }
+
+interface StorePaymentIntent {
+  readonly intentId: string;
+  readonly orderId: string;
+}
+
+type AlertAction = 'investigate' | 'refund';
 
 function property(value: unknown, key: string): unknown {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
@@ -103,34 +110,115 @@ function eventInsert(env: Env, event: StripeEvent, now: string) {
   ).bind(event.id, event.type, now);
 }
 
-async function loadEventOrder(
-  env: Env,
+function storePaymentIntent(
   paymentIntent: Record<string, unknown>
-) {
+): StorePaymentIntent | null {
   const metadata = property(paymentIntent, 'metadata');
+  const source = property(metadata, 'source');
   const orderId = property(metadata, 'order_id');
-  if (typeof orderId !== 'string') {
-    throw new Error('Stripe PaymentIntent is missing order metadata.');
-  }
+  const intentId = property(paymentIntent, 'id');
+  return source === 'devopsrockstars_store' &&
+    typeof orderId === 'string' &&
+    typeof intentId === 'string'
+    ? {orderId, intentId}
+    : null;
+}
+
+async function loadEventOrder(env: Env, intent: StorePaymentIntent) {
   const order = await env.DB.prepare(
     `SELECT id, status, currency, total_amount, stripe_payment_intent_id
      FROM orders WHERE id = ?`
   )
-    .bind(orderId)
+    .bind(intent.orderId)
     .first<EventOrderRow>();
-  if (!order) throw new Error(`Stripe order ${orderId} was not found.`);
-  const intentId = property(paymentIntent, 'id');
-  if (
-    typeof intentId !== 'string' ||
-    order.stripe_payment_intent_id !== intentId
-  ) {
-    throw new Error(`Stripe intent did not match order ${orderId}.`);
-  }
-  return {order, intentId};
+  return order;
+}
+
+function alertInsert(
+  env: Env,
+  event: StripeEvent,
+  intent: StorePaymentIntent,
+  reason: string,
+  action: AlertAction,
+  now: string
+) {
+  const amountReceived = property(event.object, 'amount_received');
+  const currency = property(event.object, 'currency');
+  return env.DB.prepare(
+    `INSERT OR IGNORE INTO stripe_event_alerts (
+       event_id, reason, action, order_id, payment_intent_id,
+       amount_received, currency, created_at
+     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+  ).bind(
+    event.id,
+    reason,
+    action,
+    intent.orderId,
+    intent.intentId,
+    typeof amountReceived === 'number' ? amountReceived : null,
+    typeof currency === 'string' ? currency : null,
+    now
+  );
+}
+
+async function recordAlert(
+  env: Env,
+  event: StripeEvent,
+  intent: StorePaymentIntent,
+  reason: string,
+  action: AlertAction,
+  now: string
+) {
+  await env.DB.batch([
+    eventInsert(env, event, now),
+    alertInsert(env, event, intent, reason, action, now),
+  ]);
+  console.error('Stripe event requires store follow-up:', {
+    action,
+    eventId: event.id,
+    intentId: intent.intentId,
+    orderId: intent.orderId,
+    reason,
+  });
 }
 
 async function processSucceeded(env: Env, event: StripeEvent, now: string) {
-  const {order} = await loadEventOrder(env, event.object);
+  const intent = storePaymentIntent(event.object);
+  if (!intent) return;
+  const order = await loadEventOrder(env, intent);
+  if (!order) {
+    await recordAlert(
+      env,
+      event,
+      intent,
+      'order_not_found',
+      'investigate',
+      now
+    );
+    return;
+  }
+  if (order.status === 'canceled') {
+    await recordAlert(
+      env,
+      event,
+      intent,
+      'payment_received_after_cancellation',
+      'refund',
+      now
+    );
+    return;
+  }
+  if (order.stripe_payment_intent_id !== intent.intentId) {
+    await recordAlert(
+      env,
+      event,
+      intent,
+      'intent_mismatch',
+      'investigate',
+      now
+    );
+    return;
+  }
   const amountReceived = property(event.object, 'amount_received');
   const currency = property(event.object, 'currency');
   if (
@@ -138,7 +226,15 @@ async function processSucceeded(env: Env, event: StripeEvent, now: string) {
     currency !== order.currency ||
     (order.status !== 'awaiting_payment' && order.status !== 'paid')
   ) {
-    throw new Error(`Stripe payment did not match order ${order.id}.`);
+    await recordAlert(
+      env,
+      event,
+      intent,
+      'payment_mismatch',
+      'investigate',
+      now
+    );
+    return;
   }
   await env.DB.batch([
     eventInsert(env, event, now),
@@ -151,7 +247,42 @@ async function processSucceeded(env: Env, event: StripeEvent, now: string) {
 }
 
 async function processCanceled(env: Env, event: StripeEvent, now: string) {
-  const {order} = await loadEventOrder(env, event.object);
+  const intent = storePaymentIntent(event.object);
+  if (!intent) return;
+  const order = await loadEventOrder(env, intent);
+  if (!order) {
+    await recordAlert(
+      env,
+      event,
+      intent,
+      'order_not_found',
+      'investigate',
+      now
+    );
+    return;
+  }
+  if (order.stripe_payment_intent_id !== intent.intentId) {
+    await recordAlert(
+      env,
+      event,
+      intent,
+      'intent_mismatch',
+      'investigate',
+      now
+    );
+    return;
+  }
+  if (order.status === 'paid') {
+    await recordAlert(
+      env,
+      event,
+      intent,
+      'cancellation_after_payment',
+      'investigate',
+      now
+    );
+    return;
+  }
   await env.DB.batch([
     eventInsert(env, event, now),
     env.DB.prepare(
@@ -167,7 +298,7 @@ async function recordEvent(env: Env, event: StripeEvent, now: string) {
   await env.DB.batch(statements);
 }
 
-async function processEvent(env: Env, event: StripeEvent) {
+export async function processEvent(env: Env, event: StripeEvent) {
   const now = new Date().toISOString();
   if (event.type === 'payment_intent.succeeded') {
     await processSucceeded(env, event, now);
@@ -177,7 +308,9 @@ async function processEvent(env: Env, event: StripeEvent) {
     await processCanceled(env, event, now);
     return;
   }
-  await recordEvent(env, event, now);
+  if (storePaymentIntent(event.object)) {
+    await recordEvent(env, event, now);
+  }
 }
 
 export async function handleStripeWebhook(env: Env, request: Request) {

@@ -12,6 +12,24 @@ import type {D1PreparedStatement, Env} from './types';
 
 const RESERVATION_MINUTES = 30;
 
+export interface CheckoutDependencies {
+  readonly cancelPaymentIntent: typeof cancelPaymentIntent;
+  readonly createPaymentIntent: typeof createPaymentIntent;
+  readonly now: () => Date;
+  readonly randomToken: typeof randomToken;
+  readonly randomUUID: () => string;
+  readonly sha256: typeof sha256;
+}
+
+const defaultDependencies: CheckoutDependencies = {
+  cancelPaymentIntent,
+  createPaymentIntent,
+  now: () => new Date(),
+  randomToken,
+  randomUUID: () => crypto.randomUUID(),
+  sha256,
+};
+
 interface VariantRow {
   readonly active: number;
   readonly currency: string;
@@ -109,14 +127,29 @@ function calculateOrder(
   return {currency, totalAmount, lines};
 }
 
-async function cancelOrder(env: Env, orderId: string) {
-  const now = new Date().toISOString();
+async function cancelOrder(
+  env: Env,
+  orderId: string,
+  now: string,
+  paymentIntentId: string | null = null,
+  paymentCancellationFailed = false
+) {
   await env.DB.prepare(
     `UPDATE orders
-     SET status = 'canceled', canceled_at = ?, updated_at = ?
+     SET status = 'canceled',
+         stripe_payment_intent_id = COALESCE(stripe_payment_intent_id, ?),
+         payment_cancel_failed_at = CASE WHEN ? = 1 THEN ? ELSE payment_cancel_failed_at END,
+         canceled_at = ?, updated_at = ?
      WHERE id = ? AND status IN ('creating_payment', 'awaiting_payment')`
   )
-    .bind(now, now, orderId)
+    .bind(
+      paymentIntentId,
+      paymentCancellationFailed ? 1 : 0,
+      now,
+      now,
+      now,
+      orderId
+    )
     .run();
 }
 
@@ -190,7 +223,8 @@ function reservationStatements(input: {
 
 export async function startCheckout(
   env: Env,
-  request: CreateCheckoutRequest
+  request: CreateCheckoutRequest,
+  dependencies: CheckoutDependencies = defaultDependencies
 ): Promise<CreateCheckoutResponse> {
   const secretKey = env.STRIPE_SECRET_KEY?.trim();
   const publishableKey = env.STRIPE_PUBLISHABLE_KEY?.trim();
@@ -206,10 +240,10 @@ export async function startCheckout(
     request.items.map(item => item.variantId)
   );
   const order = calculateOrder(request, variants);
-  const orderId = crypto.randomUUID();
-  const orderToken = randomToken();
-  const accessTokenHash = await sha256(orderToken);
-  const now = new Date();
+  const orderId = dependencies.randomUUID();
+  const orderToken = dependencies.randomToken();
+  const accessTokenHash = await dependencies.sha256(orderToken);
+  const now = dependencies.now();
   const expiresAt = new Date(
     now.getTime() + RESERVATION_MINUTES * 60_000
   ).toISOString();
@@ -241,7 +275,7 @@ export async function startCheckout(
 
   let paymentIntent: Awaited<ReturnType<typeof createPaymentIntent>>;
   try {
-    paymentIntent = await createPaymentIntent({
+    paymentIntent = await dependencies.createPaymentIntent({
       amount: order.totalAmount,
       currency: order.currency,
       orderId,
@@ -249,7 +283,7 @@ export async function startCheckout(
       shipping: request.shipping,
     });
   } catch (error) {
-    await cancelOrder(env, orderId);
+    await cancelOrder(env, orderId, dependencies.now().toISOString());
     if (error instanceof StripeRequestError) {
       throw new CheckoutCreationError(
         'payment_provider_unavailable',
@@ -266,18 +300,26 @@ export async function startCheckout(
        SET status = 'awaiting_payment', stripe_payment_intent_id = ?, updated_at = ?
        WHERE id = ? AND status = 'creating_payment'`
     )
-      .bind(paymentIntent.id, new Date().toISOString(), orderId)
+      .bind(paymentIntent.id, dependencies.now().toISOString(), orderId)
       .run();
     if (updated.meta.changes !== 1) {
       throw new Error('The reserved order could not be activated.');
     }
   } catch (error) {
+    let paymentCancellationFailed = false;
     try {
-      await cancelPaymentIntent(secretKey, paymentIntent.id);
+      await dependencies.cancelPaymentIntent(secretKey, paymentIntent.id);
     } catch (cancelError) {
+      paymentCancellationFailed = true;
       console.error('Failed to cancel an orphaned PaymentIntent:', cancelError);
     }
-    await cancelOrder(env, orderId);
+    await cancelOrder(
+      env,
+      orderId,
+      dependencies.now().toISOString(),
+      paymentIntent.id,
+      paymentCancellationFailed
+    );
     throw error;
   }
 

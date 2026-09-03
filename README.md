@@ -99,4 +99,14 @@ starts, restored when an order is canceled, and protected from double-restock
 by the order-status transition trigger. A ten-minute cron cancels reservations
 that have been abandoned for thirty minutes.
 
+Signed Stripe events without the store's source metadata are acknowledged and
+ignored. Store events that cannot be applied safely are recorded in
+`stripe_event_alerts`; entries with `action = 'refund'` require operator action.
+Check the open queue with:
+
+```shell
+pnpm exec wrangler d1 execute devopsrockstars-store --remote \
+  --command "SELECT * FROM stripe_event_alerts WHERE status = 'open' ORDER BY created_at"
+```
+
 The configuration for the site is in the [terraform folder](terraform).

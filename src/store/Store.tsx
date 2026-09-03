@@ -82,8 +82,11 @@ const Store = React.memo(() => {
         const available = product.variants.filter(
           variant => variant.availableQuantity > 0
         );
-        const variantId = selected[product.id] ?? available[0]?.id ?? '';
-        const variant = product.variants.find(item => item.id === variantId);
+        const selectedVariant = available.find(
+          item => item.id === selected[product.id]
+        );
+        const variant = selectedVariant ?? available[0];
+        const variantId = variant?.id ?? '';
         const priceVariant = variant ?? product.variants[0];
         return (
           <ProductGrid key={product.id}>

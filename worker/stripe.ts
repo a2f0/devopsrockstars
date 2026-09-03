@@ -114,13 +114,17 @@ export async function createPaymentIntent(
   };
 }
 
-export async function cancelPaymentIntent(secretKey: string, intentId: string) {
+export async function cancelPaymentIntent(
+  secretKey: string,
+  intentId: string,
+  attemptId = crypto.randomUUID()
+) {
   if (!/^pi_[A-Za-z0-9_]+$/u.test(intentId)) {
     throw new StripeRequestError('PaymentIntent cancellation', 400);
   }
   const result = await requestStripe({
     form: new URLSearchParams(),
-    idempotencyKey: `cancel-expired-${intentId}`,
+    idempotencyKey: `cancel-${intentId}-${attemptId}`,
     operation: 'PaymentIntent cancellation',
     path: `/v1/payment_intents/${encodeURIComponent(intentId)}/cancel`,
     secretKey,

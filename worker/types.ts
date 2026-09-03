@@ -1,4 +1,4 @@
-interface D1Result<T = Record<string, unknown>> {
+export interface D1Result<T = Record<string, unknown>> {
   readonly meta: {readonly changes?: number};
   readonly results: readonly T[];
   readonly success: boolean;
@@ -11,7 +11,7 @@ export interface D1PreparedStatement {
   run<T = Record<string, unknown>>(): Promise<D1Result<T>>;
 }
 
-interface D1Database {
+export interface D1Database {
   batch<T = Record<string, unknown>>(
     statements: readonly D1PreparedStatement[]
   ): Promise<readonly D1Result<T>[]>;
