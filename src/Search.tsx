@@ -7,8 +7,8 @@ const SearchForm = styled.form`
 `;
 
 const SearchLogo = styled.div`
-  width: 200px;
-  height: 42px;
+  width: min(300px, calc(100% - 24px));
+  aspect-ratio: 167.38037 / 33.959961;
   margin: 50px auto 25px;
 
   img {
@@ -22,7 +22,18 @@ const SearchField = styled.input`
   display: block;
   width: min(250px, calc(100% - 24px));
   box-sizing: border-box;
+  border: 1px solid #404040;
+  border-radius: 0;
   margin: 0 auto;
+  background-color: #101010;
+  color: white;
+  appearance: none;
+
+  &:focus,
+  &:active {
+    border-color: #666;
+    outline: none;
+  }
 `;
 
 const HiddenSubmit = styled.button`
