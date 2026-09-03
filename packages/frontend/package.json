@@ -1,0 +1,27 @@
+{
+  "name": "@devopsrockstars/frontend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "NODE_OPTIONS='--import tsx' webpack --mode production",
+    "start": "NODE_OPTIONS='--import tsx' webpack serve --mode development --history-api-fallback",
+    "start:test": "NODE_OPTIONS='--import tsx' webpack serve --port 8081 --mode development --history-api-fallback",
+    "test": "NODE_OPTIONS='--experimental-specifier-resolution=node' wdio wdio.shared.conf.ts",
+    "test:headless": "NODE_OPTIONS='--experimental-specifier-resolution=node' wdio wdio.headless.conf.ts"
+  },
+  "devDependencies": {
+    "@svgr/webpack": "8.1.0"
+  },
+  "dependencies": {
+    "@devopsrockstars/store-contracts": "workspace:*",
+    "@stripe/stripe-js": "9.15.0",
+    "leaflet": "1.9.4",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "react-leaflet": "5.0.0",
+    "react-router": "8.3.0",
+    "react-svg": "19.0.0",
+    "styled-components": "6.5.0"
+  }
+}

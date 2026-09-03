@@ -1,6 +1,6 @@
 ---
 name: commit-and-push
-description: Commit local changes and push to the remote for devopsrockstars-frontend using conventional commits. Use when you need to commit and push work, create or update a PR, and handle Gemini feedback in PR review threads.
+description: Commit local changes and push to the remote for devopsrockstars using conventional commits. Use when you need to commit and push work, create or update a PR, and handle Gemini feedback in PR review threads.
 ---
 
 # Commit and Push

@@ -1,3 +1,6 @@
+packages:
+  - 'packages/*'
+
 # Build scripts for these packages are intentionally not run: chrome-only
 # e2e passes without the driver downloads, and esbuild and workerd work via
 # their optional platform packages. allowBuilds is read by pnpm 11+,

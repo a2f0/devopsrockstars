@@ -12,7 +12,7 @@ const repository = path.resolve(
 );
 
 function wrangler(arguments_: readonly string[]) {
-  return spawnSync('pnpm', ['exec', 'wrangler', ...arguments_], {
+  return spawnSync('pnpm', ['--silent', 'exec', 'wrangler', ...arguments_], {
     cwd: repository,
     encoding: 'utf8',
     env: {...process.env, CI: 'true'},

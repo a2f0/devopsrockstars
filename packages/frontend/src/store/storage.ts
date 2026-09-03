@@ -1,4 +1,7 @@
-import type {CreateCheckoutResponse, ShippingInput} from './contracts';
+import type {
+  CreateCheckoutResponse,
+  ShippingInput,
+} from '@devopsrockstars/store-contracts';
 
 const CHECKOUT_CLIENT_KEY = 'devopsrockstars.store.checkout-client';
 const PENDING_CHECKOUT_KEY = 'devopsrockstars.store.pending-checkout';

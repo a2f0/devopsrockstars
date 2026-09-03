@@ -1,20 +1,31 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
-  "entry": [
-    "wdio.shared.conf.ts",
-    "wdio.headless.conf.ts",
-    "e2e/specs/**/*.spec.ts",
-    "packages/agent-tool/test/**/*.test.ts",
-    "src/store/**/*.test.ts",
-    "worker/**/*.test.ts"
-  ],
-  "project": [
-    "src/**/*.{ts,tsx}",
-    "worker/**/*.ts",
-    "e2e/**/*.ts",
-    "packages/agent-tool/**/*.ts",
-    "*.ts"
-  ],
+  "workspaces": {
+    ".": {
+      "entry": ["scripts/check-for-unpinned-dependencies.mjs"],
+      "project": ["scripts/**/*.mjs"]
+    },
+    "packages/agent-tool": {
+      "entry": ["test/**/*.test.ts"],
+      "project": ["src/**/*.ts", "test/**/*.ts"]
+    },
+    "packages/backend": {
+      "entry": ["src/**/*.test.ts"],
+      "project": ["src/**/*.ts"]
+    },
+    "packages/frontend": {
+      "entry": [
+        "src/store/**/*.test.ts",
+        "wdio.shared.conf.ts",
+        "wdio.headless.conf.ts",
+        "e2e/specs/**/*.spec.ts"
+      ],
+      "project": ["src/**/*.{ts,tsx}", "e2e/**/*.ts", "*.ts"]
+    },
+    "packages/store-contracts": {
+      "project": ["src/**/*.ts"]
+    }
+  },
   "ignoreDependencies": [
     "@types/mocha",
     "@wdio/dot-reporter",

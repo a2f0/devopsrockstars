@@ -1,4 +1,16 @@
-# DevOpsRockstars Frontend
+# DevOps Rockstars
+
+## Workspace layout
+
+- `packages/frontend` — React site, static assets, Webpack configuration, and
+  browser tests
+- `packages/backend` — Cloudflare Worker, D1 migrations, and Wrangler
+  configuration
+- `packages/store-contracts` — API types shared by the frontend and backend
+- `packages/agent-tool` — guarded review, pull request, and merge tooling
+
+Root scripts orchestrate the packages, so the existing development, test, and
+deployment commands remain stable.
 
 ## Development
 
@@ -13,7 +25,7 @@ The ordinary webpack server is useful for the existing static pages. Store API
 development runs the built SPA and Worker together through Wrangler:
 
 ```shell
-cp .dev.vars.example .dev.vars
+cp packages/backend/.dev.vars.example packages/backend/.dev.vars
 pnpm run db:migrate:local
 pnpm run dev:cloudflare
 ```
@@ -22,7 +34,7 @@ The local store is deliberately sold out after the first migration. Add local
 inventory before testing checkout:
 
 ```shell
-pnpm exec wrangler d1 execute devopsrockstars-store --local \
+pnpm --filter @devopsrockstars/backend exec wrangler d1 execute devopsrockstars-store --local \
   --command "UPDATE product_variants SET inventory_quantity = 5"
 ```
 
@@ -45,7 +57,8 @@ pnpm run test-headless
 Run a specific spec
 
 ```shell
-npx wdio wdio.shared.conf.ts --spec=./specs/basic.spec.ts
+pnpm --filter @devopsrockstars/frontend exec wdio wdio.shared.conf.ts \
+  --spec=./e2e/specs/basic.spec.ts
 ```
 
 ## Production
@@ -56,13 +69,14 @@ resources and Stripe webhook are configured.
 
 ### Cloudflare and Stripe setup
 
-1. The committed `wrangler.jsonc` identifiers are authoritative for the
-   existing deployment. For a different Cloudflare account, create a database
-   and replace `database_id`; also choose a unique positive `namespace_id` for
-   the rate-limit binding:
+1. The committed `packages/backend/wrangler.jsonc` identifiers are
+   authoritative for the existing deployment. For a different Cloudflare
+   account, create a database and replace `database_id`; also choose a unique
+   positive `namespace_id` for the rate-limit binding:
 
    ```shell
-   pnpm exec wrangler d1 create devopsrockstars-store --location=enam
+   pnpm --filter @devopsrockstars/backend exec wrangler d1 create \
+     devopsrockstars-store --location=enam
    ```
 
 2. Apply the schema, then set the actual price and inventory. The migration
@@ -70,7 +84,8 @@ resources and Stripe webhook are configured.
 
    ```shell
    pnpm run db:migrate:remote
-   pnpm exec wrangler d1 execute devopsrockstars-store --remote \
+   pnpm --filter @devopsrockstars/backend exec wrangler d1 execute \
+     devopsrockstars-store --remote \
      --command "UPDATE product_variants SET unit_amount = 2000, inventory_quantity = 1"
    ```
 
@@ -79,10 +94,10 @@ resources and Stripe webhook are configured.
    configuration.
 
    ```shell
-   pnpm exec wrangler secret put STRIPE_PUBLISHABLE_KEY
-   pnpm exec wrangler secret put STRIPE_SECRET_KEY
-   pnpm exec wrangler secret put STRIPE_WEBHOOK_SECRET
-   pnpm exec wrangler secret put CHECKOUT_HASH_SECRET
+   pnpm --filter @devopsrockstars/backend exec wrangler secret put STRIPE_PUBLISHABLE_KEY
+   pnpm --filter @devopsrockstars/backend exec wrangler secret put STRIPE_SECRET_KEY
+   pnpm --filter @devopsrockstars/backend exec wrangler secret put STRIPE_WEBHOOK_SECRET
+   pnpm --filter @devopsrockstars/backend exec wrangler secret put CHECKOUT_HASH_SECRET
    ```
 
 4. Register `https://<store-domain>/api/webhooks/stripe` in Stripe for
@@ -116,7 +131,8 @@ ignored. Store events that cannot be applied safely are recorded in
 Check the open queue with:
 
 ```shell
-pnpm exec wrangler d1 execute devopsrockstars-store --remote \
+pnpm --filter @devopsrockstars/backend exec wrangler d1 execute \
+  devopsrockstars-store --remote \
   --command "SELECT * FROM stripe_event_alerts WHERE status = 'open' ORDER BY created_at"
 ```
 

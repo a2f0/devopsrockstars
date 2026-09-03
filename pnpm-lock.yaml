@@ -7,34 +7,6 @@ settings:
 importers:
 
   .:
-    dependencies:
-      '@stripe/stripe-js':
-        specifier: 9.15.0
-        version: 9.15.0
-      '@svgr/webpack':
-        specifier: 8.1.0
-        version: 8.1.0(typescript@6.0.3)
-      leaflet:
-        specifier: 1.9.4
-        version: 1.9.4
-      react:
-        specifier: 19.2.8
-        version: 19.2.8
-      react-dom:
-        specifier: 19.2.8
-        version: 19.2.8(react@19.2.8)
-      react-leaflet:
-        specifier: 5.0.0
-        version: 5.0.0(leaflet@1.9.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      react-router:
-        specifier: 8.3.0
-        version: 8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      react-svg:
-        specifier: 19.0.0
-        version: 19.0.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      styled-components:
-        specifier: 6.5.0
-        version: 6.5.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
     devDependencies:
       '@biomejs/biome':
         specifier: 2.5.7
@@ -117,6 +89,50 @@ importers:
       wrangler:
         specifier: 4.128.0
         version: 4.128.0
+
+  packages/agent-tool: {}
+
+  packages/backend:
+    dependencies:
+      '@devopsrockstars/store-contracts':
+        specifier: workspace:*
+        version: link:../store-contracts
+
+  packages/frontend:
+    dependencies:
+      '@devopsrockstars/store-contracts':
+        specifier: workspace:*
+        version: link:../store-contracts
+      '@stripe/stripe-js':
+        specifier: 9.15.0
+        version: 9.15.0
+      leaflet:
+        specifier: 1.9.4
+        version: 1.9.4
+      react:
+        specifier: 19.2.8
+        version: 19.2.8
+      react-dom:
+        specifier: 19.2.8
+        version: 19.2.8(react@19.2.8)
+      react-leaflet:
+        specifier: 5.0.0
+        version: 5.0.0(leaflet@1.9.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      react-router:
+        specifier: 8.3.0
+        version: 8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      react-svg:
+        specifier: 19.0.0
+        version: 19.0.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      styled-components:
+        specifier: 6.5.0
+        version: 6.5.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+    devDependencies:
+      '@svgr/webpack':
+        specifier: 8.1.0
+        version: 8.1.0(typescript@6.0.3)
+
+  packages/store-contracts: {}
 
 packages:
 

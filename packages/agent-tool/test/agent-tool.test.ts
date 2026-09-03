@@ -96,8 +96,8 @@ test('rejects multiline subjects', () => {
 test('resolves subjects and repository identity', () => {
   assert.equal(resolveSubject('', 'feat: fallback'), 'feat: fallback');
   assert.equal(
-    repoFromPrUrl('https://github.com/a2f0/devopsrockstars-frontend/pull/785'),
-    'a2f0/devopsrockstars-frontend'
+    repoFromPrUrl('https://github.com/a2f0/devopsrockstars/pull/785'),
+    'a2f0/devopsrockstars'
   );
   assert.throws(() => repoFromPrUrl('https://example.com/no-pr'), /resolve/);
 });

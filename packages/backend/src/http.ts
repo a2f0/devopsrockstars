@@ -1,4 +1,4 @@
-import type {StoreErrorResponse} from '../src/store/contracts';
+import type {StoreErrorResponse} from '@devopsrockstars/store-contracts';
 
 const JSON_HEADERS = {
   'Cache-Control': 'no-store',

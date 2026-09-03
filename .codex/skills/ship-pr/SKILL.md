@@ -1,6 +1,6 @@
 ---
 name: ship-pr
-description: Ship the current devopsrockstars-frontend work through commit, cross-agent review and repair, PR creation or update, Gemini and CI gates, an exact-head squash merge, and safe cleanup.
+description: Ship the current devopsrockstars work through commit, cross-agent review and repair, PR creation or update, Gemini and CI gates, an exact-head squash merge, and safe cleanup.
 ---
 
 # Ship PR

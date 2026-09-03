@@ -1,7 +1,7 @@
 import React, {useEffect, useMemo, useState} from 'react';
 import {loadStorefront} from './api';
 import {useStoreCart} from './cart';
-import type {StorefrontResponse} from './contracts';
+import type {StorefrontResponse} from '@devopsrockstars/store-contracts';
 import {formatMoney} from './format';
 import {
   ActionLink,

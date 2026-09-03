@@ -1,6 +1,6 @@
 ---
 name: enter-merge-queue
-description: Drive a PR to merge in devopsrockstars-frontend by rebasing when behind, fixing CI failures, addressing Gemini review feedback, enabling auto-merge, and waiting until merged.
+description: Drive a PR to merge in devopsrockstars by rebasing when behind, fixing CI failures, addressing Gemini review feedback, enabling auto-merge, and waiting until merged.
 ---
 
 # Enter Merge Queue

@@ -2,7 +2,7 @@ import React, {useEffect, useState} from 'react';
 import {useSearchParams} from 'react-router';
 import {loadOrder} from './api';
 import {useStoreCart} from './cart';
-import type {StoreOrderResponse} from './contracts';
+import type {StoreOrderResponse} from '@devopsrockstars/store-contracts';
 import {formatMoney} from './format';
 import {
   ActionLink,
