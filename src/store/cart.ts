@@ -2,7 +2,6 @@ import {useCallback, useState} from 'react';
 import type {CartItemInput} from './contracts';
 
 const CART_KEY = 'devopsrockstars.store.cart';
-const ORDER_TOKEN_PREFIX = 'devopsrockstars.store.order.';
 
 function isCartItem(value: unknown): value is CartItemInput {
   if (typeof value !== 'object' || value === null) return false;
@@ -63,12 +62,4 @@ export function useStoreCart() {
   }, []);
 
   return {items, add, remove, clear};
-}
-
-export function storeOrderToken(orderId: string, token: string) {
-  sessionStorage.setItem(`${ORDER_TOKEN_PREFIX}${orderId}`, token);
-}
-
-export function readOrderToken(orderId: string) {
-  return sessionStorage.getItem(`${ORDER_TOKEN_PREFIX}${orderId}`);
 }

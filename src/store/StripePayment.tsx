@@ -79,7 +79,13 @@ const StripePayment = React.memo(
             },
           });
           payment = elements.create('payment', {
-            fields: {billingDetails: {email: 'never', name: 'never'}},
+            fields: {
+              billingDetails: {
+                address: 'never',
+                email: 'never',
+                name: 'never',
+              },
+            },
             layout: 'tabs',
           });
           payment.on('ready', () => active && setReady(true));

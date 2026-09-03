@@ -56,7 +56,10 @@ resources and Stripe webhook are configured.
 
 ### Cloudflare and Stripe setup
 
-1. Create the database and copy its UUID into `wrangler.jsonc`:
+1. The committed `wrangler.jsonc` identifiers are authoritative for the
+   existing deployment. For a different Cloudflare account, create a database
+   and replace `database_id`; also choose a unique positive `namespace_id` for
+   the rate-limit binding:
 
    ```shell
    pnpm exec wrangler d1 create devopsrockstars-store --location=enam
@@ -100,8 +103,9 @@ by the order-status transition trigger. A ten-minute cron cancels reservations
 that have been abandoned for thirty minutes.
 
 Checkout creation is limited to two attempts per minute and one active
-reservation per client address. The edge limit uses Cloudflare's
-`CHECKOUT_RATE_LIMITER` binding; D1 enforces the exact active-reservation cap.
+reservation per browser session. The edge limit uses Cloudflare's
+`CHECKOUT_RATE_LIMITER` binding; D1 prevents accidental duplicate reservations
+for the same resumable checkout session.
 
 Signed Stripe events without the store's source metadata are acknowledged and
 ignored. Store events that cannot be applied safely are recorded in

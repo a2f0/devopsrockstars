@@ -1,7 +1,7 @@
 ALTER TABLE orders ADD COLUMN payment_cancel_failed_at TEXT;
 ALTER TABLE orders ADD COLUMN checkout_client_hash TEXT;
 
-CREATE INDEX orders_checkout_client_status
+CREATE INDEX orders_checkout_session_status
 ON orders(checkout_client_hash, status);
 
 CREATE TRIGGER limit_active_checkout_reservations
@@ -14,7 +14,7 @@ WHEN NEW.checkout_client_hash IS NOT NULL
       AND status IN ('creating_payment', 'awaiting_payment')
   )
 BEGIN
-  SELECT RAISE(ABORT, 'checkout_rate_limited');
+  SELECT RAISE(ABORT, 'checkout_already_active');
 END;
 
 CREATE TABLE stripe_event_alerts (

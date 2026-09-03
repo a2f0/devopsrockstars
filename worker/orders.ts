@@ -9,6 +9,7 @@ interface OrderRow {
   readonly access_token_hash: string;
   readonly currency: string;
   readonly id: string;
+  readonly reservation_expires_at: string;
   readonly status: StoreOrderStatus;
   readonly total_amount: number;
 }
@@ -20,7 +21,8 @@ export async function loadOrder(
 ): Promise<StoreOrderResponse | null> {
   if (!/^[0-9a-f-]{36}$/iu.test(orderId) || token.length > 100) return null;
   const order = await env.DB.prepare(
-    `SELECT id, access_token_hash, status, currency, total_amount
+    `SELECT id, access_token_hash, status, currency, total_amount,
+            reservation_expires_at
      FROM orders
      WHERE id = ?`
   )
@@ -33,6 +35,7 @@ export async function loadOrder(
     orderId: order.id,
     status: order.status,
     currency: order.currency,
+    expiresAt: order.reservation_expires_at,
     totalAmount: order.total_amount,
   };
 }

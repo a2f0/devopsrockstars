@@ -84,7 +84,13 @@ function calculateOrder(
 ) {
   let currency: string | null = null;
   let totalAmount = 0;
-  const lines = request.items.map(item => {
+  const lines: Array<
+    CreateCheckoutRequest['items'][number] & {
+      readonly variant: VariantRow;
+      readonly lineTotal: number;
+    }
+  > = [];
+  for (const item of request.items) {
     const variant = variants.get(item.variantId);
     if (!variant?.active || !variant.product_active) {
       throw new CheckoutCreationError(
@@ -110,8 +116,8 @@ function calculateOrder(
     currency = variant.currency;
     const lineTotal = variant.unit_amount * item.quantity;
     totalAmount += lineTotal;
-    return {...item, variant, lineTotal};
-  });
+    lines.push({...item, variant, lineTotal});
+  }
   if (
     !currency ||
     !Number.isSafeInteger(totalAmount) ||
@@ -274,11 +280,11 @@ export async function startCheckout(
         409
       );
     }
-    if (String(error).includes('checkout_rate_limited')) {
+    if (String(error).includes('checkout_already_active')) {
       throw new CheckoutCreationError(
-        'checkout_rate_limited',
-        'A checkout is already active for this connection.',
-        429
+        'checkout_already_active',
+        'A checkout is already active in this browser.',
+        409
       );
     }
     throw error;

@@ -60,6 +60,7 @@ export type StoreOrderStatus =
 
 export interface StoreOrderResponse {
   readonly currency: string;
+  readonly expiresAt: string;
   readonly orderId: string;
   readonly status: StoreOrderStatus;
   readonly totalAmount: number;

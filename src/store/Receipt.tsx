@@ -1,9 +1,10 @@
 import React, {useEffect, useState} from 'react';
 import {useSearchParams} from 'react-router';
 import {loadOrder} from './api';
-import {readOrderToken, useStoreCart} from './cart';
+import {useStoreCart} from './cart';
 import type {StoreOrderResponse} from './contracts';
 import {formatMoney} from './format';
+import {clearPendingCheckout, readOrderToken} from './storage';
 import {
   ActionLink,
   FormActions,
@@ -16,6 +17,7 @@ import {
 const Receipt = React.memo(() => {
   const [searchParams] = useSearchParams();
   const orderId = searchParams.get('order') ?? '';
+  const redirectStatus = searchParams.get('redirect_status');
   const orderToken = orderId ? readOrderToken(orderId) : null;
   const cart = useStoreCart();
   const [order, setOrder] = useState<StoreOrderResponse | null>(null);
@@ -33,12 +35,20 @@ const Receipt = React.memo(() => {
       try {
         const result = await loadOrder(orderId, orderToken, controller.signal);
         setOrder(result);
-        if (result.status === 'paid') cart.clear();
+        if (result.status === 'paid') {
+          cart.clear();
+          clearPendingCheckout();
+        }
+        if (result.status === 'canceled') clearPendingCheckout();
         if (
           result.status === 'awaiting_payment' ||
           result.status === 'creating_payment'
         ) {
-          timeout = setTimeout(refresh, 1500);
+          if (Date.parse(result.expiresAt) > Date.now()) {
+            timeout = setTimeout(refresh, 1500);
+          } else {
+            setError('This order expired before payment was confirmed.');
+          }
         }
       } catch (loadError) {
         if (!controller.signal.aborted) {
@@ -74,7 +84,11 @@ const Receipt = React.memo(() => {
           </Status>
         ) : null}
         {order && order.status !== 'paid' && order.status !== 'canceled' ? (
-          <Status>Payment received. Confirming your order…</Status>
+          <Status $error={redirectStatus === 'failed'}>
+            {redirectStatus === 'failed'
+              ? 'Payment was not completed. Please try again.'
+              : 'Confirming your payment…'}
+          </Status>
         ) : null}
         {!order && !error ? <Status>Loading your order…</Status> : null}
         {error ? <Status $error>{error}</Status> : null}

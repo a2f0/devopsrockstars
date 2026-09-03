@@ -15,6 +15,8 @@ import {CheckoutValidationError, validateCheckout} from './validation';
 import {handleStripeWebhook} from './webhook';
 
 const CHECKOUT_RATE_LIMIT_KEY = 'checkout:';
+const CHECKOUT_CLIENT_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
 
 export async function route(request: Request, env: Env) {
   const url = new URL(request.url);
@@ -27,6 +29,16 @@ export async function route(request: Request, env: Env) {
         'forbidden',
         'Cross-site checkout requests are blocked.',
         403
+      );
+    }
+    const checkout = validateCheckout(await readJson(request));
+    const checkoutClientToken =
+      request.headers.get('X-Checkout-Client')?.trim() ?? '';
+    if (!CHECKOUT_CLIENT_PATTERN.test(checkoutClientToken)) {
+      return apiError(
+        'invalid_checkout_client',
+        'The checkout session is invalid. Reload the page and try again.',
+        400
       );
     }
     if (!env.CHECKOUT_RATE_LIMITER) {
@@ -49,8 +61,7 @@ export async function route(request: Request, env: Env) {
         429
       );
     }
-    const checkout = validateCheckout(await readJson(request));
-    const clientHash = await sha256(rateLimitKey);
+    const clientHash = await sha256(`checkout-client:${checkoutClientToken}`);
     return json(await startCheckout(env, checkout, clientHash), 201);
   }
   if (request.method === 'POST' && url.pathname === '/api/webhooks/stripe') {

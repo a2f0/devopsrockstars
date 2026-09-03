@@ -47,10 +47,16 @@ export async function loadStorefront(signal?: AbortSignal) {
   return readResponse<StorefrontResponse>(response);
 }
 
-export async function createCheckout(request: CreateCheckoutRequest) {
+export async function createCheckout(
+  request: CreateCheckoutRequest,
+  checkoutClientToken: string
+) {
   const response = await fetch('/api/checkouts', {
     method: 'POST',
-    headers: {'Content-Type': 'application/json'},
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Checkout-Client': checkoutClientToken,
+    },
     body: JSON.stringify(request),
   });
   return readResponse<CreateCheckoutResponse>(response);

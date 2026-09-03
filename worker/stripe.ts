@@ -27,6 +27,15 @@ interface PaymentIntentResult {
   readonly id: string;
 }
 
+export interface PaymentIntentState {
+  readonly amountReceived: number | null;
+  readonly currency: string | null;
+  readonly id: string;
+  readonly orderId: string | null;
+  readonly source: string | null;
+  readonly status: string;
+}
+
 function property(value: unknown, key: string) {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
     return undefined;
@@ -42,8 +51,9 @@ function requiredString(value: unknown, field: string) {
 }
 
 async function requestStripe(input: {
-  readonly form: URLSearchParams;
+  readonly form?: URLSearchParams;
   readonly idempotencyKey?: string;
+  readonly method?: 'GET' | 'POST';
   readonly operation: string;
   readonly path: string;
   readonly secretKey: string;
@@ -51,16 +61,18 @@ async function requestStripe(input: {
   let response: Response;
   try {
     response = await fetch(`${STRIPE_ORIGIN}${input.path}`, {
-      method: 'POST',
+      method: input.method ?? 'POST',
       headers: {
         Authorization: `Bearer ${input.secretKey}`,
-        'Content-Type': 'application/x-www-form-urlencoded',
         'Stripe-Version': STRIPE_API_VERSION,
+        ...(input.form
+          ? {'Content-Type': 'application/x-www-form-urlencoded'}
+          : {}),
         ...(input.idempotencyKey
           ? {'Idempotency-Key': input.idempotencyKey}
           : {}),
       },
-      body: input.form.toString(),
+      ...(input.form ? {body: input.form.toString()} : {}),
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
   } catch (error) {
@@ -76,6 +88,34 @@ async function requestStripe(input: {
     throw new StripeRequestError(input.operation, response.status);
   }
   return response.json() as Promise<unknown>;
+}
+
+export async function retrievePaymentIntent(
+  secretKey: string,
+  intentId: string
+): Promise<PaymentIntentState> {
+  if (!/^pi_[A-Za-z0-9_]+$/u.test(intentId)) {
+    throw new StripeRequestError('PaymentIntent retrieval', 400);
+  }
+  const result = await requestStripe({
+    method: 'GET',
+    operation: 'PaymentIntent retrieval',
+    path: `/v1/payment_intents/${encodeURIComponent(intentId)}`,
+    secretKey,
+  });
+  const metadata = property(result, 'metadata');
+  const amountReceived = property(result, 'amount_received');
+  const currency = property(result, 'currency');
+  const orderId = property(metadata, 'order_id');
+  const source = property(metadata, 'source');
+  return {
+    amountReceived: typeof amountReceived === 'number' ? amountReceived : null,
+    currency: typeof currency === 'string' ? currency : null,
+    id: requiredString(property(result, 'id'), 'id'),
+    orderId: typeof orderId === 'string' ? orderId : null,
+    source: typeof source === 'string' ? source : null,
+    status: requiredString(property(result, 'status'), 'status'),
+  };
 }
 
 export async function createPaymentIntent(

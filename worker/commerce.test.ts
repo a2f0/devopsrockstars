@@ -7,6 +7,7 @@ import {
   CheckoutCreationError,
   startCheckout,
 } from './checkout';
+import {cleanupExpiredOrders} from './cleanup';
 import {sha256} from './crypto';
 import {route} from './index';
 import {loadOrder} from './orders';
@@ -182,10 +183,10 @@ test('checkout maps an atomic negative-inventory rollback to out of stock', asyn
   assert.equal(createPaymentCalls, 0);
 });
 
-test('checkout maps the active-reservation trigger to a rate limit', async () => {
+test('checkout maps the active-reservation trigger to an active order', async () => {
   const database = new FakeDatabase();
   database.allValues = [availableVariant()];
-  database.batchFailure = new Error('checkout_rate_limited');
+  database.batchFailure = new Error('checkout_already_active');
 
   await assert.rejects(
     startCheckout(
@@ -196,8 +197,8 @@ test('checkout maps the active-reservation trigger to a rate limit', async () =>
     ),
     (error: unknown) =>
       error instanceof CheckoutCreationError &&
-      error.code === 'checkout_rate_limited' &&
-      error.status === 429
+      error.code === 'checkout_already_active' &&
+      error.status === 409
   );
 });
 
@@ -259,6 +260,47 @@ test('checkout records an orphaned PaymentIntent when cancellation fails', async
     '2026-09-03T12:00:00.000Z',
     '2026-09-03T12:00:00.000Z',
     '2026-09-03T12:00:00.000Z',
+    '12345678-1234-1234-1234-123456789abc',
+  ]);
+});
+
+test('cleanup reconciles an already-succeeded expired PaymentIntent', async t => {
+  t.mock.method(console, 'error', () => undefined);
+  const database = new FakeDatabase();
+  database.allValues = [
+    {
+      currency: 'usd',
+      id: '12345678-1234-1234-1234-123456789abc',
+      stripe_payment_intent_id: 'pi_store',
+      total_amount: 4000,
+    },
+  ];
+
+  await cleanupExpiredOrders(
+    {DB: database, STRIPE_SECRET_KEY: 'sk_test'},
+    Date.parse('2026-09-03T17:00:00.000Z'),
+    {
+      cancelPaymentIntent: async () => {
+        throw new StripeRequestError('PaymentIntent cancellation', 400);
+      },
+      retrievePaymentIntent: async () => ({
+        amountReceived: 4000,
+        currency: 'usd',
+        id: 'pi_store',
+        orderId: '12345678-1234-1234-1234-123456789abc',
+        source: 'devopsrockstars_store',
+        status: 'succeeded',
+      }),
+    }
+  );
+
+  const paidUpdate = database.runs.find(statement =>
+    statement.query.includes("SET status = 'paid'")
+  );
+  assert.ok(paidUpdate);
+  assert.deepEqual(paidUpdate.values, [
+    '2026-09-03T17:00:00.000Z',
+    '2026-09-03T17:00:00.000Z',
     '12345678-1234-1234-1234-123456789abc',
   ]);
 });
@@ -424,6 +466,7 @@ test('order lookup requires the matching bearer token hash', async () => {
     access_token_hash: await sha256('correct-token'),
     currency: 'usd',
     id: '12345678-1234-1234-1234-123456789abc',
+    reservation_expires_at: '2026-09-03T17:00:00.000Z',
     status: 'paid',
     total_amount: 4000,
   };
@@ -437,6 +480,7 @@ test('order lookup requires the matching bearer token hash', async () => {
     ),
     {
       currency: 'usd',
+      expiresAt: '2026-09-03T17:00:00.000Z',
       orderId: '12345678-1234-1234-1234-123456789abc',
       status: 'paid',
       totalAmount: 4000,
@@ -459,7 +503,10 @@ test('checkout route applies the Cloudflare rate limit before creating work', as
   };
   const request = new Request('https://store.example/api/checkouts', {
     method: 'POST',
-    headers: {'CF-Connecting-IP': '203.0.113.10'},
+    headers: {
+      'CF-Connecting-IP': '203.0.113.10',
+      'X-Checkout-Client': '12345678-1234-4234-8234-123456789abc',
+    },
     body: JSON.stringify(checkoutRequest()),
   });
 
@@ -477,5 +524,29 @@ test('checkout route applies the Cloudflare rate limit before creating work', as
         'Too many checkout attempts. Please wait a minute and try again.',
     },
   });
+  assert.equal(database.statements.length, 0);
+});
+
+test('checkout route rejects an invalid browser token before rate limiting', async () => {
+  const database = new FakeDatabase();
+  const keys: string[] = [];
+  const response = await route(
+    new Request('https://store.example/api/checkouts', {
+      method: 'POST',
+      body: JSON.stringify(checkoutRequest()),
+    }),
+    {
+      DB: database,
+      CHECKOUT_RATE_LIMITER: {
+        async limit({key}) {
+          keys.push(key);
+          return {success: true};
+        },
+      },
+    }
+  );
+
+  assert.equal(response.status, 400);
+  assert.deepEqual(keys, []);
   assert.equal(database.statements.length, 0);
 });

@@ -42,3 +42,15 @@ describe('search page', () => {
     );
   });
 });
+
+describe('store page', () => {
+  it('shows a graceful unavailable state without the Worker API', async () => {
+    await BasePage.open('store');
+    await BasePage.waitForAppReady();
+
+    await expect(await browser.$('h1=store')).toExist();
+    await expect(
+      await browser.$('p=The store is temporarily unavailable.')
+    ).toExist();
+  });
+});

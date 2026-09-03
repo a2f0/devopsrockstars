@@ -1,13 +1,19 @@
 import React, {useEffect, useMemo, useState} from 'react';
 import {useNavigate} from 'react-router';
 import {createCheckout, loadStorefront} from './api';
-import {storeOrderToken, useStoreCart} from './cart';
+import {useStoreCart} from './cart';
 import type {
   CreateCheckoutResponse,
   ShippingInput,
   StorefrontResponse,
 } from './contracts';
 import {formatMoney} from './format';
+import {
+  getCheckoutClientToken,
+  readPendingCheckout,
+  storeOrderToken,
+  storePendingCheckout,
+} from './storage';
 import {
   ActionLink,
   Button,
@@ -41,9 +47,17 @@ const EMPTY_SHIPPING: ShippingInput = {
 const Checkout = React.memo(() => {
   const cart = useStoreCart();
   const navigate = useNavigate();
+  const [pendingCheckout] = useState(readPendingCheckout);
   const [storefront, setStorefront] = useState<StorefrontResponse | null>(null);
-  const [shipping, setShipping] = useState<ShippingInput>(EMPTY_SHIPPING);
-  const [checkout, setCheckout] = useState<CreateCheckoutResponse | null>(null);
+  const [shipping, setShipping] = useState<ShippingInput>(
+    pendingCheckout?.shipping ?? EMPTY_SHIPPING
+  );
+  const [checkout, setCheckout] = useState<CreateCheckoutResponse | null>(
+    pendingCheckout?.checkout ?? null
+  );
+  const [reservedItems, setReservedItems] = useState<
+    readonly {readonly variantId: string; readonly quantity: number}[] | null
+  >(pendingCheckout?.items ?? null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -69,7 +83,8 @@ const Checkout = React.memo(() => {
       ),
     [storefront]
   );
-  const visibleItems = cart.items.flatMap(item => {
+  const displayedItems = checkout && reservedItems ? reservedItems : cart.items;
+  const visibleItems = displayedItems.flatMap(item => {
     const entry = variants.get(item.variantId);
     return entry ? [{...item, ...entry}] : [];
   });
@@ -101,8 +116,13 @@ const Checkout = React.memo(() => {
     setBusy(true);
     setError(null);
     try {
-      const result = await createCheckout({items: checkoutItems, shipping});
+      const result = await createCheckout(
+        {items: checkoutItems, shipping},
+        getCheckoutClientToken()
+      );
       storeOrderToken(result.orderId, result.orderToken);
+      storePendingCheckout({checkout: result, items: checkoutItems, shipping});
+      setReservedItems(checkoutItems);
       setCheckout(result);
     } catch (checkoutError) {
       console.error('Failed to start checkout:', checkoutError);
@@ -116,7 +136,7 @@ const Checkout = React.memo(() => {
     }
   };
 
-  if (cart.items.length === 0) {
+  if (displayedItems.length === 0) {
     return (
       <StoreShell>
         <StoreHeading>checkout</StoreHeading>

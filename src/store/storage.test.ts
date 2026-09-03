@@ -1,0 +1,113 @@
+import assert from 'node:assert/strict';
+import {beforeEach, test} from 'node:test';
+import {
+  clearPendingCheckout,
+  getCheckoutClientToken,
+  readOrderToken,
+  readPendingCheckout,
+  storeOrderToken,
+  storePendingCheckout,
+} from './storage';
+
+class MemoryStorage implements Storage {
+  readonly values = new Map<string, string>();
+
+  get length() {
+    return this.values.size;
+  }
+
+  clear() {
+    this.values.clear();
+  }
+
+  getItem(key: string) {
+    return this.values.get(key) ?? null;
+  }
+
+  key(index: number) {
+    return [...this.values.keys()][index] ?? null;
+  }
+
+  removeItem(key: string) {
+    this.values.delete(key);
+  }
+
+  setItem(key: string, value: string) {
+    this.values.set(key, value);
+  }
+}
+
+beforeEach(() => {
+  Object.defineProperty(globalThis, 'sessionStorage', {
+    configurable: true,
+    value: new MemoryStorage(),
+  });
+});
+
+function pendingCheckout(expiresAt: string) {
+  return {
+    checkout: {
+      clientSecret: 'pi_store_secret_test',
+      currency: 'usd',
+      expiresAt,
+      orderId: '12345678-1234-4234-8234-123456789abc',
+      orderToken: 'order-token',
+      totalAmount: 4000,
+    },
+    items: [{variantId: 'hat-5950-7-1-4', quantity: 2}],
+    shipping: {
+      name: 'Grace Hopper',
+      email: 'grace@example.com',
+      addressLine1: '1 Navy Way',
+      addressLine2: '',
+      city: 'New York',
+      state: 'NY',
+      postalCode: '10001',
+      country: 'US' as const,
+    },
+  };
+}
+
+test('persists and resumes an unexpired checkout', () => {
+  const pending = pendingCheckout(new Date(Date.now() + 60_000).toISOString());
+  storePendingCheckout(pending);
+  assert.deepEqual(readPendingCheckout(), pending);
+  clearPendingCheckout();
+  assert.equal(readPendingCheckout(), null);
+});
+
+test('discards expired or malformed pending checkouts', () => {
+  storePendingCheckout(
+    pendingCheckout(new Date(Date.now() - 60_000).toISOString())
+  );
+  assert.equal(readPendingCheckout(), null);
+  sessionStorage.setItem(
+    'devopsrockstars.store.pending-checkout',
+    JSON.stringify({checkout: {clientSecret: 'untrusted'}})
+  );
+  assert.equal(readPendingCheckout(), null);
+});
+
+test('keeps a random checkout client token stable for the page session', () => {
+  const token = getCheckoutClientToken();
+  assert.match(token, /^[0-9a-f-]{36}$/u);
+  assert.equal(getCheckoutClientToken(), token);
+});
+
+test('order token storage fails safely when session storage is blocked', () => {
+  storeOrderToken('order-id', 'order-token');
+  assert.equal(readOrderToken('order-id'), 'order-token');
+  Object.defineProperty(globalThis, 'sessionStorage', {
+    configurable: true,
+    value: {
+      getItem() {
+        throw new Error('blocked');
+      },
+      setItem() {
+        throw new Error('blocked');
+      },
+    },
+  });
+  assert.doesNotThrow(() => storeOrderToken('order-id', 'order-token'));
+  assert.equal(readOrderToken('order-id'), null);
+});
