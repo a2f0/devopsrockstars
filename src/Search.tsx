@@ -7,7 +7,7 @@ const SearchForm = styled.form`
 `;
 
 const SearchLogo = styled.div`
-  width: min(300px, calc(100% - 24px));
+  width: min(375px, calc(100% - 24px));
   aspect-ratio: 167.38037 / 33.959961;
   margin: 50px auto 25px;
 
