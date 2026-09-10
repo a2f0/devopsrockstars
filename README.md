@@ -41,7 +41,7 @@ pnpm --filter @devopsrockstars/backend exec wrangler d1 execute \
   --command "UPDATE product_variants SET inventory_quantity = 5"
 ```
 
-To see the site as staging renders it, without the store or search:
+To see the site as staging renders it, with the store and search enabled:
 
 ```shell
 pnpm run start-staging-server   # :8082
@@ -88,8 +88,10 @@ deployments; Terraform owns the custom domains.
 | Production | `devopsrockstars.com` | `store.devopsrockstars.com` | `devopsrockstars-website-prod`, `devopsrockstars-store-prod` |
 | Staging | `staging.devopsrockstars.com` | `store-staging.devopsrockstars.com` | `devopsrockstars-website-staging`, `devopsrockstars-store-staging` |
 
-`www.devopsrockstars.com` is a Cloudflare redirect to the apex. Neither Worker
-is reachable on `workers.dev`, so the only hostnames are the ones above.
+`www.devopsrockstars.com` is a second custom domain on the production website
+Worker, serving the same content as the apex rather than redirecting to it,
+which is what CloudFront did before the move. Neither Worker is reachable on
+`workers.dev`, so the only hostnames are the ones above.
 
 The store and search are not launched yet, so **production** hides their links
 and routes and serves a not-found page for `/search` and `/store`. Staging
@@ -179,6 +181,22 @@ migrations, publishes the store Worker, then publishes the site Worker.
    delegation changes, and `www` returns 522 until the redirect ruleset is in
    place. Cloudflare only engages its proxy once the zone leaves `pending`, so
    the Worker hostnames cannot be tested before the move.
+
+### Retiring a renamed Worker
+
+Renaming a Worker publishes a new one; the old deployment keeps running, along
+with its cron trigger and its bindings to the same production D1 database. The
+`devopsrockstars-store` Worker that preceded `devopsrockstars-store-prod` has
+been deleted for exactly that reason. After any future rename, confirm the
+cutover, then retire the predecessor:
+
+```shell
+pnpm --filter @devopsrockstars/backend exec wrangler delete --name <old-worker>
+```
+
+Check for stragglers with `wrangler deployments list --name <old-worker>`, and
+remember that Worker secrets cannot be read back — a rename means re-adding
+every secret to the new Worker before it can serve traffic.
 
 ### Infrastructure
 
