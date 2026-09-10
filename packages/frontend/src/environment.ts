@@ -12,11 +12,12 @@ export function parseSiteEnvironment(
   return value === 'staging' ? 'staging' : 'production';
 }
 
-// Staging is a publicly reachable host running unreleased work, so it ships
-// without the store or search and asks crawlers to leave it alone.
+// The store and search are not ready to launch, so production hides them while
+// staging keeps them reachable for testing. Staging is publicly resolvable, so
+// only production is offered to search engines.
 export function siteFeatures(environment: SiteEnvironment): SiteFeatures {
-  const released = environment === 'production';
-  return {indexable: released, search: released, store: released};
+  const production = environment === 'production';
+  return {indexable: production, search: !production, store: !production};
 }
 
 const siteEnvironment = parseSiteEnvironment(globalThis.__SITE_ENVIRONMENT__);

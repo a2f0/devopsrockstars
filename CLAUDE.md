@@ -178,8 +178,12 @@ D1 database.
 
 `packages/frontend/src/environment.ts` derives the environment from
 `PUBLIC_ENVIRONMENT`, injected at build time by webpack's `DefinePlugin`.
-Staging drops the store and search routes and links, and adds a `noindex`
-meta tag, an `X-Robots-Tag` header, and a disallow-all `robots.txt`. The store
-JavaScript is still present in the staging bundle; it simply has no link or
-route reaching it. `packages/frontend/buildAssets.ts` generates the `robots.txt`
-and `_headers` files, and both are covered by unit and e2e tests.
+
+- The store and search are unlaunched, so **production** hides their links and
+  routes; staging keeps them for testing
+- **Staging** adds a `noindex` meta tag, an `X-Robots-Tag` header, and a
+  disallow-all `robots.txt`, so only production is indexable
+- The store JavaScript is still present in the production bundle; it simply has
+  no link or route reaching it
+- `packages/frontend/buildAssets.ts` generates `robots.txt` and `_headers`;
+  both are covered by unit and e2e tests

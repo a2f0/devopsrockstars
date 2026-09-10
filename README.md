@@ -65,8 +65,9 @@ pnpm run test-headless
 ```
 
 `e2e/specs/basic.spec.ts` runs against the production build on :8081 and
-`e2e/specs/staging.spec.ts` against the staging build on :8082, so one run
-covers both environments' feature flags.
+asserts the store and search are hidden; `e2e/specs/staging.spec.ts` runs
+against the staging build on :8082 and exercises them. One run covers both
+environments' feature flags.
 
 Run a specific spec
 
@@ -90,11 +91,17 @@ deployments; Terraform owns the custom domains.
 `www.devopsrockstars.com` is a Cloudflare redirect to the apex. Neither Worker
 is reachable on `workers.dev`, so the only hostnames are the ones above.
 
-Staging builds with `PUBLIC_ENVIRONMENT=staging`, which drops the store and
-search routes and links, and adds a `noindex, nofollow` meta tag, an
-`X-Robots-Tag` response header, and a `robots.txt` that disallows everything.
-The store Worker and its database still run in staging so the API can be
-exercised directly.
+The store and search are not launched yet, so **production** hides their links
+and routes and serves a not-found page for `/search` and `/store`. Staging
+keeps them reachable so the storefront can be exercised end to end against the
+Stripe test keys. Staging builds with `PUBLIC_ENVIRONMENT=staging`, which also
+adds a `noindex, nofollow` meta tag, an `X-Robots-Tag` response header, and a
+`robots.txt` that disallows everything, so only production is offered to search
+engines.
+
+Cloudflare prepends its own managed `robots.txt` block whose `User-agent: *`
+group merges with ours, and `Allow` wins that tie, so the header and meta tag
+are what actually keep staging out of search results.
 
 GitHub Actions deploys `production` to production and `staging` to staging, and
 `workflow_dispatch` deploys any branch to staging. Deployments run locally the
