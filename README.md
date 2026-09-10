@@ -171,10 +171,16 @@ migrations, publishes the store Worker, then publishes the site Worker.
 
    Terraform needs `TF_VAR_cloudflare_api_token` in the environment and
    `cloudflare_account_id` in `main.tfvars`. The token needs Workers Scripts
-   Edit, Workers Routes Edit, DNS Edit, Zone Read, and Zone Settings Edit — the
-   last one for `always_use_https`, which restores the HTTPS redirect
-   CloudFront used to perform. Creating the zone itself needs Zone Create,
-   which is easier to do once in the dashboard.
+   Edit, Workers Routes Edit, DNS Edit, Zone Read, and Zone Settings Edit.
+   Creating the zone itself needs Zone Create, which is easier to do once in
+   the dashboard.
+
+   Zone Settings Edit is required for `cloudflare_zone_setting.always_use_https`,
+   which restores the HTTPS redirect CloudFront used to perform. **A token
+   without it fails the whole apply on that resource**, and cannot read the
+   setting either, so Terraform reports it as missing even when it is enabled in
+   the dashboard. Toggling it under SSL/TLS → Edge Certificates fixes the
+   behaviour immediately; widening the token is what makes Terraform agree.
 
 7. Move the registrar's nameservers last, after Terraform has applied. The
    `MX` records must already exist in Cloudflare or mail stops the moment the
