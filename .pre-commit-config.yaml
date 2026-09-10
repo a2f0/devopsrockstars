@@ -18,6 +18,11 @@ repos:
       entry: node scripts/check-for-unpinned-dependencies.mjs
       pass_filenames: false
       language: system
+    - id: check-agent-skills-in-sync
+      name: check-agent-skills-in-sync
+      entry: node scripts/check-agent-skills-in-sync.mjs
+      pass_filenames: false
+      language: system
     - id: biome format
       name: biome format
       entry: pnpm exec biome format

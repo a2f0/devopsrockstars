@@ -1,39 +1,67 @@
 {
   "$schema": "../../node_modules/wrangler/config-schema.json",
-  "name": "devopsrockstars-store",
   "main": "./src/index.ts",
   "compatibility_date": "2026-08-31",
-  "vars": {
-    "STOREFRONT_ORIGINS": "https://devopsrockstars.com,https://www.devopsrockstars.com"
-  },
-  "assets": {
-    "directory": "../frontend/build",
-    "binding": "ASSETS",
-    "not_found_handling": "single-page-application",
-    "run_worker_first": ["/api/*"]
-  },
-  "d1_databases": [
-    {
-      "binding": "DB",
-      "database_name": "devopsrockstars-store",
-      "database_id": "3c4ece27-9b96-4978-b747-77a9fa67b7e2",
-      "migrations_dir": "./migrations"
-    }
-  ],
-  "ratelimits": [
-    {
-      "name": "CHECKOUT_RATE_LIMITER",
-      "namespace_id": "5950753",
-      "simple": {
-        "limit": 2,
-        "period": 60
-      }
-    }
-  ],
   "triggers": {
     "crons": ["* * * * *"]
   },
   "observability": {
     "enabled": true
+  },
+  // Bindings and vars are not inherited by named environments, so each
+  // environment repeats them. Always deploy with an explicit --env.
+  "env": {
+    "staging": {
+      "name": "devopsrockstars-store-staging",
+      "workers_dev": false,
+      "preview_urls": false,
+      "vars": {
+        "STOREFRONT_ORIGINS": "https://staging.devopsrockstars.com"
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "devopsrockstars-store-staging",
+          "database_id": "35891cf5-2187-43f8-b844-8b96a16e70dc",
+          "migrations_dir": "./migrations"
+        }
+      ],
+      "ratelimits": [
+        {
+          "name": "CHECKOUT_RATE_LIMITER",
+          "namespace_id": "5950754",
+          "simple": {
+            "limit": 2,
+            "period": 60
+          }
+        }
+      ]
+    },
+    "prod": {
+      "name": "devopsrockstars-store-prod",
+      "workers_dev": false,
+      "preview_urls": false,
+      "vars": {
+        "STOREFRONT_ORIGINS": "https://devopsrockstars.com,https://www.devopsrockstars.com"
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "devopsrockstars-store",
+          "database_id": "3c4ece27-9b96-4978-b747-77a9fa67b7e2",
+          "migrations_dir": "./migrations"
+        }
+      ],
+      "ratelimits": [
+        {
+          "name": "CHECKOUT_RATE_LIMITER",
+          "namespace_id": "5950753",
+          "simple": {
+            "limit": 2,
+            "period": 60
+          }
+        }
+      ]
+    }
   }
 }

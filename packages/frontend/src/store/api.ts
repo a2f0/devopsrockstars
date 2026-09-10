@@ -5,6 +5,7 @@ import type {
   StorefrontResponse,
   StoreOrderResponse,
 } from '@devopsrockstars/shared-types';
+import {storeApiOrigin} from '../environment';
 
 class StoreApiError extends Error {
   readonly code: string;
@@ -16,15 +17,11 @@ class StoreApiError extends Error {
   }
 }
 
-const PRODUCTION_API_ORIGIN =
-  'https://devopsrockstars-store.dansullivan.workers.dev';
-
+// Each deployed environment serves the store API from its own Worker, so the
+// origin is baked in at build time. Development and the browser tests leave it
+// empty and stay same-origin.
 function apiUrl(path: string) {
-  const hostname = globalThis.location?.hostname;
-  return hostname === 'devopsrockstars.com' ||
-    hostname === 'www.devopsrockstars.com'
-    ? new URL(path, PRODUCTION_API_ORIGIN).href
-    : path;
+  return storeApiOrigin ? new URL(path, storeApiOrigin).href : path;
 }
 
 async function readResponse<T>(response: Response): Promise<T> {

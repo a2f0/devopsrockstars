@@ -4,10 +4,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "db:migrate:local": "wrangler d1 migrations apply devopsrockstars-store --local",
-    "db:migrate:remote": "wrangler d1 migrations apply devopsrockstars-store --remote",
-    "deploy": "wrangler deploy",
-    "dev": "wrangler dev --local"
+    "db:migrate:local": "wrangler d1 migrations apply devopsrockstars-store-staging --env staging --local",
+    "db:migrate:staging": "wrangler d1 migrations apply devopsrockstars-store-staging --env staging --remote",
+    "db:migrate:prod": "wrangler d1 migrations apply devopsrockstars-store --env prod --remote",
+    "deploy:staging": "wrangler deploy --env staging",
+    "deploy:prod": "wrangler deploy --env prod",
+    "dev": "wrangler dev --env staging --local"
   },
   "dependencies": {
     "@devopsrockstars/shared-types": "workspace:*"

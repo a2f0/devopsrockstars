@@ -38,8 +38,12 @@ function orderSql(id: string, clientHash: string, networkHash: string) {
 
 test('D1 migrations enforce reservation, restock, and cap invariants', () => {
   const persistence = mkdtempSync(path.join(tmpdir(), 'store-d1-test-'));
+  // Local migrations run against the staging environment's binding, matching
+  // the db:migrate:local script.
   const localArguments = [
-    'devopsrockstars-store',
+    'devopsrockstars-store-staging',
+    '--env',
+    'staging',
     '--local',
     '--persist-to',
     persistence,

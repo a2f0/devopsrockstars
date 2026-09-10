@@ -1,7 +1,3 @@
-variable "aws_region" {
-  type = string
-}
-
 variable "host" {
   type = string
 }
@@ -10,18 +6,11 @@ variable "domain" {
   type = string
 }
 
-variable "github_owner" {
-  type = string
+variable "cloudflare_api_token" {
+  type      = string
+  sensitive = true
 }
 
-variable "github_repository" {
-  type = string
-}
-
-variable "github_token" {
-  type = string
-}
-
-variable "slack_webhook_url" {
+variable "cloudflare_account_id" {
   type = string
 }

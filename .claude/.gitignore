@@ -1,0 +1,8 @@
+# Machine-local Claude Code state. Skills under skills/ are committed.
+/settings.local.json
+/scheduled_tasks.lock
+/projects/
+/shell-snapshots/
+/todos/
+/statsig/
+/.credentials.json

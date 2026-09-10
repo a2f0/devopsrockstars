@@ -5,6 +5,7 @@ on:
     branches: '**'
   pull_request:
     branches: '**'
+  workflow_dispatch:
 
 jobs:
   code-quality:
@@ -38,7 +39,29 @@ jobs:
         run: pnpm unit
       - run: pnpm run ci-headless
 
-  deploy-cloudflare:
+  deploy-staging:
+    runs-on: ubuntu-latest
+    needs: code-quality
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/staging')
+    continue-on-error: false
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: '.nvmrc'
+      - uses: pnpm/action-setup@v6
+        with:
+          version: latest
+      - name: pnpm install
+        run: pnpm install --frozen-lockfile
+      - name: Deploy staging to Cloudflare
+        run: pnpm run deploy:staging
+
+  deploy-production:
     runs-on: ubuntu-latest
     needs: code-quality
     if: github.event_name == 'push' && github.ref == 'refs/heads/production'
@@ -55,41 +78,5 @@ jobs:
           version: latest
       - name: pnpm install
         run: pnpm install --frozen-lockfile
-      - name: Build
-        run: pnpm run build
-      - name: Apply Cloudflare migrations
-        run: pnpm run db:migrate:remote
-      - name: Deploy Cloudflare Worker
-        run: pnpm --filter @devopsrockstars/backend run deploy
-
-  deploy:
-    runs-on: ubuntu-latest
-    needs: [code-quality, deploy-cloudflare]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/production'
-    continue-on-error: false
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version-file: '.nvmrc'
-      - uses: pnpm/action-setup@v6
-        with:
-          version: latest
-      - name: pnpm install
-        run: pnpm install --frozen-lockfile
-      - name: Build
-        run: pnpm run build
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v6
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
-          aws-region: us-east-1
-      - name: deploy to s3
-        run: |
-          # First sync all assets (excluding index.html)
-          aws s3 sync --acl=public-read ./packages/frontend/build s3://devopsrockstars.com --exclude "index.html"
-          # Then copy index.html separately
-          aws s3 cp --acl=public-read ./packages/frontend/build/index.html s3://devopsrockstars.com/index.html
-          # Finally cleanup old files
-          aws s3 sync --acl=public-read --delete ./packages/frontend/build s3://devopsrockstars.com
+      - name: Deploy production to Cloudflare
+        run: pnpm run deploy:prod
