@@ -5,10 +5,13 @@
   "type": "module",
   "scripts": {
     "build": "NODE_OPTIONS='--import tsx' webpack --mode production",
-    "start": "NODE_OPTIONS='--import tsx' webpack serve --mode development --history-api-fallback",
-    "start:test": "NODE_OPTIONS='--import tsx' webpack serve --port 8081 --mode development --history-api-fallback",
+    "start": "NODE_OPTIONS='--import tsx' webpack serve --mode development",
+    "start:test": "NODE_OPTIONS='--import tsx' webpack serve --port 8081 --mode development",
     "test": "NODE_OPTIONS='--experimental-specifier-resolution=node' wdio wdio.shared.conf.ts",
-    "test:headless": "NODE_OPTIONS='--experimental-specifier-resolution=node' wdio wdio.headless.conf.ts"
+    "test:headless": "NODE_OPTIONS='--experimental-specifier-resolution=node' wdio wdio.headless.conf.ts",
+    "deploy:staging": "wrangler deploy --env staging",
+    "deploy:prod": "wrangler deploy --env prod",
+    "start:staging": "PUBLIC_ENVIRONMENT=staging NODE_OPTIONS='--import tsx' webpack serve --port 8082 --mode development"
   },
   "devDependencies": {
     "@svgr/webpack": "8.1.0"

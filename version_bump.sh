@@ -10,10 +10,10 @@ VERSION=$(node -p "require('./package.json').version")
 # Using a portable approach for macOS and Linux
 if [ "$(uname)" = "Darwin" ]; then
   # macOS requires an extension argument (can be empty)
-  sed -i '' "s/<html data-version=\"[^\"]*\"/<html data-version=\"$VERSION\"/" packages/frontend/index.html
+  sed -i '' "s/\(<html[^>]*\)data-version=\"[^\"]*\"/\1data-version=\"$VERSION\"/" packages/frontend/index.html
 else
   # Linux
-  sed -i "s/<html data-version=\"[^\"]*\"/<html data-version=\"$VERSION\"/" packages/frontend/index.html
+  sed -i "s/\(<html[^>]*\)data-version=\"[^\"]*\"/\1data-version=\"$VERSION\"/" packages/frontend/index.html
 fi
 
 echo "Version bumped to $VERSION and added to index.html"

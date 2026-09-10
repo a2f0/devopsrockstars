@@ -30,5 +30,4 @@ terraform.rc
 /terraform/main.tfvars
 /terraform/terraform.backend
 
-# claude
-.claude
+# claude (skills are committed; see .claude/.gitignore for local state)
