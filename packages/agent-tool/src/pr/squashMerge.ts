@@ -7,7 +7,10 @@ import {
   stripPrNumberSuffix,
 } from './prNumberSuffix';
 import {singleLineSubject} from './subjectLine';
-import {validateCommitSubject} from './validateCommitSubject';
+import {
+  assertSubjectLength,
+  validateCommitSubject,
+} from './validateCommitSubject';
 
 /**
  * Resolve the squash subject from the CLI argument, falling back to the PR
@@ -188,6 +191,10 @@ export function squashMerge(
   const baseSubject = stripPrNumberSuffix(subject);
   validateCommitSubject(rootDir, baseSubject);
   const finalSubject = appendPrNumberSuffix(baseSubject, pr.prNumber);
+  // The reference is appended after the base is validated, so re-check the
+  // length of what actually gets committed. Without this a 68-character subject
+  // merges as 75 and wraps in GitHub's UI.
+  assertSubjectLength(finalSubject);
   const mergeTarget = resolvePullRequestMergeTarget(pr, expectedBaseRef);
 
   const result = spawnSync(

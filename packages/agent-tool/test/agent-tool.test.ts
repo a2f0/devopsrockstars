@@ -34,7 +34,10 @@ import {
   resolveSubject,
 } from '../src/pr/squashMerge';
 import {singleLineSubject} from '../src/pr/subjectLine';
-import {validateCommitSubject} from '../src/pr/validateCommitSubject';
+import {
+  assertSubjectLength,
+  validateCommitSubject,
+} from '../src/pr/validateCommitSubject';
 import {
   REVIEW_EFFORT_LEVELS,
   resolveReviewEffort,
@@ -61,6 +64,27 @@ test('validates repository conventional commit subjects', () => {
   assert.throws(
     () => validateCommitSubject('/unused', `fix: ${'x'.repeat(68)}`),
     /maximum is 72/
+  );
+});
+
+test('rejects a merged subject that overflows once the PR ref is appended', () => {
+  // PR #790 merged as 75 characters: a 68-character subject passed the base
+  // check, then ' (#790)' pushed it past the limit and GitHub wrapped it.
+  const base =
+    'feat: move the site to Cloudflare Workers with a staging environment';
+  assert.equal(base.length, 68);
+  assert.doesNotThrow(() => validateCommitSubject('', base));
+
+  const merged = appendPrNumberSuffix(base, '790');
+  assert.equal(merged.length, 75);
+  assert.throws(
+    () => assertSubjectLength(merged),
+    /75 characters.*maximum is 72/u
+  );
+
+  const short = 'feat: move the site to Cloudflare Workers';
+  assert.doesNotThrow(() =>
+    assertSubjectLength(appendPrNumberSuffix(short, '790'))
   );
 });
 
