@@ -171,15 +171,15 @@ migrations, publishes the store Worker, then publishes the site Worker.
 
    Terraform needs `TF_VAR_cloudflare_api_token` in the environment and
    `cloudflare_account_id` in `main.tfvars`. The token needs Workers Scripts
-   Edit, Workers Routes Edit, DNS Edit, Zone Read, and Dynamic Redirect Edit.
-   Account-owned tokens cannot use the Page Rules API at all, so the `www`
-   redirect has to be a dynamic redirect ruleset. Creating the zone itself
-   needs Zone Create, which is easier to do once in the dashboard.
+   Edit, Workers Routes Edit, DNS Edit, Zone Read, and Zone Settings Edit — the
+   last one for `always_use_https`, which restores the HTTPS redirect
+   CloudFront used to perform. Creating the zone itself needs Zone Create,
+   which is easier to do once in the dashboard.
 
 7. Move the registrar's nameservers last, after Terraform has applied. The
    `MX` records must already exist in Cloudflare or mail stops the moment the
-   delegation changes, and `www` returns 522 until the redirect ruleset is in
-   place. Cloudflare only engages its proxy once the zone leaves `pending`, so
+   delegation changes. Cloudflare only engages its proxy once the zone leaves
+   `pending`, so
    the Worker hostnames cannot be tested before the move.
 
 ### Retiring a renamed Worker

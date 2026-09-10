@@ -41,6 +41,15 @@ resource "cloudflare_workers_custom_domain" "store_staging" {
   service    = "devopsrockstars-store-staging"
 }
 
+# CloudFront enforced HTTPS with redirect-to-https. Worker custom domains serve
+# plain HTTP as well, so the zone has to re-establish that redirect or the move
+# quietly downgrades every visitor who types the bare hostname.
+resource "cloudflare_zone_setting" "always_use_https" {
+  zone_id    = data.cloudflare_zone.website.id
+  setting_id = "always_use_https"
+  value      = "on"
+}
+
 # Google Workspace mail, carried over verbatim from Route 53. Cloudflare's
 # zone scan imported nothing, so these are the only thing standing between the
 # nameserver move and dropped mail. They must exist before the registrar cuts
