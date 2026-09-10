@@ -15,9 +15,14 @@ pnpm install
 ### Development Server
 
 ```bash
-pnpm run start-server          # Start development server (default port)
-pnpm run start-test-server     # Start test server on port 8081
+pnpm run start-server           # Development server (default port)
+pnpm run start-test-server      # Test server on port 8081 (production features)
+pnpm run start-staging-server   # Test server on port 8082 (staging features)
+pnpm run dev:cloudflare         # Store API Worker on port 8787
 ```
+
+The webpack dev server proxies `/api` to `http://127.0.0.1:8787`, so the site
+and the store API stay same-origin in development.
 
 ### Build and Production
 
@@ -95,6 +100,8 @@ store backend.
 - `packages/frontend/src/Skyline.tsx` - Main page content
 - `packages/frontend/src/Company.tsx` - Company information page
 - `packages/frontend/src/Map.tsx` - Full-screen Leaflet map component
+- `packages/frontend/src/NotFound.tsx` - Catch-all route for unmatched paths
+- `packages/frontend/src/environment.ts` - Per-environment feature flags
 
 ### Styled Components System
 
@@ -146,7 +153,33 @@ The project uses pre-commit hooks. After installation, hooks run automatically o
 
 ## Deployment
 
-- Production frontend deployment to Amazon S3 via GitHub Actions
-- Store API deployment to Cloudflare Workers via GitHub Actions
-- Terraform configuration for infrastructure in `terraform/` directory
-- Frontend build artifacts generated in `packages/frontend/build/`
+Everything runs on Cloudflare. Each environment is a pair of Workers: a
+static-assets Worker for the site and a store Worker for `/api/*` with its own
+D1 database.
+
+| Environment | Site | Store API |
+| --- | --- | --- |
+| Production | `devopsrockstars.com` | `store.devopsrockstars.com` |
+| Staging | `staging.devopsrockstars.com` | `store-staging.devopsrockstars.com` |
+
+- `pnpm run deploy:staging` and `pnpm run deploy:prod` wrap `scripts/deploy.sh`,
+  which builds the site for the environment, applies D1 migrations, then
+  publishes the store and site Workers in that order
+- Wrangler owns Worker and asset deployments; Terraform (`terraform/`) owns the
+  custom domains and the `www` redirect
+- GitHub Actions deploys the `production` branch to production and the
+  `staging` branch to staging; `workflow_dispatch` deploys any branch to staging
+- Frontend build artifacts are generated in `packages/frontend/build/`
+- Terraform manages Cloudflare only. The AWS website stack (S3, CloudFront,
+  ACM, Route 53) is destroyed; the S3 Terraform state backend is all that
+  remains, so `terraform` still needs AWS credentials
+
+### Environment feature flags
+
+`packages/frontend/src/environment.ts` derives the environment from
+`PUBLIC_ENVIRONMENT`, injected at build time by webpack's `DefinePlugin`.
+Staging drops the store and search routes and links, and adds a `noindex`
+meta tag, an `X-Robots-Tag` header, and a disallow-all `robots.txt`. The store
+JavaScript is still present in the staging bundle; it simply has no link or
+route reaching it. `packages/frontend/buildAssets.ts` generates the `robots.txt`
+and `_headers` files, and both are covered by unit and e2e tests.

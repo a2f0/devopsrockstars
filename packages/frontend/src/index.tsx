@@ -2,9 +2,11 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import {Route, BrowserRouter as Router, Routes} from 'react-router';
 import Company from './Company';
+import {features} from './environment';
 import Footer from './Footer';
 import Header from './Header';
 import FullScreenMap from './Map';
+import NotFound from './NotFound';
 import Search from './Search';
 import Skyline from './Skyline';
 import Checkout from './store/Checkout';
@@ -30,10 +32,17 @@ function AppRouter() {
                 <Routes>
                   <Route path="/" element={<Skyline />} />
                   <Route path="/company" element={<Company />} />
-                  <Route path="/search" element={<Search />} />
-                  <Route path="/store" element={<Store />} />
-                  <Route path="/store/checkout" element={<Checkout />} />
-                  <Route path="/store/receipt" element={<Receipt />} />
+                  {features.search ? (
+                    <Route path="/search" element={<Search />} />
+                  ) : null}
+                  {features.store ? (
+                    <>
+                      <Route path="/store" element={<Store />} />
+                      <Route path="/store/checkout" element={<Checkout />} />
+                      <Route path="/store/receipt" element={<Receipt />} />
+                    </>
+                  ) : null}
+                  <Route path="*" element={<NotFound />} />
                 </Routes>
               </FlexContainerColumn>
             </FlexMain>

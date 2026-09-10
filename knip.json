@@ -15,7 +15,8 @@
     },
     "packages/frontend": {
       "entry": [
-        "src/store/**/*.test.ts",
+        "src/**/*.test.ts",
+        "*.test.ts",
         "wdio.shared.conf.ts",
         "wdio.headless.conf.ts",
         "e2e/specs/**/*.spec.ts"
@@ -30,7 +31,6 @@
     "@types/mocha",
     "@wdio/dot-reporter",
     "@wdio/local-runner",
-    "@wdio/spec-reporter",
-    "depcheck"
+    "@wdio/spec-reporter"
   ]
 }
