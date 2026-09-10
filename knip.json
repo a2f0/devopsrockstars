@@ -2,7 +2,10 @@
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "workspaces": {
     ".": {
-      "entry": ["scripts/check-for-unpinned-dependencies.mjs"],
+      "entry": [
+        "scripts/check-for-unpinned-dependencies.mjs",
+        "scripts/check-agent-skills-in-sync.mjs"
+      ],
       "project": ["scripts/**/*.mjs"]
     },
     "packages/agent-tool": {

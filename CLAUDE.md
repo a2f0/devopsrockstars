@@ -147,6 +147,34 @@ reusable layout primitives:
 - Page object model in `packages/frontend/e2e/pageObjects/`
 - Tests validate page loading and component visibility
 
+## Agent Skills
+
+Both agents ship the same skills, each discovering them from its own directory:
+
+- `.claude/skills/<name>/SKILL.md` for Claude Code
+- `.codex/skills/<name>/SKILL.md` for Codex
+
+`ship-pr` runs the full flow: commit on a feature branch, cross-agent review and
+repair, open or update the PR, address Gemini feedback, wait for CI, squash-merge
+the exact reviewed head, then clean up. `address-gemini-feedback` handles review
+threads and is invoked by `ship-pr`.
+
+The skills shared by both agents are **byte-identical on purpose** and their
+wording is agent-neutral, so one text serves both. The reviewer defaults to the
+*other* agent from whichever is running the flow, which is the point of a
+cross-agent review. `scripts/check-agent-skills-in-sync.mjs` runs in pre-commit
+and fails if the copies diverge; edit one and copy it over the other.
+
+They drive `packages/agent-tool`, which owns review isolation, PR-title
+validation, and the exact-head squash merge:
+
+```bash
+pnpm agent-tool                       # usage
+pnpm agent-tool solicitCodexReview    # or solicitClaudeCodeReview
+pnpm agent-tool openPr 'feat: ...'    # body from stdin
+pnpm agent-tool squashMerge '' "$SHA" "$BASE"
+```
+
 ## Pre-commit Hooks
 
 The project uses pre-commit hooks. After installation, hooks run automatically on commits to ensure code quality.
