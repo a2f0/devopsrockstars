@@ -7,6 +7,12 @@ export const StoreShell = styled.section`
   pointer-events: auto;
 `;
 
+// The store page centers its whole column; checkout and the receipt stay
+// left-aligned around their forms.
+export const StorePage = styled(StoreShell)`
+  text-align: center;
+`;
+
 export const StoreHeading = styled.h1`
   margin-bottom: 28px;
   font-size: clamp(28px, 5vw, 52px);
@@ -23,23 +29,19 @@ export const Eyebrow = styled.div`
 `;
 
 export const ProductGrid = styled.div`
-  display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(260px, 0.65fr);
-  gap: 42px;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-
-  @media (max-width: 720px) {
-    grid-template-columns: 1fr;
-    gap: 22px;
-  }
+  gap: 26px;
+  text-align: center;
 `;
 
 export const ProductArt = styled.div`
+  width: 100%;
   min-height: 320px;
   display: grid;
   place-items: center;
-  border: 1px solid #2b2b2b;
-  background: #050505;
+  background: transparent;
 
   img {
     display: block;
@@ -54,16 +56,11 @@ export const ProductArt = styled.div`
 `;
 
 export const ProductDetails = styled.div`
+  width: min(100%, 280px);
   display: flex;
   flex-direction: column;
+  align-items: stretch;
   gap: 18px;
-`;
-
-export const ProductName = styled.h2`
-  margin: 0;
-  font-size: clamp(24px, 4vw, 36px);
-  font-weight: 400;
-  line-height: 1.05;
 `;
 
 export const ProductCopy = styled.p`
@@ -166,9 +163,11 @@ export const ActionLink = styled(Link)`
 `;
 
 export const CartPanel = styled.aside`
-  margin-top: 42px;
+  width: min(100%, 460px);
+  margin: 42px auto 0;
   border-top: 1px solid #4d4d4d;
   padding-top: 16px;
+  text-align: left;
 `;
 
 export const CartRow = styled.div`
@@ -194,7 +193,7 @@ export const CartRow = styled.div`
 export const CartActions = styled.div`
   margin-top: 16px;
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
 `;
 
 export const CheckoutGrid = styled.div`
