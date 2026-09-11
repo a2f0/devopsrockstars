@@ -101,12 +101,15 @@ const Store = React.memo(() => {
                   aria-label={`${product.name} size`}
                   disabled={available.length === 0}
                   value={variantId}
-                  onChange={event =>
+                  onChange={event => {
+                    // Read the value before the updater runs: React clears
+                    // currentTarget once the handler returns.
+                    const nextVariantId = event.currentTarget.value;
                     setSelected(current => ({
                       ...current,
-                      [product.id]: event.currentTarget.value,
-                    }))
-                  }
+                      [product.id]: nextVariantId,
+                    }));
+                  }}
                 >
                   {available.length === 0 ? (
                     <option value="">Sold out</option>
