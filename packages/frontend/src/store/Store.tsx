@@ -16,11 +16,10 @@ import {
   ProductCopy,
   ProductDetails,
   ProductGrid,
-  ProductName,
   Select,
   Status,
   StoreHeading,
-  StoreShell,
+  StorePage,
 } from './StoreStyles';
 
 function useStorefront() {
@@ -59,24 +58,24 @@ const Store = React.memo(() => {
 
   if (error) {
     return (
-      <StoreShell>
+      <StorePage>
         <StoreHeading>store</StoreHeading>
         <Status $error>{error}</Status>
-      </StoreShell>
+      </StorePage>
     );
   }
 
   if (!storefront) {
     return (
-      <StoreShell>
+      <StorePage>
         <StoreHeading>store</StoreHeading>
         <Status>Loading inventory…</Status>
-      </StoreShell>
+      </StorePage>
     );
   }
 
   return (
-    <StoreShell>
+    <StorePage>
       <StoreHeading>store</StoreHeading>
       {storefront.products.map(product => {
         const available = product.variants.filter(
@@ -93,12 +92,8 @@ const Store = React.memo(() => {
             <ProductArt>
               <img src={product.imagePath} alt={product.name} />
             </ProductArt>
+            <ProductCopy>{product.description}</ProductCopy>
             <ProductDetails>
-              <div>
-                <Eyebrow>{product.manufacturer}</Eyebrow>
-                <ProductName>{product.name}</ProductName>
-              </div>
-              <ProductCopy>{product.description}</ProductCopy>
               {priceVariant ? (
                 <Price>
                   {formatMoney(priceVariant.unitAmount, priceVariant.currency)}
@@ -170,7 +165,7 @@ const Store = React.memo(() => {
           </CartActions>
         </CartPanel>
       ) : null}
-    </StoreShell>
+    </StorePage>
   );
 });
 
