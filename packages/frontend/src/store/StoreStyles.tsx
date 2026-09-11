@@ -107,6 +107,10 @@ export const Input = styled.input`
 export const Select = styled.select`
   ${controlStyles}
   appearance: none;
+  /* Keeps the platform popup dark, and its selection gray rather than the
+     system accent, wherever the picker cannot be styled directly. */
+  color-scheme: dark;
+  accent-color: #666;
   background-image: linear-gradient(45deg, transparent 50%, white 50%),
     linear-gradient(135deg, white 50%, transparent 50%);
   background-position:
@@ -114,6 +118,57 @@ export const Select = styled.select`
     calc(100% - 10px) 50%;
   background-size: 5px 5px, 5px 5px;
   background-repeat: no-repeat;
+
+  /* Browsers that render the picker in the page let it match the store
+     instead of falling back to the platform menu. */
+  @supports (appearance: base-select) {
+    &,
+    &::picker(select) {
+      appearance: base-select;
+    }
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-image: none;
+    text-align: left;
+
+    &::picker-icon {
+      color: #bbb;
+      transition: rotate 0.15s ease;
+    }
+
+    &:open::picker-icon {
+      rotate: 180deg;
+    }
+
+    &::picker(select) {
+      border: 1px solid #666;
+      margin-top: 2px;
+      padding: 0;
+      background: #080808;
+      color: white;
+    }
+
+    option {
+      padding: 9px 11px;
+      background: #080808;
+      color: white;
+    }
+
+    option:hover,
+    option:focus {
+      background: #1a1a1a;
+    }
+
+    option:checked {
+      background: #242424;
+    }
+
+    option::checkmark {
+      color: #bbb;
+    }
+  }
 `;
 
 export const Button = styled.button`

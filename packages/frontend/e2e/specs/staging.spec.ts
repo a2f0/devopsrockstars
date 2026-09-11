@@ -84,6 +84,14 @@ describe('store page', () => {
             imagePath: '/static/image/store/5950.svg',
             variants: [
               {
+                id: 'hat-5950-7-1-8',
+                label: '7 1/8',
+                sku: 'DOR-5950-7-1-8',
+                unitAmount: 2000,
+                currency: 'usd',
+                availableQuantity: 1,
+              },
+              {
                 id: 'hat-5950-7-1-4',
                 label: '7 1/4',
                 sku: 'DOR-5950-7-1-4',
@@ -158,7 +166,15 @@ describe('store page', () => {
         }),
         2
       );
+      // Picking a size must not throw: the handler reads the event before
+      // React clears it. The first variant is selected by default.
+      const size = await browser.$('select[aria-label$="size"]');
+      await size.selectByVisibleText('7 1/4');
+      await expect(size).toHaveValue('hat-5950-7-1-4');
       await (await browser.$('button=Add to cart')).click();
+      await expect(
+        await browser.$('aside[aria-label="Shopping cart"]')
+      ).toHaveText('7 1/4', {containing: true});
       await (await browser.$('a=Checkout')).click();
 
       await (await browser.$('input[autocomplete="name"]')).setValue(
