@@ -18,7 +18,6 @@ import {
   ProductGrid,
   Select,
   Status,
-  StoreHeading,
   StorePage,
 } from './StoreStyles';
 
@@ -59,7 +58,6 @@ const Store = React.memo(() => {
   if (error) {
     return (
       <StorePage>
-        <StoreHeading>store</StoreHeading>
         <Status $error>{error}</Status>
       </StorePage>
     );
@@ -68,7 +66,6 @@ const Store = React.memo(() => {
   if (!storefront) {
     return (
       <StorePage>
-        <StoreHeading>store</StoreHeading>
         <Status>Loading inventory…</Status>
       </StorePage>
     );
@@ -76,7 +73,6 @@ const Store = React.memo(() => {
 
   return (
     <StorePage>
-      <StoreHeading>store</StoreHeading>
       {storefront.products.map(product => {
         const available = product.variants.filter(
           variant => variant.availableQuantity > 0

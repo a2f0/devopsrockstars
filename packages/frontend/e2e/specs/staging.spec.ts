@@ -80,7 +80,7 @@ describe('store page', () => {
             slug: 'devops-rockstars-59fifty',
             name: 'DevOps Rockstars 59FIFTY',
             manufacturer: 'New Era',
-            description: 'Fitted, black.',
+            description: 'Low Crown 59FIFTY cap.\nFitted, black.',
             imagePath: '/static/image/store/5950.svg',
             variants: [
               {
@@ -138,6 +138,8 @@ describe('store page', () => {
     }, fixtures);
 
     try {
+      // A known width keeps the product copy's line count deterministic.
+      await browser.setWindowSize(1280, 1000);
       await BasePage.openStaging('');
       await browser.execute(() => sessionStorage.clear());
       await BasePage.openStaging('store');
@@ -145,6 +147,17 @@ describe('store page', () => {
       await expect(
         await browser.$('img[alt="DevOps Rockstars 59FIFTY"]')
       ).toExist();
+      // The description keeps the line breaks the catalog stores: copy that
+      // would fit on one line at this width still renders as two.
+      assert.strictEqual(
+        await browser.execute(() => {
+          const copy = document.querySelector('main p');
+          if (!copy) return 0;
+          const lineHeight = parseFloat(getComputedStyle(copy).lineHeight);
+          return Math.round(copy.getBoundingClientRect().height / lineHeight);
+        }),
+        2
+      );
       await (await browser.$('button=Add to cart')).click();
       await (await browser.$('a=Checkout')).click();
 
@@ -218,7 +231,6 @@ describe('store page', () => {
     await BasePage.openStaging('store');
     await BasePage.waitForAppReady();
 
-    await expect(await browser.$('h1=store')).toExist();
     await expect(
       await browser.$('p=The store is temporarily unavailable.')
     ).toExist();

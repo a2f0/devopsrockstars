@@ -8,8 +8,10 @@ export const StoreShell = styled.section`
 `;
 
 // The store page centers its whole column; checkout and the receipt stay
-// left-aligned around their forms.
+// left-aligned around their forms. It carries its own top padding because it
+// has no heading to space the art away from the navigation.
 export const StorePage = styled(StoreShell)`
+  padding-top: 32px;
   text-align: center;
 `;
 
@@ -32,26 +34,22 @@ export const ProductGrid = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 26px;
+  gap: 20px;
   text-align: center;
 `;
 
+// The art's viewBox is cropped to the hat, so the block hugs the image rather
+// than reserving height for whitespace baked into the file.
 export const ProductArt = styled.div`
   width: 100%;
-  min-height: 320px;
   display: grid;
   place-items: center;
   background: transparent;
 
   img {
     display: block;
-    width: min(100%, 560px);
-    max-height: 440px;
-    object-fit: contain;
-  }
-
-  @media (max-width: 520px) {
-    min-height: 220px;
+    width: min(100%, 480px);
+    height: auto;
   }
 `;
 
@@ -63,10 +61,12 @@ export const ProductDetails = styled.div`
   gap: 18px;
 `;
 
+// Newlines in the stored description render as line breaks.
 export const ProductCopy = styled.p`
   color: #c7c7c7;
   font-size: 16px;
   line-height: 1.5;
+  white-space: pre-line;
 `;
 
 export const Price = styled.div`
