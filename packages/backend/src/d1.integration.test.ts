@@ -6,6 +6,9 @@ import path from 'node:path';
 import {test} from 'node:test';
 import {fileURLToPath} from 'node:url';
 
+import {reservationStatements} from './checkout';
+import type {D1Database, D1PreparedStatement, D1Result, Env} from './types';
+
 const repository = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   '..'
@@ -19,21 +22,111 @@ function wrangler(arguments_: readonly string[]) {
   });
 }
 
+// The reservation SQL comes from the worker itself rather than a copy here:
+// a copy cannot catch the statement drifting out of step with the schema, which
+// is how the orders insert once ended up binding 19 values for 20 columns.
+function literal(value: unknown) {
+  if (value === null || value === undefined) return 'NULL';
+  if (typeof value === 'number') return String(value);
+  return `'${String(value).replace(/'/gu, "''")}'`;
+}
+
+class RecordingStatement implements D1PreparedStatement {
+  values: readonly unknown[] = [];
+
+  constructor(readonly query: string) {}
+
+  bind(...values: readonly unknown[]) {
+    this.values = values;
+    return this;
+  }
+
+  async first<T>(): Promise<T | null> {
+    return null;
+  }
+
+  async all<T>(): Promise<D1Result<T>> {
+    return {meta: {changes: 0}, results: [], success: true};
+  }
+
+  async run<T>(): Promise<D1Result<T>> {
+    return {meta: {changes: 0}, results: [], success: true};
+  }
+}
+
+class RecordingDatabase implements D1Database {
+  readonly recorded: RecordingStatement[] = [];
+
+  prepare(query: string) {
+    const statement = new RecordingStatement(query);
+    this.recorded.push(statement);
+    return statement;
+  }
+
+  async batch<T>(): Promise<readonly D1Result<T>[]> {
+    return [];
+  }
+}
+
+const VARIANT = {
+  active: 1,
+  currency: 'usd',
+  inventory_quantity: 2,
+  label: '7 1/4',
+  product_active: 1,
+  product_id: 'hat-5950',
+  product_name: 'DevOps Rockstars 59FIFTY',
+  sku: 'DOR-5950-7-1-4',
+  unit_amount: 2000,
+  variant_id: 'hat-5950-7-1-4',
+};
+
+function reservationSql(id: string, clientHash: string, networkHash: string) {
+  const database = new RecordingDatabase();
+  reservationStatements({
+    accessTokenHash: 'token-hash',
+    clientHash,
+    networkHash,
+    currency: 'usd',
+    expiresAt: '2026-09-03T18:10:00.000Z',
+    lines: [
+      {
+        quantity: 1,
+        variantId: 'hat-5950-7-1-4',
+        variant: VARIANT,
+        lineTotal: 2000,
+      },
+    ],
+    now: '2026-09-03T18:00:00.000Z',
+    orderId: id,
+    request: {
+      items: [{variantId: 'hat-5950-7-1-4', quantity: 1}],
+      shipping: {
+        name: 'Test Buyer',
+        email: 'test@example.com',
+        addressLine1: '1 Test Way',
+        addressLine2: '',
+        city: 'New York',
+        state: 'NY',
+        postalCode: '10001',
+        country: 'US',
+      },
+    },
+    totalAmount: 2000,
+    env: {DB: database} as Env,
+  });
+  return database.recorded.map(statement => {
+    let index = 0;
+    return statement.query.replace(/\?/gu, () =>
+      literal(statement.values[index++])
+    );
+  });
+}
+
 function orderSql(id: string, clientHash: string, networkHash: string) {
-  return `INSERT INTO orders (
-    id, access_token_hash, checkout_client_hash, checkout_network_hash,
-    status, currency, subtotal_amount, shipping_amount, total_amount,
-    email, shipping_name, shipping_address_line1, shipping_address_line2,
-    shipping_city, shipping_state, shipping_postal_code, shipping_country,
-    reservation_expires_at, created_at, updated_at
-  ) VALUES (
-    '${id}', 'token-hash', '${clientHash}', '${networkHash}',
-    'awaiting_payment', 'usd', 2000, 0, 2000,
-    'test@example.com', 'Test Buyer', '1 Test Way', '',
-    'New York', 'NY', '10001', 'US',
-    '2026-09-03T18:10:00.000Z', '2026-09-03T18:00:00.000Z',
-    '2026-09-03T18:00:00.000Z'
-  )`;
+  const [orders] = reservationSql(id, clientHash, networkHash);
+  assert.ok(orders);
+  return orders;
 }
 
 test('D1 migrations enforce reservation, restock, and cap invariants', () => {
@@ -55,22 +148,17 @@ test('D1 migrations enforce reservation, restock, and cap invariants', () => {
     const migrated = wrangler(['d1', 'migrations', 'apply', ...localArguments]);
     assert.equal(migrated.status, 0, migrated.stderr || migrated.stdout);
 
+    // The whole reservation batch, exactly as the worker builds it.
+    const reservation = reservationSql(
+      '10000000-0000-4000-8000-000000000001',
+      'client-1',
+      'network-1'
+    ).join(';\n      ');
     const reserved = execute(`
       UPDATE product_variants
       SET inventory_quantity = 2
       WHERE id = 'hat-5950-7-1-4';
-      ${orderSql('10000000-0000-4000-8000-000000000001', 'client-1', 'network-1')};
-      INSERT INTO order_items (
-        order_id, variant_id, product_id, sku, product_name,
-        variant_label, unit_amount, quantity, line_total
-      ) VALUES (
-        '10000000-0000-4000-8000-000000000001', 'hat-5950-7-1-4',
-        'hat-5950', 'DOR-5950-7-1-4', 'DevOps Rockstars 59FIFTY',
-        '7 1/4', 2000, 1, 2000
-      );
-      UPDATE product_variants
-      SET inventory_quantity = inventory_quantity - 1
-      WHERE id = 'hat-5950-7-1-4';
+      ${reservation};
     `);
     assert.equal(reserved.status, 0, reserved.stderr || reserved.stdout);
 
