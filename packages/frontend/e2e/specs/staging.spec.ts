@@ -142,7 +142,9 @@ describe('store page', () => {
       await browser.execute(() => sessionStorage.clear());
       await BasePage.openStaging('store');
       await BasePage.waitForAppReady();
-      await expect(await browser.$('h2=DevOps Rockstars 59FIFTY')).toExist();
+      await expect(
+        await browser.$('img[alt="DevOps Rockstars 59FIFTY"]')
+      ).toExist();
       await (await browser.$('button=Add to cart')).click();
       await (await browser.$('a=Checkout')).click();
 
