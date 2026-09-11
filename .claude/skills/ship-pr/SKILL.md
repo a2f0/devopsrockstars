@@ -28,7 +28,6 @@ ordering, repair loop, validation, GitHub review handling, and cleanup.
   back to the running agent. Cross-agent review is the point: a second opinion
   from the model that did not write the code.
 - `--passes <n>`: review an unchanged head up to `n` times. Default: `1`.
-- `--repair-rounds <n>`: maximum blocking-finding repair rounds. Default: `2`.
 - `--merge-anyway`: permit an unavailable or blocking review verdict. This does
   not waive validation, CI, base freshness, or exact-head checks.
 - `--keep-branch`: leave the local and remote feature branch after merge.
@@ -185,11 +184,13 @@ test "$REVIEWED_SHA" = "$(git rev-parse HEAD)"
 test -z "$PR_NUMBER" || test "$REVIEWED_SHA" = "$(gh pr view "$PR_NUMBER" -R "$REPO" --json headRefOid -q .headRefOid)"
 ```
 
-On blocking findings, stop in report-only mode or after the repair budget is
-exhausted. Otherwise implement only actionable in-scope repairs, rerun relevant
-validation, commit them, and push without force only when a PR already exists.
-Increment `REPAIR_ROUND`, then restart this section. Never call a repaired head
-reviewed until a fresh review has examined it.
+On blocking findings, stop in report-only mode. Otherwise implement only
+actionable in-scope repairs, rerun relevant validation, commit them, and push
+without force only when a PR already exists. Increment `REPAIR_ROUND`, then
+restart this section. Repair rounds are unbounded: repeat until a review comes
+back with a shippable verdict. `REPAIR_ROUND` is a counter for the final
+report, not a budget. Never call a repaired head reviewed until a fresh review
+has examined it.
 
 If no review can run, or blocking findings remain, stop unless
 `--merge-anyway` was explicitly supplied. Report exactly what is being waived.
@@ -255,9 +256,9 @@ repeat review, Gemini handling, and CI for the new head.
 Immediately before merge, resolve the live base OID again. It must equal the
 pinned `BASE_OID`, and it must be an ancestor of `REVIEWED_SHA`.
 
-If the base moved, allow at most two refresh rounds. Fetch and merge the new OID,
-push without force, and repeat cross-agent review, Gemini handling, and CI. A
-third move stops the flow with the PR open. Never merge an unreviewed base-sync
+If the base moved, fetch and merge the new OID, push without force, and repeat
+cross-agent review, Gemini handling, and CI. Refresh rounds are unbounded:
+repeat for as long as the base keeps moving. Never merge an unreviewed base-sync
 commit.
 
 Also require the PR still targets `BASE_REF`. GitHub has no atomic expected-base
