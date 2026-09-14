@@ -15,6 +15,8 @@ front panel seam while the complete mark retains its original spacing.
   [left side](https://cdn.shopify.com/s/files/1/0601/2554/4675/files/70331909_70360398_59FIFTY_MLBAC2017GM_NEYYAN_OTC_LSIDE.jpg?v=1736179442)
   and
   [right side](https://cdn.shopify.com/s/files/1/0601/2554/4675/files/70331909_70360398_59FIFTY_MLBAC2017GM_NEYYAN_OTC_RSIDE.jpg?v=1736179442).
+  Its front and three-quarter photos also guide the visor outline: a modest
+  overhang beside the crown, rounded corners, and a shallow front arc.
 - [Authentic Collection Low Profile 59FIFTY, product 70360653](https://www.neweracap.com/products/new-york-yankees-authentic-collection-low-profile-59fifty-fitted)
   supplies references for the lower crown, side flag, and rear Batterman
   placement. Its curved visor is not used for this model.
@@ -25,6 +27,11 @@ front panel seam while the complete mark retains its original spacing.
 The official sources above do not specify crown height, visor length, or shell
 width/depth. Those model proportions are estimated from the photos. Model units
 are arbitrary; changing the selected size does not rescale the preview.
+
+The visor is approximately 1.08 times the crown's width and projects about 0.66
+model units beyond the crown's front edge. These are visual proportion targets,
+not manufacturer dimensions. The stitching shares the visor's width and depth
+scales so it stays inset as the outline changes.
 
 ## Logo sources
 
