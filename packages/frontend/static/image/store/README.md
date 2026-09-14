@@ -31,7 +31,8 @@ are arbitrary; changing the selected size does not rescale the preview.
 The visor is approximately 1.08 times the crown's width and projects about 0.66
 model units beyond the crown's front edge. These are visual proportion targets,
 not manufacturer dimensions. The stitching shares the visor's width and depth
-scales so it stays inset as the outline changes.
+scales. Changes to the front arc also require adjusting the stitching's reach
+to preserve its inset.
 
 ## Logo sources
 
