@@ -19,6 +19,7 @@ import {
 import {ParametricGeometry} from 'three/addons/geometries/ParametricGeometry.js';
 import {SVGLoader} from 'three/addons/loaders/SVGLoader.js';
 import {TessellateModifier} from 'three/addons/modifiers/TessellateModifier.js';
+import {mergeVertices} from 'three/addons/utils/BufferGeometryUtils.js';
 
 // Proportions follow New Era's Low Profile reference photos; see the artwork README.
 const height = 1.3;
@@ -77,7 +78,9 @@ function addLogo(
   placement: {name: string; angle: number; width: number; y: number}
 ) {
   const data = new SVGLoader().parse(source);
-  const geometries = data.paths.map(path => new ShapeGeometry(path.toShapes()));
+  const geometries = data.paths.map(
+    path => new ShapeGeometry(SVGLoader.createShapes(path))
+  );
   const bounds = new Box3();
   for (const geometry of geometries) {
     geometry.computeBoundingBox();
@@ -86,6 +89,15 @@ function addLogo(
   const center = bounds.getCenter(new Vector3());
   const sourceWidth = bounds.getSize(new Vector3()).x;
   const scale = placement.width / sourceWidth;
+  const halfHeight = (bounds.getSize(new Vector3()).y * scale) / 2;
+  if (
+    !Number.isFinite(scale) ||
+    placement.y - halfHeight < 0 ||
+    placement.y + halfHeight >= height
+  ) {
+    for (const geometry of geometries) geometry.dispose();
+    throw new Error('The hat artwork does not fit on the crown.');
+  }
   // Subdivide filled areas before wrapping them, so the badge's center follows
   // the crown instead of cutting through it between widely spaced vertices.
   const tessellate = new TessellateModifier(sourceWidth / 12, 6);
@@ -123,8 +135,11 @@ function addLogo(
 }
 
 function billHeight(x: number, z: number) {
-  // The pre-curved visor drops at its sides, with a gentle slope toward the tip.
-  return 0.025 - 0.045 * z - 0.15 * x ** 2;
+  // Keep the attachment inside the fitted band, then curve the exposed visor.
+  const extension = Math.max(0, Math.hypot(x / width, z / depth) - 1);
+  const blend = Math.min(1, extension / 0.5);
+  const curve = blend ** 2 * (3 - 2 * blend);
+  return 0.015 - (0.045 * z + 0.15 * x ** 2) * curve;
 }
 
 export function createHatModel(artwork: HatArtwork) {
@@ -206,8 +221,10 @@ export function createHatModel(artwork: HatArtwork) {
     const y = billHeight(x, z) - positions.getZ(i);
     positions.setXYZ(i, x, y, z);
   }
-  billGeometry.computeVertexNormals();
-  hat.add(new Mesh(billGeometry, fabric));
+  const smoothBill = mergeVertices(billGeometry);
+  billGeometry.dispose();
+  smoothBill.computeVertexNormals();
+  hat.add(new Mesh(smoothBill, fabric));
 
   // Concentric stitching follows the curved leading edge of the bill.
   for (let row = 0; row < 5; row++) {

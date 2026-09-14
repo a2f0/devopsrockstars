@@ -146,9 +146,17 @@ describe('3D hat preview', () => {
     for (const asset of ['new-era-flag.svg', 'mlb-batterman.svg']) {
       const failAsset = await browser.addInitScript(asset => {
         const originalFetch = globalThis.fetch.bind(globalThis);
+        const originalWarn = console.warn.bind(console);
+        let rejected = false;
+        console.warn = (...args) => {
+          if (rejected && args[0] === 'Using the static hat preview:') {
+            document.documentElement.setAttribute('data-failed-artwork', asset);
+          }
+          originalWarn(...args);
+        };
         globalThis.fetch = async (input, init) => {
           if (String(input).endsWith(`/static/image/store/${asset}`)) {
-            document.documentElement.setAttribute('data-failed-artwork', asset);
+            rejected = true;
             return new Response('', {status: 503});
           }
           return originalFetch(input, init);
