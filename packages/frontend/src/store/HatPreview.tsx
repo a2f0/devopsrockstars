@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useEffect, useId, useRef, useState} from 'react';
 import styled from 'styled-components';
 import type {createHatViewer} from './hatViewer';
 
@@ -28,6 +28,7 @@ export default function HatPreview({src, name}: {src: string; name: string}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const viewerRef = useRef<ReturnType<typeof createHatViewer> | null>(null);
   const [ready, setReady] = useState(false);
+  const instructions = useId();
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -83,7 +84,7 @@ export default function HatPreview({src, name}: {src: string; name: string}) {
           tabIndex={ready ? 0 : -1}
           role="img"
           aria-label={`${name}, interactive 3D preview`}
-          aria-description="Drag or use arrow keys to rotate. Press Home to reset the view."
+          aria-describedby={ready ? instructions : undefined}
           aria-hidden={!ready}
           onKeyDown={event => {
             const step = Math.PI / 12;
@@ -110,6 +111,9 @@ export default function HatPreview({src, name}: {src: string; name: string}) {
           }}
         />
       </Stage>
+      <span id={instructions} hidden>
+        Drag or use arrow keys to rotate. Press Home to reset the view.
+      </span>
     </Preview>
   );
 }
