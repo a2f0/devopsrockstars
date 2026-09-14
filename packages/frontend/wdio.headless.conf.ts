@@ -11,7 +11,9 @@ export const config: WebdriverIO.Config = {
           // See .github/workflows/main.yml for a deterministic configuration of this value.
           args: [
             '--headless',
-            '--disable-gpu',
+            // Exercise the 3D preview deterministically on CI without a GPU.
+            '--use-angle=swiftshader',
+            '--enable-unsafe-swiftshader',
             '--disable-features=NetworkService',
             '--no-sandbox',
             '--disable-dev-shm-usage',
