@@ -45,27 +45,21 @@ describe('3D hat preview', () => {
     await canvas.waitForDisplayed();
     await expect(await browser.$(imageSelector)).not.toBeDisplayed();
     // Compare rendered pixels, so changing UI state without rotating the model
-    // cannot satisfy the test. Capture only the canvas to exclude button focus.
+    // cannot satisfy the test. Capture only the canvas to exclude page changes.
     const snapshot = async () =>
       browser.takeElementScreenshot(await canvas.elementId);
+    await canvas.click();
     const initial = await snapshot();
-    const right = await browser.$('button[aria-label="Rotate hat right"]');
-    for (let step = 0; step < 4; step++) await right.click();
+    for (let step = 0; step < 12; step++) await browser.keys('ArrowRight');
     assert.notEqual(await snapshot(), initial);
-    for (let step = 0; step < 4; step++) await right.click();
+    for (let step = 0; step < 12; step++) await browser.keys('ArrowRight');
     assert.equal(await snapshot(), initial);
 
     await canvas.dragAndDrop({x: 90, y: 25}, {duration: 300});
     assert.notEqual(await snapshot(), initial);
-    await (await browser.$('button=Reset view')).click();
-    assert.equal(await snapshot(), initial);
-
     await canvas.click();
-    const focused = await snapshot();
-    await browser.keys('ArrowRight');
-    assert.notEqual(await snapshot(), focused);
     await browser.keys('Home');
-    assert.equal(await snapshot(), focused);
+    assert.equal(await snapshot(), initial);
 
     const restoreDevice = await browser.emulate('device', 'iPhone 12');
     await expect(canvas).toBeDisplayed();
@@ -93,15 +87,16 @@ describe('3D hat preview', () => {
 
   it('renders the white flag on the side and white Batterman on the back', async () => {
     for (const {asset, steps} of [
-      {asset: 'new-era-flag.svg', steps: 1},
-      {asset: 'mlb-batterman.svg', steps: 4},
+      {asset: 'new-era-flag.svg', steps: 3},
+      {asset: 'mlb-batterman.svg', steps: 12},
     ]) {
       const snapshot = async () => {
         await BasePage.openStaging('store');
         const canvas = await browser.$(canvasSelector);
         await canvas.waitForDisplayed();
-        const right = await browser.$('button[aria-label="Rotate hat right"]');
-        for (let step = 0; step < steps; step++) await right.click();
+        await canvas.click();
+        for (let step = 0; step < steps; step++)
+          await browser.keys('ArrowRight');
         return browser.takeElementScreenshot(await canvas.elementId);
       };
       const original = await snapshot();
@@ -213,7 +208,6 @@ describe('3D hat preview', () => {
     );
     await expect(await browser.$(imageSelector)).toBeDisplayed();
     await expect(await browser.$(canvasSelector)).not.toBeDisplayed();
-    await expect(await browser.$('button=Reset view')).not.toExist();
   });
 
   it('keeps the SVG if either embroidery asset cannot be loaded', async () => {

@@ -24,34 +24,6 @@ const Stage = styled.div`
   [hidden] { display: none; }
 `;
 
-const Controls = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
-  margin-top: 8px;
-  color: #aaa;
-  font-size: 12px;
-
-  button {
-    min-width: 44px;
-    min-height: 36px;
-    padding: 6px 10px;
-    border: 1px solid #444;
-    background: #080808;
-    color: #ccc;
-    font: inherit;
-    cursor: pointer;
-  }
-
-  button:hover, button:focus-visible { border-color: white; color: white; }
-
-  @media (max-width: 440px) {
-    span { width: 100%; }
-  }
-`;
-
 export default function HatPreview({src, name}: {src: string; name: string}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const viewerRef = useRef<ReturnType<typeof createHatViewer> | null>(null);
@@ -139,28 +111,9 @@ export default function HatPreview({src, name}: {src: string; name: string}) {
           }}
         />
       </Stage>
-      {ready ? (
-        <Controls>
-          <span id={instructions}>360° · Drag or use arrow keys to rotate</span>
-          <button
-            type="button"
-            aria-label="Rotate hat left"
-            onClick={() => viewerRef.current?.rotate(-Math.PI / 4)}
-          >
-            ←
-          </button>
-          <button
-            type="button"
-            aria-label="Rotate hat right"
-            onClick={() => viewerRef.current?.rotate(Math.PI / 4)}
-          >
-            →
-          </button>
-          <button type="button" onClick={() => viewerRef.current?.reset()}>
-            Reset view
-          </button>
-        </Controls>
-      ) : null}
+      <span id={instructions} hidden>
+        Drag or use arrow keys to rotate. Press Home to reset the view.
+      </span>
     </Preview>
   );
 }
