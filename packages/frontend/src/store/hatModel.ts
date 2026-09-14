@@ -19,12 +19,12 @@ import {
 import {ParametricGeometry} from 'three/addons/geometries/ParametricGeometry.js';
 import {SVGLoader} from 'three/addons/loaders/SVGLoader.js';
 import {TessellateModifier} from 'three/addons/modifiers/TessellateModifier.js';
-import {mergeVertices} from 'three/addons/utils/BufferGeometryUtils.js';
 
 // Proportions follow New Era's Low Profile reference photos; see the artwork README.
 const height = 1.3;
 const width = 1.08;
 const depth = 1.15;
+const billTop = 0.015;
 
 export interface HatArtwork {
   front: string;
@@ -75,7 +75,13 @@ function frontLogo(source: string) {
 function addLogo(
   hat: Group,
   source: string,
-  placement: {name: string; angle: number; width: number; y: number}
+  placement: {
+    name: string;
+    angle: number;
+    width: number;
+    y: number;
+    centerOnPath?: string;
+  }
 ) {
   const data = new SVGLoader().parse(source);
   const geometries = data.paths.map(
@@ -87,6 +93,21 @@ function addLogo(
     if (geometry.boundingBox) bounds.union(geometry.boundingBox);
   }
   const center = bounds.getCenter(new Vector3());
+  if (placement.centerOnPath) {
+    const anchor =
+      geometries[
+        data.paths.findIndex(path => {
+          const node = path.userData?.['node'];
+          return node instanceof Element && node.id === placement.centerOnPath;
+        })
+      ]?.boundingBox;
+    if (!anchor || anchor.isEmpty()) {
+      for (const geometry of geometries) geometry.dispose();
+      throw new Error('The hat artwork is missing its alignment anchor.');
+    }
+    // Keep the complete mark together, with the star centered on the seam.
+    center.x = anchor.getCenter(new Vector3()).x;
+  }
   const sourceWidth = bounds.getSize(new Vector3()).x;
   const scale = placement.width / sourceWidth;
   const halfHeight = (bounds.getSize(new Vector3()).y * scale) / 2;
@@ -132,14 +153,6 @@ function addLogo(
     mesh.name = placement.name;
     hat.add(mesh);
   }
-}
-
-function billHeight(x: number, z: number) {
-  // Keep the attachment inside the fitted band, then curve the exposed visor.
-  const extension = Math.max(0, Math.hypot(x / width, z / depth) - 1);
-  const blend = Math.min(1, extension / 0.5);
-  const curve = blend ** 2 * (3 - 2 * blend);
-  return 0.015 - (0.045 * z + 0.15 * x ** 2) * curve;
 }
 
 export function createHatModel(artwork: HatArtwork) {
@@ -206,33 +219,30 @@ export function createHatModel(artwork: HatArtwork) {
   bill.bezierCurveTo(1.34, 0.73, 1.47, 1.55, 1.08, 1.94);
   bill.bezierCurveTo(0.61, 2.35, -0.61, 2.35, -1.08, 1.94);
   bill.bezierCurveTo(-1.47, 1.55, -1.34, 0.73, -0.98, 0.38);
-  const extrudedBill = new ExtrudeGeometry(bill, {
+  // A factory-flat visor has parallel top and bottom surfaces throughout.
+  const billGeometry = new ExtrudeGeometry(bill, {
     depth: 0.055,
     bevelEnabled: false,
     curveSegments: 36,
     steps: 1,
   });
-  const billGeometry = new TessellateModifier(0.12, 6).modify(extrudedBill);
-  extrudedBill.dispose();
   const positions = billGeometry.getAttribute('position');
   for (let i = 0; i < positions.count; i++) {
     const x = positions.getX(i) * 0.94;
     const z = 0.38 + (positions.getY(i) - 0.38) * 0.82;
-    const y = billHeight(x, z) - positions.getZ(i);
+    const y = billTop - positions.getZ(i);
     positions.setXYZ(i, x, y, z);
   }
-  const smoothBill = mergeVertices(billGeometry);
-  billGeometry.dispose();
-  smoothBill.computeVertexNormals();
-  hat.add(new Mesh(smoothBill, fabric));
+  billGeometry.computeVertexNormals();
+  hat.add(new Mesh(billGeometry, fabric));
 
-  // Concentric stitching follows the curved leading edge of the bill.
+  // Concentric stitching lies just above the flat top of the bill.
   for (let row = 0; row < 5; row++) {
     const points = Array.from({length: 65}, (_, i) => {
       const angle = -1.05 + (i / 64) * 2.1;
       const x = (1.38 - row * 0.065) * Math.sin(angle) * 0.94;
       const z = 0.38 + (0.35 + (1.46 - row * 0.085) * Math.cos(angle)) * 0.82;
-      return new Vector3(x, billHeight(x, z) + 0.007, z);
+      return new Vector3(x, billTop + 0.007, z);
     });
     hat.add(
       new Mesh(
@@ -247,6 +257,7 @@ export function createHatModel(artwork: HatArtwork) {
       angle: 0,
       width: 0.92,
       y: height * 0.52,
+      centerOnPath: 'path3757_2_',
     });
     // +X is the viewer's right when facing the front (the wearer's left).
     addLogo(hat, artwork.side, {
