@@ -3,6 +3,7 @@ import {loadStorefront} from './api';
 import {useStoreCart} from './cart';
 import type {StorefrontResponse} from '@devopsrockstars/shared-types';
 import {formatMoney} from './format';
+import HatPreview from './HatPreview';
 import {
   ActionLink,
   Button,
@@ -86,7 +87,11 @@ const Store = React.memo(() => {
         return (
           <ProductGrid key={product.id}>
             <ProductArt>
-              <img src={product.imagePath} alt={product.name} />
+              {product.imagePath === '/static/image/store/5950.svg' ? (
+                <HatPreview src={product.imagePath} name={product.name} />
+              ) : (
+                <img src={product.imagePath} alt={product.name} />
+              )}
             </ProductArt>
             <ProductCopy>{product.description}</ProductCopy>
             <ProductDetails>
