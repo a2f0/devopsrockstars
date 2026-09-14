@@ -1,15 +1,23 @@
 # Hat artwork and proportions
 
-The interactive cap is a visual approximation of a New Era Low Profile 59FIFTY,
-not a measured manufacturing model. Its front embroidery comes from `5950.svg`.
+The interactive cap is a visual approximation of the store's low-crown 59FIFTY
+with a flat visor, not a measured manufacturing model. Its front embroidery
+comes from `5950.svg`; the six-pointed star (`path3757_2_`) is centered on the
+front panel seam while the complete mark retains its original spacing.
 
 ## Shape references
 
 - [New Era's 59FIFTY silhouette guide](https://www.neweracap.com/pages/silhouette-guide-59fifty)
-  describes the Low Profile's structured, contoured crown.
+  describes the standard 59FIFTY's flat visor and the Low Profile's structured,
+  contoured crown.
+- [Authentic Collection 59FIFTY, product 70331909](https://www.neweracap.com/products/new-york-yankees-authentic-collection-59fifty-fitted)
+  provides unworn product references for the flat visor:
+  [left side](https://cdn.shopify.com/s/files/1/0601/2554/4675/files/70331909_70360398_59FIFTY_MLBAC2017GM_NEYYAN_OTC_LSIDE.jpg?v=1736179442)
+  and
+  [right side](https://cdn.shopify.com/s/files/1/0601/2554/4675/files/70331909_70360398_59FIFTY_MLBAC2017GM_NEYYAN_OTC_RSIDE.jpg?v=1736179442).
 - [Authentic Collection Low Profile 59FIFTY, product 70360653](https://www.neweracap.com/products/new-york-yankees-authentic-collection-low-profile-59fifty-fitted)
-  supplies the front, left-side, and rear photo references for the lower crown,
-  curved visor, side flag, and rear Batterman placement.
+  supplies references for the lower crown, side flag, and rear Batterman
+  placement. Its curved visor is not used for this model.
 - [New Era's fitted size chart](https://www.neweracap.com/pages/sizing-chart)
   includes Low Profile 59FIFTY. A size 7¼ corresponds to a 57.7 cm head
   circumference. This is a fit measurement, not the cap's outside dimensions.
