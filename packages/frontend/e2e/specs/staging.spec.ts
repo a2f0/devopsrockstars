@@ -80,7 +80,8 @@ describe('store page', () => {
             slug: 'devops-rockstars-59fifty',
             name: 'DevOps Rockstars 59FIFTY',
             manufacturer: 'New Era',
-            description: 'Low Crown 59FIFTY cap.\nFitted, black.',
+            description:
+              'Embroidered New Era Low Crown 59FIFTY\nFitted, black.',
             imagePath: '/static/image/store/5950.svg',
             variants: [
               {

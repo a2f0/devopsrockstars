@@ -91,6 +91,80 @@ describe('3D hat preview', () => {
     await expect(await browser.$(canvasSelector)).toBeDisplayed();
   });
 
+  it('renders the white flag on the side and white Batterman on the back', async () => {
+    for (const {asset, steps} of [
+      {asset: 'new-era-flag.svg', steps: 1},
+      {asset: 'mlb-batterman.svg', steps: 4},
+    ]) {
+      const snapshot = async () => {
+        await BasePage.openStaging('store');
+        const canvas = await browser.$(canvasSelector);
+        await canvas.waitForDisplayed();
+        const right = await browser.$('button[aria-label="Rotate hat right"]');
+        for (let step = 0; step < steps; step++) await right.click();
+        return browser.takeElementScreenshot(await canvas.elementId);
+      };
+      const original = await snapshot();
+      // Recolor only this asset, then require its white stitches to turn red in
+      // the expected view. An omitted badge or a badge on the far side fails.
+      const recolor = await browser.addInitScript(asset => {
+        const originalFetch = globalThis.fetch.bind(globalThis);
+        globalThis.fetch = async (input, init) => {
+          const response = await originalFetch(input, init);
+          if (String(input).endsWith(`/static/image/store/${asset}`)) {
+            return new Response(
+              (await response.text()).replaceAll('#f4f4f4', '#ff0000'),
+              {headers: {'Content-Type': 'image/svg+xml'}}
+            );
+          }
+          return response;
+        };
+      }, asset);
+      try {
+        const recolored = await snapshot();
+        const changedStitches = await browser.execute(
+          async (original, recolored) => {
+            const pixels = async (png: string) => {
+              const image = new Image();
+              image.src = `data:image/png;base64,${png}`;
+              await image.decode();
+              const canvas = document.createElement('canvas');
+              canvas.width = image.width;
+              canvas.height = image.height;
+              const context = canvas.getContext('2d');
+              if (!context) throw new Error('Could not read the badge pixels.');
+              context.drawImage(image, 0, 0);
+              return context.getImageData(0, 0, canvas.width, canvas.height)
+                .data;
+            };
+            const before = await pixels(original);
+            const after = await pixels(recolored);
+            let count = 0;
+            for (let i = 0; i < before.length; i += 4) {
+              const [r = 0, g = 0, b = 0] = before.slice(i, i + 3);
+              const [red = 0, green = 0, blue = 0] = after.slice(i, i + 3);
+              if (
+                Math.min(r, g, b) > 80 &&
+                Math.max(r, g, b) - Math.min(r, g, b) < 30 &&
+                red > 100 &&
+                red > green * 1.5 &&
+                red > blue * 1.5
+              ) {
+                count++;
+              }
+            }
+            return count;
+          },
+          original,
+          recolored
+        );
+        assert.ok(changedStitches > 20, `${asset} must be visibly embroidered`);
+      } finally {
+        await recolor.remove();
+      }
+    }
+  });
+
   it('keeps the SVG and purchase controls when WebGL is unavailable', async () => {
     const disableWebGL = await browser.addInitScript(() => {
       const getContext = HTMLCanvasElement.prototype.getContext;
@@ -140,5 +214,46 @@ describe('3D hat preview', () => {
     await expect(await browser.$(imageSelector)).toBeDisplayed();
     await expect(await browser.$(canvasSelector)).not.toBeDisplayed();
     await expect(await browser.$('button=Reset view')).not.toExist();
+  });
+
+  it('keeps the SVG if either embroidery asset cannot be loaded', async () => {
+    for (const asset of ['new-era-flag.svg', 'mlb-batterman.svg']) {
+      const failAsset = await browser.addInitScript(asset => {
+        const originalFetch = globalThis.fetch.bind(globalThis);
+        const originalWarn = console.warn.bind(console);
+        let rejected = false;
+        console.warn = (...args) => {
+          if (rejected && args[0] === 'Using the static hat preview:') {
+            document.documentElement.setAttribute('data-failed-artwork', asset);
+          }
+          originalWarn(...args);
+        };
+        globalThis.fetch = async (input, init) => {
+          if (String(input).endsWith(`/static/image/store/${asset}`)) {
+            rejected = true;
+            return new Response('', {status: 503});
+          }
+          return originalFetch(input, init);
+        };
+      }, asset);
+      try {
+        await BasePage.openStaging('store');
+        await browser.waitUntil(() =>
+          browser.execute(
+            asset =>
+              document.documentElement.getAttribute('data-failed-artwork') ===
+              asset,
+            asset
+          )
+        );
+        await expect(await browser.$(imageSelector)).toBeDisplayed();
+        await expect(await browser.$(canvasSelector)).not.toBeDisplayed();
+        await expect(
+          await browser.$('select[aria-label$="size"]')
+        ).toBeEnabled();
+      } finally {
+        await failAsset.remove();
+      }
+    }
   });
 });

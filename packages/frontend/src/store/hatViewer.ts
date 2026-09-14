@@ -8,14 +8,17 @@ import {
   WebGLRenderer,
 } from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
-import {createHatModel, disposeHatModel} from './hatModel';
+import {createHatModel, disposeHatModel, type HatArtwork} from './hatModel';
 
-export function createHatViewer(canvas: HTMLCanvasElement, svg: string) {
+export function createHatViewer(
+  canvas: HTMLCanvasElement,
+  artwork: HatArtwork
+) {
   const renderer = new WebGLRenderer({canvas, alpha: true, antialias: true});
   const scene = new Scene();
   let hat: ReturnType<typeof createHatModel>;
   try {
-    hat = createHatModel(svg);
+    hat = createHatModel(artwork);
   } catch (error) {
     renderer.dispose();
     throw error;
@@ -30,8 +33,8 @@ export function createHatViewer(canvas: HTMLCanvasElement, svg: string) {
 
   const camera = new PerspectiveCamera(34, 1, 0.1, 40);
   const controls = new OrbitControls(camera, canvas);
-  controls.target.set(0, 0.38, 0.55);
-  camera.position.set(3.15, 2.35, 5.55);
+  controls.target.set(0, 0.35, 0.4);
+  camera.position.set(2.95, 2.2, 5.1);
   controls.enablePan = false;
   // Disable viewer zoom so the mouse wheel keeps scrolling the page.
   controls.enableZoom = false;
