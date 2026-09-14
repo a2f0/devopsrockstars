@@ -18,10 +18,19 @@ import {
 } from 'three';
 import {ParametricGeometry} from 'three/addons/geometries/ParametricGeometry.js';
 import {SVGLoader} from 'three/addons/loaders/SVGLoader.js';
+import {TessellateModifier} from 'three/addons/modifiers/TessellateModifier.js';
+import {mergeVertices} from 'three/addons/utils/BufferGeometryUtils.js';
 
-const height = 1.45;
+// Proportions follow New Era's Low Profile reference photos; see the artwork README.
+const height = 1.3;
 const width = 1.08;
 const depth = 1.15;
+
+export interface HatArtwork {
+  front: string;
+  side: string;
+  rear: string;
+}
 
 function crownPoint(angle: number, elevation: number, offset = 0) {
   const radius = Math.cos(elevation);
@@ -50,7 +59,7 @@ function fabricTexture() {
   return texture;
 }
 
-function addLogo(hat: Group, source: string) {
+function frontLogo(source: string) {
   // Reuse the original vector paths, including their Illustrator transforms.
   // The silhouette has no depth information; only the Logo group is projected.
   const document = new DOMParser().parseFromString(source, 'image/svg+xml');
@@ -60,38 +69,80 @@ function addLogo(hat: Group, source: string) {
   }
   const svg = document.documentElement.cloneNode(false);
   svg.appendChild(logo.cloneNode(true));
-  const data = new SVGLoader().parse(
-    new XMLSerializer().serializeToString(svg)
+  return new XMLSerializer().serializeToString(svg);
+}
+
+function addLogo(
+  hat: Group,
+  source: string,
+  placement: {name: string; angle: number; width: number; y: number}
+) {
+  const data = new SVGLoader().parse(source);
+  const geometries = data.paths.map(
+    path => new ShapeGeometry(SVGLoader.createShapes(path))
   );
-  const geometries = data.paths.map(path => new ShapeGeometry(path.toShapes()));
   const bounds = new Box3();
   for (const geometry of geometries) {
     geometry.computeBoundingBox();
     if (geometry.boundingBox) bounds.union(geometry.boundingBox);
   }
   const center = bounds.getCenter(new Vector3());
-  const scale = 0.92 / bounds.getSize(new Vector3()).x;
-  const embroidery = new MeshStandardMaterial({
-    color: '#f4f4f4',
-    roughness: 0.85,
-    side: DoubleSide,
-  });
-  for (const geometry of geometries) {
+  const sourceWidth = bounds.getSize(new Vector3()).x;
+  const scale = placement.width / sourceWidth;
+  const halfHeight = (bounds.getSize(new Vector3()).y * scale) / 2;
+  if (
+    !Number.isFinite(scale) ||
+    placement.y - halfHeight < 0 ||
+    placement.y + halfHeight >= height
+  ) {
+    for (const geometry of geometries) geometry.dispose();
+    throw new Error('The hat artwork does not fit on the crown.');
+  }
+  // Subdivide filled areas before wrapping them, so the badge's center follows
+  // the crown instead of cutting through it between widely spaced vertices.
+  const tessellate = new TessellateModifier(sourceWidth / 12, 6);
+  for (const [index, original] of geometries.entries()) {
+    const geometry = tessellate.modify(original);
+    original.dispose();
     const positions = geometry.getAttribute('position');
     for (let i = 0; i < positions.count; i++) {
       const x = (positions.getX(i) - center.x) * scale;
-      const y = 0.76 - (positions.getY(i) - center.y) * scale;
-      const radius = Math.sqrt(1 - (y / height) ** (2 / 0.72));
-      const z = depth * Math.sqrt(radius ** 2 - (x / width) ** 2);
-      positions.setXYZ(i, x, y, z + 0.018);
+      const y = placement.y - (positions.getY(i) - center.y) * scale;
+      const elevation = Math.asin((y / height) ** (1 / 0.72));
+      const tangentRadius =
+        Math.hypot(
+          width * Math.cos(placement.angle),
+          depth * Math.sin(placement.angle)
+        ) * Math.cos(elevation);
+      const point = crownPoint(
+        placement.angle + x / tangentRadius,
+        elevation,
+        0.012 + index * 0.002
+      );
+      positions.setXYZ(i, point.x, point.y, point.z);
     }
     geometry.computeBoundingBox();
     geometry.computeVertexNormals();
-    hat.add(new Mesh(geometry, embroidery));
+    const embroidery = new MeshStandardMaterial({
+      color: data.paths[index]?.color ?? '#f4f4f4',
+      roughness: 0.94,
+      side: DoubleSide,
+    });
+    const mesh = new Mesh(geometry, embroidery);
+    mesh.name = placement.name;
+    hat.add(mesh);
   }
 }
 
-export function createHatModel(svg: string) {
+function billHeight(x: number, z: number) {
+  // Keep the attachment inside the fitted band, then curve the exposed visor.
+  const extension = Math.max(0, Math.hypot(x / width, z / depth) - 1);
+  const blend = Math.min(1, extension / 0.5);
+  const curve = blend ** 2 * (3 - 2 * blend);
+  return 0.015 - (0.045 * z + 0.15 * x ** 2) * curve;
+}
+
+export function createHatModel(artwork: HatArtwork) {
   const hat = new Group();
   const bumpMap = fabricTexture();
   const fabric = new MeshStandardMaterial({
@@ -155,29 +206,33 @@ export function createHatModel(svg: string) {
   bill.bezierCurveTo(1.34, 0.73, 1.47, 1.55, 1.08, 1.94);
   bill.bezierCurveTo(0.61, 2.35, -0.61, 2.35, -1.08, 1.94);
   bill.bezierCurveTo(-1.47, 1.55, -1.34, 0.73, -0.98, 0.38);
-  const billGeometry = new ExtrudeGeometry(bill, {
+  const extrudedBill = new ExtrudeGeometry(bill, {
     depth: 0.055,
     bevelEnabled: false,
     curveSegments: 36,
     steps: 1,
   });
+  const billGeometry = new TessellateModifier(0.12, 6).modify(extrudedBill);
+  extrudedBill.dispose();
   const positions = billGeometry.getAttribute('position');
   for (let i = 0; i < positions.count; i++) {
-    const x = positions.getX(i);
-    const z = positions.getY(i);
-    const y = -positions.getZ(i) + 0.02 - 0.035 * z + 0.025 * x ** 2;
+    const x = positions.getX(i) * 0.94;
+    const z = 0.38 + (positions.getY(i) - 0.38) * 0.82;
+    const y = billHeight(x, z) - positions.getZ(i);
     positions.setXYZ(i, x, y, z);
   }
-  billGeometry.computeVertexNormals();
-  hat.add(new Mesh(billGeometry, fabric));
+  const smoothBill = mergeVertices(billGeometry);
+  billGeometry.dispose();
+  smoothBill.computeVertexNormals();
+  hat.add(new Mesh(smoothBill, fabric));
 
-  // Concentric stitching follows the leading edge of the nearly flat bill.
+  // Concentric stitching follows the curved leading edge of the bill.
   for (let row = 0; row < 5; row++) {
     const points = Array.from({length: 65}, (_, i) => {
       const angle = -1.05 + (i / 64) * 2.1;
-      const x = (1.38 - row * 0.065) * Math.sin(angle);
-      const z = 0.73 + (1.46 - row * 0.085) * Math.cos(angle);
-      return new Vector3(x, 0.027 - 0.035 * z + 0.025 * x ** 2, z);
+      const x = (1.38 - row * 0.065) * Math.sin(angle) * 0.94;
+      const z = 0.38 + (0.35 + (1.46 - row * 0.085) * Math.cos(angle)) * 0.82;
+      return new Vector3(x, billHeight(x, z) + 0.007, z);
     });
     hat.add(
       new Mesh(
@@ -187,7 +242,25 @@ export function createHatModel(svg: string) {
     );
   }
   try {
-    addLogo(hat, svg);
+    addLogo(hat, frontLogo(artwork.front), {
+      name: 'Front embroidery',
+      angle: 0,
+      width: 0.92,
+      y: height * 0.52,
+    });
+    // +X is the viewer's right when facing the front (the wearer's left).
+    addLogo(hat, artwork.side, {
+      name: 'New Era flag',
+      angle: Math.PI / 2,
+      width: 0.34,
+      y: 0.32,
+    });
+    addLogo(hat, artwork.rear, {
+      name: 'MLB Batterman',
+      angle: Math.PI,
+      width: 0.4,
+      y: 0.21,
+    });
   } catch (error) {
     disposeHatModel(hat);
     throw error;
