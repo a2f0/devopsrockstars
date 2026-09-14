@@ -25,6 +25,9 @@ const height = 1.3;
 const width = 1.08;
 const depth = 1.15;
 const billTop = 0.015;
+// Keep the visor's side overhang modest relative to the low crown.
+const billWidthScale = 0.885;
+const billDepthScale = 0.78;
 
 export interface HatArtwork {
   front: string;
@@ -217,7 +220,7 @@ export function createHatModel(artwork: HatArtwork) {
   bill.moveTo(-0.98, 0.38);
   bill.bezierCurveTo(-0.7, 1.15, 0.7, 1.15, 0.98, 0.38);
   bill.bezierCurveTo(1.34, 0.73, 1.47, 1.55, 1.08, 1.94);
-  bill.bezierCurveTo(0.61, 2.35, -0.61, 2.35, -1.08, 1.94);
+  bill.bezierCurveTo(0.61, 2.31, -0.61, 2.31, -1.08, 1.94);
   bill.bezierCurveTo(-1.47, 1.55, -1.34, 0.73, -0.98, 0.38);
   // A factory-flat visor has parallel top and bottom surfaces throughout.
   const billGeometry = new ExtrudeGeometry(bill, {
@@ -228,8 +231,8 @@ export function createHatModel(artwork: HatArtwork) {
   });
   const positions = billGeometry.getAttribute('position');
   for (let i = 0; i < positions.count; i++) {
-    const x = positions.getX(i) * 0.94;
-    const z = 0.38 + (positions.getY(i) - 0.38) * 0.82;
+    const x = positions.getX(i) * billWidthScale;
+    const z = 0.38 + (positions.getY(i) - 0.38) * billDepthScale;
     const y = billTop - positions.getZ(i);
     positions.setXYZ(i, x, y, z);
   }
@@ -240,8 +243,9 @@ export function createHatModel(artwork: HatArtwork) {
   for (let row = 0; row < 5; row++) {
     const points = Array.from({length: 65}, (_, i) => {
       const angle = -1.05 + (i / 64) * 2.1;
-      const x = (1.38 - row * 0.065) * Math.sin(angle) * 0.94;
-      const z = 0.38 + (0.35 + (1.46 - row * 0.085) * Math.cos(angle)) * 0.82;
+      const x = (1.38 - row * 0.065) * Math.sin(angle) * billWidthScale;
+      const z =
+        0.38 + (0.35 + (1.43 - row * 0.085) * Math.cos(angle)) * billDepthScale;
       return new Vector3(x, billTop + 0.007, z);
     });
     hat.add(
