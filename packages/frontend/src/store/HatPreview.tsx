@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import type {createHatViewer} from './hatViewer';
 
 const Preview = styled.div`
-  width: min(100%, 480px);
+  width: min(100%, 640px);
 `;
 
 const Stage = styled.div`
@@ -73,16 +73,20 @@ export default function HatPreview({src, name}: {src: string; name: string}) {
       setReady(false);
     };
     canvas.addEventListener('webglcontextlost', contextLost);
-    void Promise.all([
-      import('./hatViewer'),
-      fetch(src, {signal: controller.signal}).then(response => {
+    const loadArtwork = (path: string) =>
+      fetch(path, {signal: controller.signal}).then(response => {
         if (!response.ok) throw new Error('Could not load the hat artwork.');
         return response.text();
-      }),
+      });
+    void Promise.all([
+      import('./hatViewer'),
+      loadArtwork(src),
+      loadArtwork('/static/image/store/new-era-flag.svg'),
+      loadArtwork('/static/image/store/mlb-batterman.svg'),
     ])
-      .then(([{createHatViewer}, svg]) => {
+      .then(([{createHatViewer}, front, side, rear]) => {
         if (controller.signal.aborted) return;
-        viewerRef.current = createHatViewer(canvas, svg);
+        viewerRef.current = createHatViewer(canvas, {front, side, rear});
         setReady(true);
       })
       .catch(error => {

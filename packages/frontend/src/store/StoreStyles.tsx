@@ -46,7 +46,7 @@ export const ProductArt = styled.div`
   place-items: center;
   background: transparent;
 
-  img {
+  > img {
     display: block;
     width: min(100%, 480px);
     height: auto;

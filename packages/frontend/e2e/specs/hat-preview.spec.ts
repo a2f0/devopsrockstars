@@ -141,4 +141,37 @@ describe('3D hat preview', () => {
     await expect(await browser.$(canvasSelector)).not.toBeDisplayed();
     await expect(await browser.$('button=Reset view')).not.toExist();
   });
+
+  it('keeps the SVG if either embroidery asset cannot be loaded', async () => {
+    for (const asset of ['new-era-flag.svg', 'mlb-batterman.svg']) {
+      const failAsset = await browser.addInitScript(asset => {
+        const originalFetch = globalThis.fetch.bind(globalThis);
+        globalThis.fetch = async (input, init) => {
+          if (String(input).endsWith(`/static/image/store/${asset}`)) {
+            document.documentElement.setAttribute('data-failed-artwork', asset);
+            return new Response('', {status: 503});
+          }
+          return originalFetch(input, init);
+        };
+      }, asset);
+      try {
+        await BasePage.openStaging('store');
+        await browser.waitUntil(() =>
+          browser.execute(
+            asset =>
+              document.documentElement.getAttribute('data-failed-artwork') ===
+              asset,
+            asset
+          )
+        );
+        await expect(await browser.$(imageSelector)).toBeDisplayed();
+        await expect(await browser.$(canvasSelector)).not.toBeDisplayed();
+        await expect(
+          await browser.$('select[aria-label$="size"]')
+        ).toBeEnabled();
+      } finally {
+        await failAsset.remove();
+      }
+    }
+  });
 });
