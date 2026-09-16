@@ -51,8 +51,21 @@ describe('3D hat preview', function () {
     // cannot satisfy the test. Capture only the canvas to exclude page changes.
     const snapshot = async () =>
       browser.takeElementScreenshot(await canvas.elementId);
+    const renderState = () =>
+      browser.execute(() => {
+        const target = document.querySelector('canvas');
+        const gl = target?.getContext('webgl2');
+        const rect = target?.getBoundingClientRect();
+        return {
+          density: devicePixelRatio,
+          buffer: gl && [gl.drawingBufferWidth, gl.drawingBufferHeight],
+          antialias: gl?.getContextAttributes()?.antialias,
+          bounds: rect && [rect.x, rect.y, rect.width, rect.height],
+        };
+      });
     await canvas.click();
     const initial = await snapshot();
+    const initialState = await renderState();
     for (let step = 0; step < 12; step++) await browser.keys('ArrowRight');
     assert.notEqual(await snapshot(), initial);
     for (let step = 0; step < 12; step++) await browser.keys('ArrowRight');
@@ -86,15 +99,25 @@ describe('3D hat preview', function () {
     await (await browser.$('a[href="/company"]')).click();
     await (await browser.$('a[href="/store"]')).click();
     await expect(await browser.$(canvasSelector)).toBeDisplayed();
-    // A fresh page constructs exactly the same procedural textures and pose.
-    await BasePage.openStaging('store');
-    const recreated = await browser.$(canvasSelector);
-    await recreated.waitForDisplayed();
-    await recreated.click();
-    assert.equal(
-      await browser.takeElementScreenshot(await recreated.elementId),
-      initial
-    );
+    // A fresh page constructs the same textures, pose and render pipeline,
+    // even when it reports a different display density at initialization.
+    const displayScale = await browser.addInitScript(() => {
+      Object.defineProperty(window, 'devicePixelRatio', {value: 3});
+    });
+    try {
+      await BasePage.openStaging('store');
+      const recreated = await browser.$(canvasSelector);
+      await recreated.waitForDisplayed();
+      await recreated.click();
+      const recreatedState = await renderState();
+      assert.ok(
+        (await browser.takeElementScreenshot(await recreated.elementId)) ===
+          initial,
+        `A fresh page at another display density must render identically: ${JSON.stringify({initialState, recreatedState})}`
+      );
+    } finally {
+      await displayScale.remove();
+    }
   });
 
   it('renders the white flag on the side and white Batterman on the back', async () => {
@@ -165,7 +188,10 @@ describe('3D hat preview', function () {
           original,
           recolored
         );
-        assert.ok(changedStitches > 20, `${asset} must be visibly embroidered`);
+        assert.ok(
+          changedStitches > 20,
+          `${asset} must be visibly embroidered (${changedStitches} matching pixels)`
+        );
       } finally {
         await recolor.remove();
       }

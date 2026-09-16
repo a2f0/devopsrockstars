@@ -93,8 +93,8 @@ printing uses vector glyphs rasterized locally, without loading fonts.
 
 The camera and studio lighting stay fixed while the cap turns. Framing tightens
 at side elevations and widens for top and underside views. All meshes share
-one physical-material feature set; rendering uses a fixed 2x pixel ratio and
-multisampling on high-density displays. The viewer renders only on changes.
+one physical-material feature set; rendering uses a fixed 2x pixel ratio for
+supersampling on every display. The viewer renders only on changes.
 
 `hat/resources.ts` owns textures, materials, and geometries from allocation,
 including intermediate parts. Model failures release these resources; viewer

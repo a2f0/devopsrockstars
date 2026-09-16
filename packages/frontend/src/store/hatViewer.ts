@@ -114,10 +114,9 @@ export function createHatViewer(
   const renderer = new WebGLRenderer({
     canvas,
     alpha: true,
-    // The canvas always renders at twice its CSS size, which already
-    // antialiases 1x displays; multisampling there would double the cost of
-    // every frame for software renderers without a visible gain.
-    antialias: devicePixelRatio > 1,
+    // The fixed 2x supersampling resolves edges on every display. Keep the
+    // same pipeline when the device scale changes between page loads.
+    antialias: false,
   });
   // Releases run in reverse, and also when construction fails part way, so
   // the preview can fall back to the static artwork without leaking.
