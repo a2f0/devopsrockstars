@@ -4,7 +4,10 @@ import {BasePage} from '../pageObjects/base';
 const canvasSelector = 'canvas[aria-label$="interactive 3D preview"]';
 const imageSelector = 'img[alt="DevOps Rockstars 59FIFTY"]';
 
-describe('3D hat preview', () => {
+describe('3D hat preview', function () {
+  // Rotation and recoloring each construct several independent WebGL scenes.
+  // Software shader compilation on CI needs more time than a single page test.
+  this.timeout(120_000);
   let fixtures: Awaited<ReturnType<typeof browser.addInitScript>>;
 
   before(async () => {

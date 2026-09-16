@@ -2,6 +2,10 @@ import {config as sharedConfig} from './wdio.shared.conf';
 
 export const config: WebdriverIO.Config = {
   ...sharedConfig,
+  // SwiftShader uses CPU workers for each browser's graphics context. Run
+  // specs serially so concurrent hat previews do not starve page interaction
+  // and shader compilation on the smaller CI runners.
+  maxInstances: 1,
   ...{
     capabilities: [
       {
