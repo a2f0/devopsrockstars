@@ -69,36 +69,60 @@ describe('3D hat preview', function () {
   it('keeps the cart responsive while building the preview and cancels on navigation', async () => {
     const probe = await browser.addInitScript(() => {
       const getContext = HTMLCanvasElement.prototype.getContext;
+      let armed = true;
       HTMLCanvasElement.prototype.getContext = function (
         this: HTMLCanvasElement,
         type,
         ...args
       ) {
         const context = getContext.call(this, type, ...args);
-        if (type === 'webgl2' && this.hasAttribute('aria-label')) {
+        if (armed && type === 'webgl2' && this.hasAttribute('aria-label')) {
+          armed = false;
           const canvas = this;
-          document.documentElement.setAttribute('data-hat-building', 'true');
+          const root = document.documentElement;
+          let becameVisible = false;
+          let navigating = false;
+          const observer = new MutationObserver(() => {
+            becameVisible ||= canvas.style.visibility === 'visible';
+            if (
+              !navigating &&
+              document.querySelector('aside[aria-label="Shopping cart"]')
+            ) {
+              navigating = true;
+              root.setAttribute(
+                'data-cart-before-preview',
+                String(!becameVisible)
+              );
+              document
+                .querySelector<HTMLAnchorElement>('a[href="/company"]')
+                ?.click();
+            }
+          });
+          observer.observe(document.body, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['style'],
+          });
           canvas.addEventListener(
             'webglcontextlost',
             () => {
-              document.documentElement.setAttribute(
-                'data-build-context-lost',
-                'true'
+              becameVisible ||= canvas.style.visibility === 'visible';
+              root.setAttribute(
+                'data-cancelled-before-preview',
+                String(!becameVisible)
               );
+              observer.disconnect();
             },
             {once: true}
           );
-          let ticks = 0;
-          const interval = setInterval(() => {
-            if (canvas.style.visibility === 'visible' || !canvas.isConnected) {
-              clearInterval(interval);
-              return;
-            }
-            document.documentElement.setAttribute(
-              'data-build-ticks',
-              String(++ticks)
-            );
-          }, 8);
+          // Run input inside the page at the first yielded browser task. Remote
+          // WebDriver round trips cannot race a fast build to its completion.
+          setTimeout(() => {
+            [...document.querySelectorAll('button')]
+              .find(button => button.textContent === 'Add to cart')
+              ?.click();
+          }, 0);
         }
         return context;
       } as typeof getContext;
@@ -106,25 +130,21 @@ describe('3D hat preview', function () {
     try {
       await BasePage.openStaging('store');
       await browser.waitUntil(() =>
-        browser.execute(
-          () =>
-            Number(document.documentElement.getAttribute('data-build-ticks')) >=
-            3
+        browser.execute(() =>
+          document.documentElement.hasAttribute('data-cancelled-before-preview')
         )
       );
-      await (await browser.$('button=Add to cart')).click();
-      await expect(
-        await browser.$('aside[aria-label="Shopping cart"]')
-      ).toExist();
-      // The cart must respond before the expensive preview has finished.
-      await expect(await browser.$(canvasSelector)).not.toBeDisplayed();
-      await (await browser.$('a[href="/company"]')).click();
-      await browser.waitUntil(() =>
-        browser.execute(
-          () =>
-            document.documentElement.getAttribute('data-build-context-lost') ===
-            'true'
-        )
+      assert.deepEqual(
+        await browser.execute(() => ({
+          cart: document.documentElement.getAttribute(
+            'data-cart-before-preview'
+          ),
+          cancelled: document.documentElement.getAttribute(
+            'data-cancelled-before-preview'
+          ),
+          path: location.pathname,
+        })),
+        {cart: 'true', cancelled: 'true', path: '/company'}
       );
       await (await browser.$('a[href="/store"]')).click();
       await (await browser.$(canvasSelector)).waitForDisplayed();

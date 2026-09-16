@@ -117,8 +117,9 @@ export async function createHatViewer(
   const renderer = new WebGLRenderer({
     canvas,
     alpha: true,
-    // The fixed 2x supersampling resolves edges on every display. Keep the
-    // same pipeline when the device scale changes between page loads.
+    // Use up to two drawing-buffer pixels per CSS pixel, with no MSAA. This
+    // keeps the pipeline identical across device densities; on a 2x display
+    // this is native resolution, not additional supersampling.
     antialias: false,
   });
   // Releases run in reverse, and also when construction fails part way, so
@@ -219,7 +220,7 @@ export async function createHatViewer(
     const resize = () => {
       const {width, height} = canvas.getBoundingClientRect();
       if (!width || !height) return;
-      // Resolve stitching on 1x displays too, while bounding fragment work if
+      // Supersample on 1x displays while bounding fragment work if
       // the canvas is enlarged. The budget is independent of display density.
       renderer.setPixelRatio(
         Math.min(2, Math.sqrt(1_048_576 / (width * height)))

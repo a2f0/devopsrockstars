@@ -93,9 +93,10 @@ printing uses vector glyphs rasterized locally, without loading fonts.
 
 The camera and studio lighting stay fixed while the cap turns. Framing tightens
 at side elevations and widens for top and underside views. All meshes share
-one physical-material feature set; rendering uses 2x supersampling on every
-display, capped at 1,048,576 drawing-buffer pixels. The viewer renders only on
-changes.
+one physical-material feature set; rendering uses two drawing-buffer pixels
+per CSS pixel, capped at 1,048,576 pixels. MSAA is disabled to keep the pipeline
+identical across display densities. This supersamples a 1x display but uses
+native resolution on a 2x display. The viewer renders only on changes.
 
 Model construction yields to the browser between stages and during texture and
 occlusion calculations, using an 8 ms work budget between checkpoints. The cart
