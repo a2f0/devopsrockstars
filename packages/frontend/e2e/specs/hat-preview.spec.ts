@@ -1,8 +1,22 @@
 import assert from 'node:assert/strict';
+import {mkdir, writeFile} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
 import {BasePage} from '../pageObjects/base';
 
 const canvasSelector = 'canvas[aria-label$="interactive 3D preview"]';
 const imageSelector = 'img[alt="DevOps Rockstars 59FIFTY"]';
+
+async function saveFailureRenders(renders: Record<string, string>) {
+  const directory = join(
+    process.env['RUNNER_TEMP'] ?? tmpdir(),
+    'hat-preview-failures'
+  );
+  await mkdir(directory, {recursive: true});
+  for (const [name, png] of Object.entries(renders)) {
+    await writeFile(join(directory, `${name}.png`), Buffer.from(png, 'base64'));
+  }
+}
 
 describe('3D hat preview', function () {
   // Rotation and recoloring each construct several independent WebGL scenes.
@@ -123,9 +137,12 @@ describe('3D hat preview', function () {
       await recreated.click();
       const recreatedState = await renderState();
       assert.deepEqual(recreatedState.bounds, initialState.bounds);
+      const fresh = await browser.takeElementScreenshot(
+        await recreated.elementId
+      );
+      if (fresh !== initial) await saveFailureRenders({initial, fresh});
       assert.ok(
-        (await browser.takeElementScreenshot(await recreated.elementId)) ===
-          initial,
+        fresh === initial,
         `A fresh page at another display density must render identically: ${JSON.stringify({initialState, recreatedState})}`
       );
     } finally {
@@ -201,6 +218,12 @@ describe('3D hat preview', function () {
           original,
           recolored
         );
+        if (changedStitches <= 20) {
+          await saveFailureRenders({
+            [`${asset}-original`]: original,
+            [`${asset}-recolored`]: recolored,
+          });
+        }
         assert.ok(
           changedStitches > 20,
           `${asset} must be visibly embroidered (${changedStitches} matching pixels)`

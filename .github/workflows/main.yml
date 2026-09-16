@@ -38,6 +38,14 @@ jobs:
       - name: Unit tests
         run: pnpm unit
       - run: pnpm run ci-headless
+      - name: Upload hat preview failure screenshots
+        if: failure()
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: hat-preview-failures
+          path: ${{ runner.temp }}/hat-preview-failures/
+          if-no-files-found: ignore
+          retention-days: 7
 
   deploy-staging:
     runs-on: ubuntu-latest
