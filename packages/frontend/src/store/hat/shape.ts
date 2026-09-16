@@ -241,14 +241,23 @@ const smoothstep = (edge0: number, edge1: number, x: number) => {
 
 const noise = new ImprovedNoise();
 
-// Eyelets sit on each panel centerline about 50 mm along the surface below
-// the button.
+/** Topstitching runs this far out from each seam, on both sides. */
+export const topstitchOffset = 5 * MM;
+
+/** The button's radius, where the seams disappear under its cover. */
+export const buttonRadius = 7.3 * MM;
+
+// Eyelets sit on each panel centerline 76 mm along the surface below the
+// button, where the Low Profile's broad top rolls into the walls.
 export const eyelets = seamAngles.map((_, panel) => {
   const theta = panelCenter(panel);
   const lengths = meridianLengths(theta);
-  const t = tAtLength(lengths, (lengths[lengths.length - 1] ?? 0) - 50 * MM);
+  const t = tAtLength(lengths, (lengths[lengths.length - 1] ?? 0) - 76 * MM);
   return {theta, t, point: crownPoint(theta, t)};
 });
+
+// Sewn panels never puff identically: each varies by up to about 20%.
+const panelFullness = [0.9, 1.15, 0.84, 1.18, 0.94, 1.08];
 
 export interface ReliefOptions {
   // Embroidery bridges the seam valleys instead of following them.
@@ -257,10 +266,12 @@ export interface ReliefOptions {
 
 /**
  * Offset along the crown normal that turns the ideal shell into sewn fabric:
- * narrow seam valleys with topstitch compression, softly puffed side and back
- * panels, a taut buckram front, a small V where the front seam meets the
- * visor, the edge rolling under into the sweatband and low-frequency pucker.
- * Everything placed on the crown must add the same relief.
+ * narrow seam valleys between welts pressed down by the topstitching, softly
+ * puffed side and back panels pulled taut over the top, a taut buckram front,
+ * a small V where the front seam meets the visor, a slight tent where the
+ * panels gather into the button, eyelet dimples, the edge rolling under into
+ * the sweatband and low-frequency pucker. Everything placed on the crown must
+ * add the same relief.
  */
 export function panelRelief(
   theta: number,
@@ -270,48 +281,70 @@ export function panelRelief(
 ) {
   const {panel, span, s} = panelAt(theta);
   sampleProfile(theta, t);
-  const y = sampledHeight * crownHeight;
+  const height = sampledHeight;
+  const y = height * crownHeight;
   const width =
     span *
     sampledRadius *
     Math.hypot(halfWidth * Math.cos(theta), halfDepth * Math.sin(theta));
   const d = Math.min(s, 1 - s) * width;
   const frontPanel = panel === 0 || panel === 5;
-  const rise = smoothstep(0.015, 0.2, y) * (1 - smoothstep(0.8, 0.97, t));
+  const rise = smoothstep(0.015, 0.2, y);
   const dome = Math.sin(Math.PI * s);
+  // Over the top the panels are stretched taut, and they vanish into the
+  // button.
+  const taut =
+    (1 - 0.75 * smoothstep(0.66, 0.8, height)) * (1 - smoothstep(0.9, 0.99, t));
   const puff =
     (frontPanel ? 0.004 : 0.012) *
+    (panelFullness[panel] ?? 1) *
     smoothstep(0, 0.1, d) *
     (0.4 + 0.6 * dome) *
     rise *
+    taut *
     Math.min(1, width / 0.5);
   const pucker =
     0.0014 *
     noise.noise(point.x * 2.6 + panel * 7.3, point.y * 2.6, point.z * 2.6) *
     dome *
-    rise;
+    rise *
+    (1 - smoothstep(0.8, 0.97, t));
   // Seams and fabric gather where the six panels meet under the button.
   const gather =
     0.0012 *
     noise.noise(point.x * 11, point.y * 11, point.z * 11) *
-    smoothstep(0.86, 0.95, t) *
-    (1 - smoothstep(0.975, 1, t));
+    smoothstep(0.86, 0.95, t);
+  const apex = Math.hypot(point.x, point.z);
+  const tent = 0.022 * Math.max(0, 1 - apex / 0.5) ** 2;
   const roll = -0.004 * (1 - smoothstep(0, 0.016, y)) ** 2;
-  let relief = puff + pucker + gather + roll;
+  let relief = puff + pucker + gather + tent + roll;
   for (const eyelet of eyelets) {
     const distance = eyelet.point.distanceTo(point);
-    if (distance < 0.12) relief -= 0.0022 * Math.exp(-((distance / 0.04) ** 2));
+    // A 0.4 mm dimple where the embroidered ring pulls the cloth in.
+    if (distance < 0.15) {
+      relief -= 0.0046 * Math.exp(-((distance / 0.05) ** 2));
+    }
   }
   if (seams) {
-    // The buckram-backed front seam stays shallower than the others.
+    // The buckram-backed front seam is a narrow crease; the others are
+    // softer valleys. Each folded seam allowance leaves a slight welt that
+    // the topstitching presses down.
     const frontSeam = (s < 0.5 && panel === 0) || (s >= 0.5 && panel === 5);
     const backSeam = (s < 0.5 && panel === 3) || (s >= 0.5 && panel === 2);
-    const fade = 1 - smoothstep(0.93, 0.99, t);
-    relief -=
-      ((frontSeam ? 0.003 : backSeam ? 0.005 : 0.006) *
-        Math.exp(-((d / 0.009) ** 2)) +
-        0.0007 * Math.exp(-(((d - 0.052) / 0.007) ** 2))) *
-      fade;
+    // Near the button every seam is gathered alike, so a panel meets its
+    // neighbors without a step.
+    const own = smoothstep(0.12, 0.3, width);
+    const depth = frontSeam ? 0.0045 : backSeam ? 0.005 : 0.006;
+    const spread = frontSeam ? 0.006 : 0.009;
+    const valley =
+      (0.006 + (depth - 0.006) * own) *
+      Math.exp(-((d / (0.009 + (spread - 0.009) * own)) ** 2));
+    const welt =
+      (0.001 - (frontSeam ? 0.0006 : 0) * own) *
+      smoothstep(0.004, 0.016, d) *
+      (1 - smoothstep(0.042, 0.054, d));
+    const stitch = 0.0009 * Math.exp(-(((d - topstitchOffset) / 0.006) ** 2));
+    relief += welt - valley - stitch;
     if (frontSeam) {
       relief -=
         0.005 * Math.exp(-((d / 0.03) ** 2)) * (1 - smoothstep(0, 0.1, y));
@@ -359,7 +392,8 @@ export function surfaceNormal(
 
 // Flat visor: 3 mm thick with a rounded turned edge, projecting 0.35 of the
 // crown depth. Its plan is a superellipse ahead of the widest line, with
-// wings that sweep back into the crown near the front/side seams.
+// convex wings that curve back under the crown just behind the front/side
+// seams.
 export const visorThickness = 0.035;
 export const visorTop = -0.001;
 export const visorEdgeRadius = visorThickness / 2;
@@ -367,78 +401,49 @@ const visorWidest = 0.93;
 const visorHalfWidth = 1.14;
 const visorTip = 1.95;
 const visorExponent = 2.2;
-const visorWingAngle = (61 * Math.PI) / 180;
-// The visor root tucks just inside the crown opening, under the fold.
-const visorRootScale = 0.975;
+const visorWingAngle = (65 * Math.PI) / 180;
+// The wings end under the crown's folded edge, 3.5 mm inside the wall.
+const visorWingTuck = 3.5 * MM;
+/** How far inside the crown wall the visor root sits, behind the sweatband. */
+export const visorRootDepth = 3 * MM;
+// The insert thins to nothing over the last 14 mm of each wing, so the edge
+// closes on itself instead of ending in an open tube.
+const visorTaper = 14 * MM;
 
-function cubic(
-  p0: Vector2,
-  p1: Vector2,
-  p2: Vector2,
-  p3: Vector2,
-  u: number
-): Vector2 {
-  const v = 1 - u;
-  return new Vector2(
-    v * v * v * p0.x +
-      3 * v * v * u * p1.x +
-      3 * v * u * u * p2.x +
-      u ** 3 * p3.x,
-    v * v * v * p0.y +
-      3 * v * v * u * p1.y +
-      3 * v * u * u * p2.y +
-      u ** 3 * p3.y
-  );
+/** A point `depth` inside the crown's base ellipse, along its normal. */
+function insideBase(theta: number, depth: number, target = new Vector2()) {
+  const x = halfWidth * Math.sin(theta);
+  const z = halfDepth * Math.cos(theta);
+  const nx = x / halfWidth ** 2;
+  const nz = z / halfDepth ** 2;
+  const length = Math.hypot(nx, nz);
+  return target.set(x - (nx / length) * depth, z - (nz / length) * depth);
 }
 
 /**
- * The contour the visor's stitch rows are offset from. The inner rows sit up
- * to 47 mm in, deeper than the radius of the edge's superellipse corners and
- * wing bends, so they follow the edge's inscribed ellipse instead, continued
- * behind the widest line until it passes under the crown.
- */
-export function visorStitchContour(count: number) {
-  const behind = 0.95;
-  return Array.from({length: count}, (_, i) => {
-    const phi = Math.PI + behind - (i / (count - 1)) * (Math.PI + 2 * behind);
-    return new Vector2(
-      visorHalfWidth * Math.cos(phi),
-      visorWidest + (visorTip - visorWidest) * Math.sin(phi)
-    );
-  });
-}
-
-/**
- * Outer visor edge in plan (x, z), from the wing root at -X round the tip to
- * the wing root at +X, spaced evenly by arc length.
+ * Outer visor edge in plan (x, z), from the wing end at -X round the tip to
+ * the wing end at +X, spaced evenly by arc length.
  */
 export function visorOutline(count: number) {
   const dense: Vector2[] = [];
+  // Behind the widest point each wing is a circular arc back to its end
+  // under the crown. Its radius exceeds the deepest stitch row's inset, so
+  // the rows, offsets of this edge, stay smooth until they meet the crown.
   const wing = (sign: number) => {
-    const theta = visorWingAngle;
-    const root = new Vector2(
-      sign * halfWidth * 0.97 * Math.sin(theta),
-      halfDepth * 0.97 * Math.cos(theta)
-    );
-    // Leave the crown close to its tangent, then turn forward at the widest.
-    const direction = new Vector2(
-      sign * (Math.sin(theta) / halfWidth) * 1.2 -
-        sign * halfWidth * Math.cos(theta),
-      (Math.cos(theta) / halfDepth) * 1.2 + halfDepth * Math.sin(theta)
-    ).normalize();
-    const widest = new Vector2(sign * visorHalfWidth, visorWidest);
+    const end = insideBase(sign * visorWingAngle, visorWingTuck);
+    const across = visorHalfWidth - Math.abs(end.x);
+    const back = visorWidest - end.y;
+    const radius = (across * across + back * back) / (2 * across);
+    const sweep = Math.asin(back / radius);
     return (u: number) =>
-      cubic(
-        root,
-        root.clone().addScaledVector(direction, 0.2),
-        new Vector2(widest.x, visorWidest - 0.2),
-        widest,
-        u
+      new Vector2(
+        sign * (visorHalfWidth - radius + radius * Math.cos(u * sweep)),
+        visorWidest - radius * Math.sin(u * sweep)
       );
   };
   const right = wing(-1);
   const left = wing(1);
-  for (let i = 0; i < 120; i++) dense.push(right(i / 120));
+  for (let i = 120; i > 0; i--) dense.push(right(i / 120));
   // Superellipse ahead of the widest line, swept from -X to +X.
   for (let i = 0; i < 240; i++) {
     const phi = Math.PI - (i / 240) * Math.PI;
@@ -452,7 +457,7 @@ export function visorOutline(count: number) {
       )
     );
   }
-  for (let i = 120; i >= 0; i--) dense.push(left(i / 120));
+  for (let i = 0; i <= 120; i++) dense.push(left(i / 120));
   const lengths = [0];
   for (let i = 1; i < dense.length; i++) {
     const a = dense[i] ?? new Vector2();
@@ -474,11 +479,20 @@ export function visorOutline(count: number) {
   return outline;
 }
 
+/**
+ * The visor's thickness, as a fraction, at a distance along the edge from the
+ * nearer wing end: zero at the end, full from 14 mm on.
+ */
+export function visorTaperAt(distance: number) {
+  const k = Math.min(Math.max(distance / visorTaper, 0), 1);
+  return Math.sin((Math.PI / 2) * k) ** 1.5;
+}
+
 /** Where the visor root meets the crown opening, for u from -X to +X. */
 export function visorRoot(u: number, target = new Vector2()) {
-  const theta = -visorWingAngle + u * 2 * visorWingAngle;
-  return target.set(
-    halfWidth * visorRootScale * Math.sin(theta),
-    halfDepth * visorRootScale * Math.cos(theta)
+  return insideBase(
+    -visorWingAngle + u * 2 * visorWingAngle,
+    visorRootDepth,
+    target
   );
 }

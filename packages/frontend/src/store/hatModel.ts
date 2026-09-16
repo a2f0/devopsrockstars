@@ -1,10 +1,13 @@
-import {Group, Mesh, type MeshPhysicalMaterial, type Texture} from 'three';
+import {Group, Mesh, Texture} from 'three';
 import {createCrown} from './hat/crown';
 import {createEmbroidery, frontLogo} from './hat/embroidery';
 import {createInterior} from './hat/interior';
+import {HatResources} from './hat/resources';
 import {crownHeight, panelCenter} from './hat/shape';
 import {twillField, twillMaps} from './hat/textures';
 import {createVisor} from './hat/visor';
+
+const modelResources = new WeakMap<Group, HatResources>();
 
 export interface HatArtwork {
   front: string;
@@ -19,14 +22,18 @@ export interface HatArtwork {
  */
 export function createHatModel(artwork: HatArtwork, anisotropy = 8) {
   const hat = new Group();
+  const resources = new HatResources();
   try {
     const twill = twillField();
-    const maps = twillMaps(twill, anisotropy);
-    hat.add(...createCrown(maps, anisotropy));
-    hat.add(...createVisor(twill, anisotropy));
-    hat.add(...createInterior(maps, anisotropy));
+    const maps = twillMaps(resources, twill, anisotropy);
+    hat.add(...createCrown(resources, maps, anisotropy));
+    hat.add(...createVisor(resources, twill, anisotropy));
+    hat.add(...createInterior(resources, maps, anisotropy));
+    // Marks are sewn through the crown built so far.
+    const fabric = [...hat.children];
     hat.add(
       ...createEmbroidery(
+        resources,
         frontLogo(artwork.front),
         {
           name: 'Front embroidery',
@@ -35,64 +42,70 @@ export function createHatModel(artwork: HatArtwork, anisotropy = 8) {
           width: 0.92,
           // The star sits on the front seam; the mark keeps its spacing.
           centerOnPath: 'path3757_2_',
-          // Raised satin with a rounded, tube-like cross-section.
-          stitching: {shoulder: 0.9, relief: 1.1},
+          // Satin on narrow strokes, fill rows across the broad star.
+          stitching: {relief: 1.2, satinWidth: 8},
         },
-        anisotropy
+        anisotropy,
+        fabric
       )
     );
     // +X is the viewer's right when facing the front (the wearer's left).
     hat.add(
       ...createEmbroidery(
+        resources,
         artwork.side,
         {
           name: 'New Era flag',
           theta: panelCenter(1),
           height: 0.285,
           width: 0.3,
-          stitching: {shoulder: 0.45, relief: 0.5},
+          // Flat satin.
+          stitching: {relief: 0.35, satinWidth: 4},
         },
-        anisotropy
+        anisotropy,
+        fabric
       )
     );
     hat.add(
       ...createEmbroidery(
+        resources,
         artwork.rear,
         {
           name: 'MLB Batterman',
           theta: Math.PI,
           height: 0.25,
           width: 0.365,
-          stitching: {shoulder: 0.5, relief: 0.6},
+          // A satin border around fill-stitched fields and batter.
+          stitching: {relief: 0.6, satinWidth: 3},
         },
-        anisotropy
+        anisotropy,
+        fabric
       )
     );
   } catch (error) {
-    disposeHatModel(hat);
+    resources.dispose();
     throw error;
   }
+  modelResources.set(hat, resources);
   return hat;
 }
 
+/** Releases every geometry, material and texture in a hat built above. */
 export function disposeHatModel(hat: Group) {
-  const materials = new Set<MeshPhysicalMaterial>();
-  const textures = new Set<Texture>();
+  const resources = modelResources.get(hat) ?? new HatResources();
   hat.traverse(object => {
     if (!(object instanceof Mesh)) return;
-    object.geometry.dispose();
-    materials.add(object.material);
-  });
-  for (const material of materials) {
-    for (const texture of [
-      material.map,
-      material.normalMap,
-      material.roughnessMap,
-    ]) {
-      if (texture) textures.add(texture);
+    const {geometry, material}: Mesh = object;
+    resources.own(geometry);
+    for (const item of Array.isArray(material) ? material : [material]) {
+      resources.own(item);
+      // Include every slot, even textures attached after construction.
+      for (const value of Object.values(item)) {
+        if (value instanceof Texture) resources.own(value);
+      }
     }
-    material.dispose();
-  }
-  // Maps are shared between parts, so each is released once.
-  for (const texture of textures) texture.dispose();
+  });
+  resources.dispose();
+  hat.clear();
+  modelResources.delete(hat);
 }

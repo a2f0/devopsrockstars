@@ -7,6 +7,7 @@ import {
   RGBAFormat,
   SRGBColorSpace,
 } from 'three';
+import type {HatResources} from './resources';
 
 /** A seeded generator, so procedural detail is identical on every load. */
 function seededRandom(seed: number) {
@@ -26,19 +27,22 @@ export interface SurfaceMaps {
   roughnessMap: DataTexture;
 }
 
-export interface TextureOptions {
+interface TextureOptions {
   anisotropy: number;
   srgb?: boolean;
   repeat?: boolean;
 }
 
 export function detailTexture(
+  resources: HatResources,
   pixels: Uint8Array,
   width: number,
   height: number,
   {anisotropy, srgb = false, repeat = false}: TextureOptions
 ) {
-  const texture = new DataTexture(pixels, width, height, RGBAFormat);
+  const texture = resources.own(
+    new DataTexture(pixels, width, height, RGBAFormat)
+  );
   // DataTexture defaults to nearest filtering without mipmaps, which shimmers.
   texture.magFilter = LinearFilter;
   texture.minFilter = LinearMipmapLinearFilter;
@@ -119,67 +123,111 @@ function tileNoise(size: number, cells: number, random: () => number) {
 }
 
 export const twillSize = 512;
-// Model units per twill repeat: 16 wales about 2 mm apart, roughly twice the
-// real pitch, so the weave survives mipmapping at product size.
+// Model units per twill repeat.
 export const twillTile = 0.5;
+// Wales per repeat: about 1.1 mm apart measured perpendicular to the wale.
+// Mipmaps and anisotropic filtering resolve the weave at product size.
+const wales = 28;
+// Small breaks and changes of sheen along each continuous diagonal wale.
+const floats = 32;
 
 export interface Twill {
+  /** Relief: rounded wales split by narrow grooves, in 0..1. */
   height: Float32Array;
+  /** How exposed the yarn crest is, in 0..1; crests are smoother. */
+  crest: Float32Array;
+  /** Fibres combed along the wale, roughly -1..1. */
+  streak: Float32Array;
+  /** Seeded 0..1 per texel, for sparse bright fibre specks. */
   fibre: Float32Array;
+  /** Faint dye variation over a few centimetres, roughly -0.5..0.5. */
   heather: Float32Array;
 }
 
 /**
- * A tileable twill: rounded diagonal wales built from short yarn floats, the
- * fine 45 degree rib that shows on New Era's polyester crown fabric.
+ * A tileable 2/2 twill: long diagonal wales of yarn floats with only a small
+ * dip where each float dives under, like New Era's polyester crown fabric.
+ * Each wale's floats get their own phase so no cross diagonal forms.
  */
 export function twillField(seed = 5950): Twill {
   const random = seededRandom(seed);
   const size = twillSize;
-  // 16 wales and 32 floats per tile keep the pattern tileable.
-  const wale = size / 16;
-  const float = size / 32;
-  const height = new Float32Array(size * size);
+  const wale = size / wales;
+  const floatLength = size / floats;
+  const phases = Float32Array.from({length: wales}, () => random());
+  const floatTone = Float32Array.from({length: wales * floats}, () => random());
   const fibre = Float32Array.from({length: size * size}, () => random());
-  const slub = tileNoise(size, 32, random);
-  const heather = tileNoise(size, 64, random);
+  const heather = tileNoise(size, 4, random).map(value => value - 0.5);
+  // Fibres run along the wale: average the per-texel noise along (1, -1).
+  const reach = 6;
+  const streak = new Float32Array(size * size);
+  const gain = Math.sqrt(12 * (2 * reach + 1));
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      let sum = 0;
+      for (let i = -reach; i <= reach; i++) {
+        const column = (x + i + size) % size;
+        const row = (y - i + size) % size;
+        sum += fibre[row * size + column] ?? 0;
+      }
+      streak[y * size + x] = (sum / (2 * reach + 1) - 0.5) * gain;
+    }
+  }
+  const height = new Float32Array(size * size);
+  const crest = new Float32Array(size * size);
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
       const across = (x + y + 0.5) / wale;
       const index = Math.floor(across);
-      const rib = Math.sin(Math.PI * (across - index)) ** 0.7;
-      // Floats in neighboring wales are staggered, like interlaced yarn.
-      const along = (x - y + size) / float + index / 2;
-      const yarn = Math.sin(Math.PI * (along - Math.floor(along))) ** 0.5;
+      const rib = Math.sin(Math.PI * (across - index)) ** 0.5;
+      const along =
+        (x - y + size + 0.5) / floatLength + (phases[index % wales] ?? 0);
+      const end = along - Math.round(along);
+      const dip = Math.exp(-((end / 0.12) ** 2));
+      const tone =
+        floatTone[(index % wales) * floats + (Math.round(along) % floats)] ??
+        0.5;
       const p = y * size + x;
       height[p] =
-        rib * (0.75 + 0.25 * yarn) +
-        ((fibre[p] ?? 0) - 0.5) * 0.12 +
-        ((slub[p] ?? 0) - 0.5) * 0.1;
+        rib * (1 - 0.07 * dip) +
+        0.09 * rib * (streak[p] ?? 0) +
+        ((fibre[p] ?? 0) - 0.5) * 0.03;
+      // Broken glints along the floats, without a crosswise height pattern.
+      crest[p] = rib * rib * (1 - 0.3 * dip) * (0.5 + 0.5 * tone);
     }
   }
-  return {height, fibre, heather};
+  return {height, crest, streak, fibre, heather};
 }
 
-/** Twill albedo scale in 0..1: heathered yarn with sparse light lint specks. */
+/**
+ * Twill albedo scale in 0..1. Nearly uniform: the weave shows through
+ * roughness and relief, plus sparse bright fibre specks.
+ */
 export function twillShade(twill: Twill, p: number) {
   const fibre = twill.fibre[p] ?? 0;
   return (
-    0.9 +
-    ((twill.heather[p] ?? 0) - 0.5) * 0.16 +
-    (fibre > 0.9975 ? 0.5 : fibre > 0.985 ? 0.12 : 0) +
-    (twill.height[p] ?? 0) * 0.06
+    0.78 +
+    0.04 * ((twill.crest[p] ?? 0) - 0.5) +
+    0.05 * (twill.heather[p] ?? 0) +
+    (fibre > 0.998 ? 0.22 : fibre > 0.985 ? 0.1 : 0)
   );
 }
 
-/** Twill roughness in 0..1: yarn crowns are slightly smoother than valleys. */
+/** Twill roughness in 0..1: float crests are smooth, grooves are dull. */
 export function twillRoughness(twill: Twill, p: number) {
   return (
-    0.86 - 0.26 * (twill.height[p] ?? 0) + ((twill.fibre[p] ?? 0) - 0.5) * 0.1
+    0.95 -
+    0.62 * (twill.crest[p] ?? 0) +
+    0.1 * (twill.streak[p] ?? 0) -
+    ((twill.fibre[p] ?? 0) > 1 - 0.015 ? 0.15 : 0)
   );
 }
 
-export function twillMaps(twill: Twill, anisotropy: number): SurfaceMaps {
+export function twillMaps(
+  resources: HatResources,
+  twill: Twill,
+  anisotropy: number
+): SurfaceMaps {
   const size = twillSize;
   const shade = new Float32Array(size * size);
   const roughness = new Float32Array(size * size);
@@ -189,44 +237,41 @@ export function twillMaps(twill: Twill, anisotropy: number): SurfaceMaps {
   }
   const options = {anisotropy, repeat: true};
   return {
-    map: detailTexture(greyPixels(shade), size, size, {
+    map: detailTexture(resources, greyPixels(shade), size, size, {
       ...options,
       srgb: true,
     }),
     normalMap: detailTexture(
+      resources,
       normalPixels(twill.height, size, size, 1.2, true),
       size,
       size,
       options
     ),
-    roughnessMap: detailTexture(greyPixels(roughness), size, size, options),
+    roughnessMap: detailTexture(
+      resources,
+      greyPixels(roughness),
+      size,
+      size,
+      options
+    ),
   };
 }
 
-/** Plain maps for smooth parts that still share the cloth shader program. */
-export function plainMaps(anisotropy: number, shade = 1): SurfaceMaps {
-  const size = 4;
-  const options = {anisotropy, repeat: true};
-  return {
-    map: detailTexture(
-      greyPixels(new Float32Array(size * size).fill(shade)),
-      size,
-      size,
-      {...options, srgb: true}
-    ),
-    normalMap: detailTexture(
-      normalPixels(new Float32Array(size * size), size, size, 0, true),
-      size,
-      size,
-      options
-    ),
-    roughnessMap: detailTexture(
-      greyPixels(new Float32Array(size * size).fill(1)),
-      size,
-      size,
-      options
-    ),
-  };
+/**
+ * Twill UVs for a crown panel cut on its own straight grain. `across` is the
+ * distance from the panel's centre line around the crown, `along` the
+ * distance up that line and `length` the whole line from base to button.
+ * Rows unroll as arcs around the button, the way a gore lies flat, so the
+ * wales stay straight on the flat top instead of fanning into arcs.
+ */
+export function panelGrain(across: number, along: number, length: number) {
+  const radius = Math.max(length - along, 1e-6);
+  const angle = across / radius;
+  return [
+    (radius * Math.sin(angle)) / twillTile,
+    (length - radius * Math.cos(angle)) / twillTile,
+  ] as const;
 }
 
 // Felzenszwalb-Huttenlocher squared distance transform along one line,
@@ -305,47 +350,4 @@ export function distanceTransform(
     }
   }
   return {distance, nearest};
-}
-
-/**
- * A tileable lockstitch: 3 mm tonal thread dashes pulled into the fabric,
- * with needle holes between them. u runs across the row, v along it, one
- * stitch per texture repeat.
- */
-export function stitchMaps(anisotropy: number): SurfaceMaps {
-  const width = 32;
-  const rows = 64;
-  const height = new Float32Array(width * rows);
-  const shade = new Float32Array(width * rows);
-  const roughness = new Float32Array(width * rows);
-  for (let y = 0; y < rows; y++) {
-    const along = (y + 0.5) / rows;
-    const dash = Math.sin(
-      Math.PI * Math.min(1, Math.max(0, (along - 0.1) / 0.8))
-    );
-    const hole = Math.exp(-(((along < 0.5 ? along : along - 1) / 0.04) ** 2));
-    for (let x = 0; x < width; x++) {
-      const across = ((x + 0.5) / width) * 2 - 1;
-      const thread = Math.sqrt(Math.max(0, 1 - (across / 0.42) ** 2)) * dash;
-      const p = y * width + x;
-      const groove = Math.exp(-((across / 0.55) ** 2));
-      height[p] = thread * 0.9 - groove * 0.5;
-      shade[p] = (0.9 - 0.12 * groove + 0.3 * thread) * (1 - 0.55 * hole);
-      roughness[p] = 0.8 - 0.22 * thread;
-    }
-  }
-  const options = {anisotropy, repeat: true};
-  return {
-    map: detailTexture(greyPixels(shade), width, rows, {
-      ...options,
-      srgb: true,
-    }),
-    normalMap: detailTexture(
-      normalPixels(height, width, rows, 0.35, true),
-      width,
-      rows,
-      options
-    ),
-    roughnessMap: detailTexture(greyPixels(roughness), width, rows, options),
-  };
 }

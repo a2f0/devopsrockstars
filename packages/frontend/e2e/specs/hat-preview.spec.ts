@@ -83,6 +83,15 @@ describe('3D hat preview', () => {
     await (await browser.$('a[href="/company"]')).click();
     await (await browser.$('a[href="/store"]')).click();
     await expect(await browser.$(canvasSelector)).toBeDisplayed();
+    // A fresh page constructs exactly the same procedural textures and pose.
+    await BasePage.openStaging('store');
+    const recreated = await browser.$(canvasSelector);
+    await recreated.waitForDisplayed();
+    await recreated.click();
+    assert.equal(
+      await browser.takeElementScreenshot(await recreated.elementId),
+      initial
+    );
   });
 
   it('renders the white flag on the side and white Batterman on the back', async () => {
@@ -208,6 +217,54 @@ describe('3D hat preview', () => {
     );
     await expect(await browser.$(imageSelector)).toBeDisplayed();
     await expect(await browser.$(canvasSelector)).not.toBeDisplayed();
+  });
+
+  it('releases the graphics context and falls back when model construction fails', async () => {
+    const malformedArtwork = await browser.addInitScript(() => {
+      const originalFetch = globalThis.fetch.bind(globalThis);
+      globalThis.fetch = async (input, init) => {
+        if (String(input).endsWith('/static/image/store/5950.svg')) {
+          // No front logo: fails after the fabric and interior are allocated.
+          return new Response('<svg xmlns="http://www.w3.org/2000/svg"/>', {
+            headers: {'Content-Type': 'image/svg+xml'},
+          });
+        }
+        return originalFetch(input, init);
+      };
+      const getContext = HTMLCanvasElement.prototype.getContext;
+      HTMLCanvasElement.prototype.getContext = function (
+        this: HTMLCanvasElement,
+        type,
+        ...args
+      ) {
+        if (type === 'webgl2') {
+          this.addEventListener(
+            'webglcontextlost',
+            () => {
+              document.documentElement.dataset['failedBuildContextLost'] =
+                'true';
+            },
+            {once: true}
+          );
+        }
+        return getContext.call(this, type, ...args);
+      } as typeof getContext;
+    });
+    try {
+      await BasePage.openStaging('store');
+      await browser.waitUntil(() =>
+        browser.execute(
+          () =>
+            document.documentElement.dataset['failedBuildContextLost'] ===
+            'true'
+        )
+      );
+      await expect(await browser.$(imageSelector)).toBeDisplayed();
+      await expect(await browser.$(canvasSelector)).not.toBeDisplayed();
+      await expect(await browser.$('select[aria-label$="size"]')).toBeEnabled();
+    } finally {
+      await malformedArtwork.remove();
+    }
   });
 
   it('keeps the SVG if either embroidery asset cannot be loaded', async () => {

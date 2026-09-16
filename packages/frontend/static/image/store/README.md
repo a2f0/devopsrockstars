@@ -38,16 +38,23 @@ units wide, about a size 7½ cap.
 
 - The crown is 1.24 units tall, 0.54 of its depth. Its buckram front leans back
   about 15° and rolls into a broad top, the back stays close to vertical
-  through the lower third, and the side walls taper toward a shallow apex under
-  the button.
+  through the lower third, and the side walls taper toward a shallow apex that
+  peaks slightly where the panels gather under the button.
 - Six panels meet at seams 0°, ±62°, ±120°, and 180° around the base, so the
-  front panels are slightly wider than the others.
+  front panels are slightly wider than the others. Topstitching runs 5 mm out
+  from each seam on both sides, to within about 3 mm of the 15 mm button.
 - The flat visor is 3 mm thick with a rounded edge. It projects 0.80 units
   (0.35 of the crown depth) beyond the crown's front edge and is 2.28 units
-  wide, widest 0.22 units behind that edge. Eight stitch rows start 7 mm in
-  from the edge, 5.75 mm apart.
-- Eyelets sit on each panel centerline about 50 mm along the crown below the
-  button.
+  wide, widest 0.22 units behind that edge. Behind the widest point each wing
+  is a convex arc that tapers closed 3.5 mm inside the crown wall. Eight
+  stitch rows follow offsets of the edge, starting 7 mm in, 5.75 mm apart.
+- Eyelets sit on each panel centerline 76 mm along the crown below the button,
+  about 0.8 of the crown height. Each is a satin ring about 9.5 mm across
+  around a 3 mm hole.
+- Inside, 13 mm black seam tapes carry vector-drawn "59FIFTY®" and flag box
+  print on a 90 mm repeat that stops 15 mm short of the button rivet. The
+  sweatband is about 35 mm tall, with a New Era box label and a 7½ size label
+  at the back, and grey perforated buckram backs the two front panels.
 
 Proportions and seam, eyelet, and visor constants live in
 `src/store/hat/shape.ts`. The under-visor is black; `undervisorColor` in
@@ -70,3 +77,28 @@ Proportions and seam, eyelet, and visor constants live in
 Embroidery thread colors come from each SVG's fills. These are New Era and MLB
 brand marks. The reference photos remain at their original sources; the viewer
 serves its SVG artwork locally.
+
+## Surface detail and rendering
+
+The crown uses a seeded diagonal twill with roughly 1.1 mm wales and straight
+grain on each developed panel. Most yarn contrast comes from roughness and
+normal maps; albedo variation is limited to faint dye variation and sparse
+fibres. Visor textures area-filter the weave before baking shallow stitch
+grooves at true offsets of the outline. The rolled edge follows its own grain.
+
+Embroidery combines satin columns with 0.45 mm fill rows, tapered relief,
+frayed edges, and a 1.5 mm contact shadow. Thin SVG strokes widen to a sewable
+thread column. The Batterman's satin border is about 2 mm wide. Interior
+printing uses vector glyphs rasterized locally, without loading fonts.
+
+The camera and studio lighting stay fixed while the cap turns. Framing tightens
+at side elevations and widens for top and underside views. All meshes share
+one physical-material feature set; rendering uses a fixed 2x pixel ratio and
+multisampling on high-density displays. The viewer renders only on changes.
+
+`hat/resources.ts` owns textures, materials, and geometries from allocation,
+including intermediate parts. Model failures release these resources; viewer
+failures also release the environment and WebGL context so the static SVG can
+take over. Hat unit tests cover assembly cleanup, silhouette constraints, and
+SVG stitching. `e2e/specs/hat-preview.spec.ts` checks interaction, fresh-load
+determinism, SVG-derived thread colors, and fallback behavior.

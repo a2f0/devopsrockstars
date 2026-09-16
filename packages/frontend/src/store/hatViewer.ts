@@ -5,6 +5,7 @@ import {
   DirectionalLight,
   FrontSide,
   Group,
+  MathUtils,
   Mesh,
   MeshBasicMaterial,
   NeutralToneMapping,
@@ -45,12 +46,16 @@ function studioEnvironment(renderer: WebGLRenderer) {
     new PlaneGeometry(40, 40),
   ] as const;
   const materials: MeshBasicMaterial[] = [];
-  const material = (color: Color, side: Side = BackSide) => {
+  // Daylight-balanced softboxes read slightly cool against the warm key.
+  const cool = 0.005;
+  const tint = new Color(1 - cool, 1, 1 + cool);
+  const material = (intensity: number, side: Side = FrontSide) => {
+    const color = tint.clone().multiplyScalar(intensity);
     const result = new MeshBasicMaterial({color, side});
     materials.push(result);
     return result;
   };
-  studio.add(new Mesh(geometries[0], material(new Color(0.02, 0.02, 0.02))));
+  studio.add(new Mesh(geometries[0], material(0.02, BackSide)));
   const panel = (
     width: number,
     height: number,
@@ -58,10 +63,7 @@ function studioEnvironment(renderer: WebGLRenderer) {
     intensity: number
   ) => {
     // Values above 1 are fine: the PMREM target is half float.
-    const mesh = new Mesh(
-      box,
-      material(new Color(1, 1, 1).multiplyScalar(intensity), FrontSide)
-    );
+    const mesh = new Mesh(box, material(intensity));
     mesh.scale.set(width, height, 0.05);
     mesh.position.set(...position);
     mesh.lookAt(0, 0.4, 0);
@@ -74,18 +76,18 @@ function studioEnvironment(renderer: WebGLRenderer) {
   panel(1.6, 10, [8, 4, -8], 3.5);
   // A broad, dim bounce from behind the camera keeps the shadow side legible.
   panel(14, 8, [10, 3, 16], 0.3);
+  panel(10, 6, [0, 6, -14], 0.6);
   // A grey sweep below lifts the under-visor and interior slightly.
-  const floor = new Mesh(
-    geometries[2],
-    material(new Color(0.2, 0.2, 0.2), FrontSide)
-  );
+  const floor = new Mesh(geometries[2], material(0.2));
   floor.rotation.x = -Math.PI / 2;
   floor.position.y = -4;
   studio.add(floor);
 
   const generator = new PMREMGenerator(renderer);
   try {
-    return generator.fromScene(studio, 0, 0.1, 100, {size: 64});
+    return generator.fromScene(studio, 0, 0.1, 100, {
+      size: 64,
+    });
   } finally {
     generator.dispose();
     for (const item of materials) item.dispose();
@@ -93,126 +95,160 @@ function studioEnvironment(renderer: WebGLRenderer) {
   }
 }
 
-// Builds the cap and its lighting, releasing the renderer if either fails so
-// the preview can fall back to the static artwork.
-function build(renderer: WebGLRenderer, artwork: HatArtwork) {
-  let hat: Group | undefined;
-  try {
-    hat = createHatModel(
-      artwork,
-      Math.min(8, renderer.capabilities.getMaxAnisotropy())
-    );
-    return {hat, environment: studioEnvironment(renderer)};
-  } catch (error) {
-    if (hat) disposeHatModel(hat);
-    renderer.dispose();
-    throw error;
-  }
+/**
+ * Camera zoom for an orbit polar angle. Side views frame the cap at about
+ * three quarters of the canvas width; toward the top and underside the visor
+ * deepens the silhouette, so the view widens to keep the whole cap in frame.
+ */
+function framing(polar: number) {
+  const side =
+    MathUtils.smoothstep(polar, 0.89, 1.36) *
+    (1 - MathUtils.smoothstep(polar, 1.78, 2.75));
+  return 0.95 + (1.44 - 0.95) * side;
 }
 
 export function createHatViewer(
   canvas: HTMLCanvasElement,
   artwork: HatArtwork
 ) {
-  const renderer = new WebGLRenderer({canvas, alpha: true, antialias: true});
-  renderer.toneMapping = NeutralToneMapping;
-  const {hat, environment} = build(renderer, artwork);
-  const scene = new Scene();
-  scene.environment = environment.texture;
-  scene.environmentIntensity = 2.5;
-  const key = new DirectionalLight('#ffffff', 2.5);
-  key.position.set(-3, 5, 4);
-  scene.add(key);
-
-  // The studio, lights and camera stay fixed and the cap turns on its stand,
-  // so every view is lit like a catalogue shot. The controls drive a virtual
-  // orbit camera whose motion is applied to the cap in reverse.
-  const turntable = new Group();
-  turntable.matrixAutoUpdate = false;
-  const stand = new Object3D();
-  stand.rotation.x = standPitch;
-  stand.add(hat);
-  turntable.add(stand);
-  scene.add(turntable);
-
-  const offset = new Vector3().setFromSphericalCoords(
-    cameraDistance,
-    Math.PI / 2 - cameraElevation,
-    cameraAzimuth
-  );
-  const camera = new PerspectiveCamera(
-    fieldOfView,
-    1,
-    cameraDistance - 4,
-    cameraDistance + 4
-  );
-  camera.position.copy(target).add(offset);
-  camera.lookAt(target);
-  camera.updateMatrixWorld();
-  const orbit = camera.clone();
-  const controls = new OrbitControls(orbit, canvas);
-  controls.target.copy(target);
-  controls.enablePan = false;
-  // Disable viewer zoom so the mouse wheel keeps scrolling the page.
-  controls.enableZoom = false;
-  controls.minPolarAngle = 0.08;
-  controls.maxPolarAngle = Math.PI - 0.08;
-  controls.update();
-  controls.saveState();
-
-  // Render only when the view changes; an idle product uses no animation loop.
-  const render = () => {
-    orbit.updateMatrixWorld();
-    turntable.matrix.multiplyMatrices(
-      camera.matrixWorld,
-      orbit.matrixWorldInverse
+  const renderer = new WebGLRenderer({
+    canvas,
+    alpha: true,
+    // The canvas always renders at twice its CSS size, which already
+    // antialiases 1x displays; multisampling there would double the cost of
+    // every frame for software renderers without a visible gain.
+    antialias: devicePixelRatio > 1,
+  });
+  // Releases run in reverse, and also when construction fails part way, so
+  // the preview can fall back to the static artwork without leaking.
+  const releases: (() => void)[] = [];
+  let disposed = false;
+  const dispose = () => {
+    if (disposed) return;
+    disposed = true;
+    for (const release of releases.splice(0).reverse()) release();
+    renderer.dispose();
+    if (!renderer.getContext().isContextLost()) renderer.forceContextLoss();
+  };
+  try {
+    renderer.toneMapping = NeutralToneMapping;
+    const hat = createHatModel(
+      artwork,
+      Math.min(8, renderer.capabilities.getMaxAnisotropy())
     );
-    turntable.matrixWorldNeedsUpdate = true;
-    renderer.render(scene, camera);
-  };
-  const resize = () => {
-    const {width, height} = canvas.getBoundingClientRect();
-    if (!width || !height) return;
-    // Supersample even on 1x displays: it resolves stitching and twill.
-    renderer.setPixelRatio(2);
-    renderer.setSize(width, height, false);
-    camera.aspect = width / height;
-    camera.updateProjectionMatrix();
-    render();
-  };
-  const observer = new ResizeObserver(resize);
-  observer.observe(canvas);
-  controls.addEventListener('change', render);
-  resize();
+    releases.push(() => disposeHatModel(hat));
+    const environment = studioEnvironment(renderer);
+    releases.push(() => environment.dispose());
 
-  return {
-    rotate(horizontal: number, vertical = 0) {
-      const position = new Vector3().subVectors(
-        orbit.position,
-        controls.target
+    const scene = new Scene();
+    scene.environment = environment.texture;
+    scene.environmentIntensity = 1.4;
+    const warm = 0.025;
+    const key = new DirectionalLight(
+      new Color(1, 1 - warm * 0.6, 1 - warm),
+      1.5
+    );
+    key.position.set(-3, 5, 4);
+    scene.add(key);
+
+    // The studio, lights and camera stay fixed and the cap turns on its
+    // stand, so every view is lit like a catalogue shot. The controls drive a
+    // virtual orbit camera whose motion is applied to the cap in reverse.
+    const turntable = new Group();
+    turntable.matrixAutoUpdate = false;
+    const stand = new Object3D();
+    stand.rotation.x = standPitch;
+    stand.add(hat);
+    turntable.add(stand);
+    scene.add(turntable);
+
+    const offset = new Vector3().setFromSphericalCoords(
+      cameraDistance,
+      Math.PI / 2 - cameraElevation,
+      cameraAzimuth
+    );
+    const camera = new PerspectiveCamera(
+      fieldOfView,
+      1,
+      cameraDistance - 4,
+      cameraDistance + 4
+    );
+    camera.position.copy(target).add(offset);
+    camera.lookAt(target);
+    camera.updateMatrixWorld();
+    const orbit = camera.clone();
+    const controls = new OrbitControls(orbit, canvas);
+    releases.push(() => controls.dispose());
+    controls.target.copy(target);
+    controls.enablePan = false;
+    // Disable viewer zoom so the mouse wheel keeps scrolling the page.
+    controls.enableZoom = false;
+    controls.minPolarAngle = 0.08;
+    controls.maxPolarAngle = Math.PI - 0.08;
+    controls.update();
+    controls.saveState();
+
+    // Render only when the view changes; an idle product uses no animation
+    // loop.
+    const view = new Spherical();
+    const eye = new Vector3();
+    const render = () => {
+      if (disposed) return;
+      view.setFromVector3(eye.subVectors(orbit.position, target));
+      const zoom = framing(view.phi);
+      if (camera.zoom !== zoom) {
+        camera.zoom = zoom;
+        camera.updateProjectionMatrix();
+      }
+      orbit.updateMatrixWorld();
+      turntable.matrix.multiplyMatrices(
+        camera.matrixWorld,
+        orbit.matrixWorldInverse
       );
-      const spherical = new Spherical().setFromVector3(position);
-      spherical.theta += horizontal;
-      spherical.phi = Math.max(
-        controls.minPolarAngle,
-        Math.min(controls.maxPolarAngle, spherical.phi + vertical)
-      );
-      orbit.position
-        .copy(controls.target)
-        .add(position.setFromSpherical(spherical));
-      controls.update();
-    },
-    reset() {
-      controls.reset();
-    },
-    dispose() {
-      observer.disconnect();
-      controls.removeEventListener('change', render);
-      controls.dispose();
-      disposeHatModel(hat);
-      environment.dispose();
-      renderer.dispose();
-      if (!renderer.getContext().isContextLost()) renderer.forceContextLoss();
-    },
-  };
+      turntable.matrixWorldNeedsUpdate = true;
+      renderer.render(scene, camera);
+    };
+    const resize = () => {
+      const {width, height} = canvas.getBoundingClientRect();
+      if (!width || !height) return;
+      // Supersample even on 1x displays: it resolves stitching and twill.
+      renderer.setPixelRatio(2);
+      renderer.setSize(width, height, false);
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+      render();
+    };
+    controls.addEventListener('change', render);
+    releases.push(() => controls.removeEventListener('change', render));
+    const observer = new ResizeObserver(resize);
+    releases.push(() => observer.disconnect());
+    observer.observe(canvas);
+    resize();
+
+    return {
+      rotate(horizontal: number, vertical = 0) {
+        const position = new Vector3().subVectors(
+          orbit.position,
+          controls.target
+        );
+        const spherical = new Spherical().setFromVector3(position);
+        spherical.theta += horizontal;
+        spherical.phi = Math.max(
+          controls.minPolarAngle,
+          Math.min(controls.maxPolarAngle, spherical.phi + vertical)
+        );
+        orbit.position
+          .copy(controls.target)
+          .add(position.setFromSpherical(spherical));
+        controls.update();
+      },
+      reset() {
+        controls.reset();
+      },
+      dispose,
+    };
+  } catch (error) {
+    dispose();
+    throw error;
+  }
 }

@@ -7,11 +7,12 @@ import {
   MeshPhysicalMaterial,
   Vector2,
 } from 'three';
+import type {HatResources} from './resources';
 import type {SurfaceMaps} from './textures';
 
 // Dyed black polyester. Neutral tone mapping crushes the darkest values, so
 // the albedo sits a little above the visual black.
-export const fabricColor = '#303030';
+export const fabricColor = '#161616';
 
 export interface ClothOptions {
   color: ColorRepresentation;
@@ -30,30 +31,35 @@ export interface ClothOptions {
  * map, roughness map, vertex occlusion, sheen, double sided), so software
  * renderers compile a single shader program; parts differ only in uniforms.
  */
-export function clothMaterial({
-  color,
-  maps,
-  roughness = 1,
-  normalScale = 0.3,
-  sheen = 1,
-  sheenColor = '#4a4a4a',
-  sheenRoughness = 0.6,
-  specularIntensity = 0.2,
-  metalness = 0,
-}: ClothOptions) {
-  return new MeshPhysicalMaterial({
+export function clothMaterial(
+  resources: HatResources,
+  {
     color,
-    ...maps,
-    roughness,
-    metalness,
-    normalScale: new Vector2(normalScale, normalScale),
-    sheen,
-    sheenColor: new Color(sheenColor),
-    sheenRoughness,
-    specularIntensity,
-    vertexColors: true,
-    side: DoubleSide,
-  });
+    maps,
+    roughness = 1,
+    normalScale = 0.3,
+    sheen = 1,
+    sheenColor = '#555555',
+    sheenRoughness = 0.6,
+    specularIntensity = 0.65,
+    metalness = 0,
+  }: ClothOptions
+) {
+  return resources.own(
+    new MeshPhysicalMaterial({
+      color,
+      ...maps,
+      roughness,
+      metalness,
+      normalScale: new Vector2(normalScale, normalScale),
+      sheen,
+      sheenColor: new Color(sheenColor),
+      sheenRoughness,
+      specularIntensity,
+      vertexColors: true,
+      side: DoubleSide,
+    })
+  );
 }
 
 /** Vertex colors carry baked occlusion; start fully unoccluded. */

@@ -11,11 +11,12 @@ import {
   visorTop,
 } from './shape';
 
-// Per-vertex occlusion is baked once on the CPU into the color attribute. It
-// darkens direct and image-based light alike, which is right for the tight
-// creases of a cap, and it is deterministic, unlike screen-space AO.
+// Per-vertex occlusion is baked once on the CPU into the color attribute.
+// Vertex colors scale the albedo, so it darkens diffuse light, direct and
+// image-based, but not specular reflections or sheen. It is deterministic,
+// unlike screen-space AO.
 
-export type Solid = (x: number, y: number, z: number) => boolean;
+type Solid = (x: number, y: number, z: number) => boolean;
 
 const TAU = Math.PI * 2;
 
@@ -92,13 +93,6 @@ export function visorSolid(): Solid {
     if (column < 0 || column >= columns || row < 0 || row >= rows) return false;
     return inside[row * columns + column] === 1;
   };
-}
-
-export function buttonSolid(): Solid {
-  return (x, y, z) =>
-    y > crownHeight - 0.01 &&
-    y < crownHeight + 0.06 &&
-    Math.hypot(x, z) < 0.085;
 }
 
 export function unionSolid(...solids: Solid[]): Solid {
@@ -203,8 +197,10 @@ export function bakeOcclusion(
  */
 export function bakeInteriorOcclusion(
   geometry: BufferGeometry,
-  {floor = 0.35, gain = 2.6, flip = false} = {}
+  {flip = false} = {}
 ) {
+  const floor = 0.35;
+  const gain = 2.6;
   const directions = hemisphere(32);
   const tangent = new Vector3();
   const bitangent = new Vector3();

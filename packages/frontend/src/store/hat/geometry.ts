@@ -1,17 +1,19 @@
 import {BufferAttribute, BufferGeometry} from 'three';
+import type {HatResources} from './resources';
 
 /**
  * An indexed grid of `columns` by `rows` vertices. Rows run in order, so
  * with columns along +u and rows along +v the faces point along u x v.
  */
 export function gridGeometry(
+  resources: HatResources,
   columns: number,
   rows: number,
   positions: number[],
   uvs: number[],
   normals?: number[]
 ) {
-  const geometry = new BufferGeometry();
+  const geometry = resources.own(new BufferGeometry());
   geometry.setAttribute(
     'position',
     new BufferAttribute(new Float32Array(positions), 3)
