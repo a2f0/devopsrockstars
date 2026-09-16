@@ -1,4 +1,5 @@
 import {type BufferGeometry, Vector3} from 'three';
+import {BuildTask} from './buildTask';
 import {
   crownHeight,
   halfDepth,
@@ -114,9 +115,10 @@ function hemisphere(count: number) {
 
 const reach = [0.012, 0.03, 0.06, 0.1, 0.16, 0.25, 0.38, 0.55];
 
-function multiplyColor(
+async function multiplyColor(
   geometry: BufferGeometry,
-  shade: (position: Vector3, normal: Vector3) => number
+  shade: (position: Vector3, normal: Vector3) => number,
+  task: BuildTask
 ) {
   const positions = geometry.getAttribute('position');
   const normals = geometry.getAttribute('normal');
@@ -124,6 +126,7 @@ function multiplyColor(
   const position = new Vector3();
   const normal = new Vector3();
   for (let i = 0; i < positions.count; i++) {
+    if (i % 128 === 0) await task.checkpoint();
     position.fromBufferAttribute(positions, i);
     normal.fromBufferAttribute(normals, i);
     const value = shade(position, normal);
@@ -144,60 +147,66 @@ interface OcclusionOptions {
 }
 
 /** Hemisphere occlusion against analytic solids, with nearer hits darker. */
-export function bakeOcclusion(
+export async function bakeOcclusion(
   geometry: BufferGeometry,
   solid: Solid,
-  {strength = 1, include}: OcclusionOptions = {}
+  {strength = 1, include}: OcclusionOptions = {},
+  task = new BuildTask()
 ) {
   const directions = hemisphere(12);
   const tangent = new Vector3();
   const bitangent = new Vector3();
   const ray = new Vector3();
-  multiplyColor(geometry, (position, normal) => {
-    if (include && !include(position)) return 1;
-    tangent
-      .set(
-        Math.abs(normal.y) < 0.9 ? 0 : 1,
-        Math.abs(normal.y) < 0.9 ? 1 : 0,
-        0
-      )
-      .cross(normal)
-      .normalize();
-    bitangent.crossVectors(normal, tangent);
-    const x = position.x + normal.x * 0.008;
-    const y = position.y + normal.y * 0.008;
-    const z = position.z + normal.z * 0.008;
-    let hits = 0;
-    for (const direction of directions) {
-      ray
-        .copy(tangent)
-        .multiplyScalar(direction.x)
-        .addScaledVector(bitangent, direction.y)
-        .addScaledVector(normal, direction.z);
-      for (const distance of reach) {
-        if (
-          solid(
-            x + ray.x * distance,
-            y + ray.y * distance,
-            z + ray.z * distance
-          )
-        ) {
-          hits += 1 - distance / 0.8;
-          break;
+  await multiplyColor(
+    geometry,
+    (position, normal) => {
+      if (include && !include(position)) return 1;
+      tangent
+        .set(
+          Math.abs(normal.y) < 0.9 ? 0 : 1,
+          Math.abs(normal.y) < 0.9 ? 1 : 0,
+          0
+        )
+        .cross(normal)
+        .normalize();
+      bitangent.crossVectors(normal, tangent);
+      const x = position.x + normal.x * 0.008;
+      const y = position.y + normal.y * 0.008;
+      const z = position.z + normal.z * 0.008;
+      let hits = 0;
+      for (const direction of directions) {
+        ray
+          .copy(tangent)
+          .multiplyScalar(direction.x)
+          .addScaledVector(bitangent, direction.y)
+          .addScaledVector(normal, direction.z);
+        for (const distance of reach) {
+          if (
+            solid(
+              x + ray.x * distance,
+              y + ray.y * distance,
+              z + ray.z * distance
+            )
+          ) {
+            hits += 1 - distance / 0.8;
+            break;
+          }
         }
       }
-    }
-    return 1 - (strength * hits) / directions.length;
-  });
+      return 1 - (strength * hits) / directions.length;
+    },
+    task
+  );
 }
 
 /**
  * Inside the crown, light arrives only through the opening: the share of the
  * hemisphere that escapes through the base ellipse sets the shade.
  */
-export function bakeInteriorOcclusion(
+export async function bakeInteriorOcclusion(
   geometry: BufferGeometry,
-  {flip = false} = {}
+  {flip = false} = {},
+  task = new BuildTask()
 ) {
   const floor = 0.35;
   const gain = 2.6;
@@ -205,30 +214,36 @@ export function bakeInteriorOcclusion(
   const tangent = new Vector3();
   const bitangent = new Vector3();
   const ray = new Vector3();
-  multiplyColor(geometry, (position, normal) => {
-    if (flip) normal.negate();
-    tangent
-      .set(
-        Math.abs(normal.y) < 0.9 ? 0 : 1,
-        Math.abs(normal.y) < 0.9 ? 1 : 0,
-        0
-      )
-      .cross(normal)
-      .normalize();
-    bitangent.crossVectors(normal, tangent);
-    let open = 0;
-    for (const direction of directions) {
-      ray
-        .copy(tangent)
-        .multiplyScalar(direction.x)
-        .addScaledVector(bitangent, direction.y)
-        .addScaledVector(normal, direction.z);
-      if (ray.y > -0.02) continue;
-      const distance = -position.y / ray.y;
-      const x = (position.x + ray.x * distance) / (halfWidth * 0.97);
-      const z = (position.z + ray.z * distance) / (halfDepth * 0.97);
-      if (x * x + z * z < 1) open++;
-    }
-    return floor + (1 - floor) * Math.min(1, (open / directions.length) * gain);
-  });
+  await multiplyColor(
+    geometry,
+    (position, normal) => {
+      if (flip) normal.negate();
+      tangent
+        .set(
+          Math.abs(normal.y) < 0.9 ? 0 : 1,
+          Math.abs(normal.y) < 0.9 ? 1 : 0,
+          0
+        )
+        .cross(normal)
+        .normalize();
+      bitangent.crossVectors(normal, tangent);
+      let open = 0;
+      for (const direction of directions) {
+        ray
+          .copy(tangent)
+          .multiplyScalar(direction.x)
+          .addScaledVector(bitangent, direction.y)
+          .addScaledVector(normal, direction.z);
+        if (ray.y > -0.02) continue;
+        const distance = -position.y / ray.y;
+        const x = (position.x + ray.x * distance) / (halfWidth * 0.97);
+        const z = (position.z + ray.z * distance) / (halfDepth * 0.97);
+        if (x * x + z * z < 1) open++;
+      }
+      return (
+        floor + (1 - floor) * Math.min(1, (open / directions.length) * gain)
+      );
+    },
+    task
+  );
 }

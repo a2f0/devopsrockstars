@@ -1,4 +1,5 @@
 import type {Box3, ShapePath} from 'three';
+import {BuildTask} from './buildTask';
 import {distanceTransform} from './textures';
 
 export interface StitchStyle {
@@ -221,8 +222,13 @@ function blurWithin(
 }
 
 /** Distance from inside texel centers to their region's edge, in texels. */
-function edgeDistance(edges: Uint8Array, width: number, rows: number) {
-  const {distance, nearest} = distanceTransform(edges, width, rows);
+async function edgeDistance(
+  edges: Uint8Array,
+  width: number,
+  rows: number,
+  task: BuildTask
+) {
+  const {distance, nearest} = await distanceTransform(edges, width, rows, task);
   for (let i = 0; i < distance.length; i++) {
     distance[i] = (distance[i] ?? 0) + 0.5;
   }
@@ -347,22 +353,35 @@ function edgeCoordinates(
  * rows for wide areas, ragged thread ends along every edge and thin strokes
  * widened to a sewable width. `texel` is millimetres per texel.
  */
-export function stitchField(
+export async function stitchField(
   paths: ShapePath[],
   box: Box3,
   width: number,
   rows: number,
   texel: number,
-  {relief, satinWidth}: StitchStyle
-): StitchField {
+  {relief, satinWidth}: StitchStyle,
+  task = new BuildTask()
+): Promise<StitchField> {
   const count = width * rows;
+  // Sort keys reserve 20 bits for the texel index. Reject unsupported artwork
+  // before allocating fields rather than allowing the keys to collide.
+  if (
+    !Number.isSafeInteger(count) ||
+    width <= 0 ||
+    rows <= 0 ||
+    count > 2 ** 20
+  ) {
+    throw new Error('The hat embroidery exceeds the supported texture size.');
+  }
   const drawn = new Int16Array(count).fill(-1);
-  paths.forEach((path, index) => {
+  for (const [index, path] of paths.entries()) {
+    await task.checkpoint();
     fillPath(path, index, drawn, width, rows, box);
-  });
+  }
   const edges = edgeTexels(drawn, width, rows);
-  const {distance, nearest} = edgeDistance(edges, width, rows);
+  const {distance, nearest} = await edgeDistance(edges, width, rows, task);
   const half = halfWidths(distance, drawn, width, rows);
+  await task.checkpoint();
   const {arc, tangentX, tangentY} = edgeCoordinates(
     edges,
     drawn,
@@ -370,6 +389,7 @@ export function stitchField(
     width,
     rows
   );
+  await task.checkpoint();
   // Column shape follows a smoothed width, so the relief has no steps where
   // columns meet.
   const columnHalf = blurWithin(
@@ -381,7 +401,7 @@ export function stitchField(
   );
   const sewn = new Uint8Array(count);
   for (let i = 0; i < count; i++) sewn[i] = (drawn[i] ?? -1) >= 0 ? 1 : 0;
-  const bare = distanceTransform(sewn, width, rows);
+  const bare = await distanceTransform(sewn, width, rows, task);
 
   const id = drawn.slice();
   const outline = new Float32Array(count);
@@ -397,6 +417,7 @@ export function stitchField(
   const satinHalf = satinWidth / 2 / texel;
   const blend = 1 / texel;
   for (let y = 0; y < rows; y++) {
+    if (y % 8 === 0) await task.checkpoint();
     for (let x = 0; x < width; x++) {
       const i = y * width + x;
       let own = drawn[i] ?? -1;

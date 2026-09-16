@@ -1,4 +1,5 @@
 import {LatheGeometry, Mesh, Vector2, Vector3} from 'three';
+import type {BuildTask} from './buildTask';
 import {gridGeometry} from './geometry';
 import {type LabelRegion, labelArt, tapeArt} from './interiorArt';
 import {clothMaterial, withOcclusion} from './materials';
@@ -64,15 +65,16 @@ function fields(count: number): Fields {
   };
 }
 
-function surfaceMaps(
+async function surfaceMaps(
   resources: HatResources,
   width: number,
   rows: number,
   {shade, height, roughness}: Fields,
   slope: number,
   anisotropy: number,
-  repeat: boolean
-): SurfaceMaps {
+  repeat: boolean,
+  task: BuildTask
+): Promise<SurfaceMaps> {
   const options = {anisotropy, repeat};
   return {
     map: detailTexture(resources, greyPixels(shade), width, rows, {
@@ -81,7 +83,7 @@ function surfaceMaps(
     }),
     normalMap: detailTexture(
       resources,
-      normalPixels(height, width, rows, slope, repeat),
+      await normalPixels(height, width, rows, slope, repeat, task),
       width,
       rows,
       options
@@ -138,7 +140,11 @@ const buckramHeight = Math.round(
   ((buckramRows * buckramPitch * Math.sqrt(3)) / 2) * buckramPx
 );
 
-function buckramMaps(resources: HatResources, anisotropy: number): SurfaceMaps {
+async function buckramMaps(
+  resources: HatResources,
+  anisotropy: number,
+  task: BuildTask
+): Promise<SurfaceMaps> {
   const width = buckramWidth;
   const rows = buckramHeight;
   const columnPitch = width / buckramColumns;
@@ -148,6 +154,7 @@ function buckramMaps(resources: HatResources, anisotropy: number): SurfaceMaps {
     value - size * Math.round(value / size);
   const out = fields(width * rows);
   for (let y = 0; y < rows; y++) {
+    if (y % 8 === 0) await task.checkpoint();
     const row = Math.floor(y / rowPitch);
     for (let x = 0; x < width; x++) {
       let distance = Infinity;
@@ -173,7 +180,7 @@ function buckramMaps(resources: HatResources, anisotropy: number): SurfaceMaps {
       out.roughness[p] = 0.96;
     }
   }
-  return surfaceMaps(resources, width, rows, out, 0.3, anisotropy, true);
+  return surfaceMaps(resources, width, rows, out, 0.3, anisotropy, true, task);
 }
 
 // Seam tape: black satin 13 mm wide, printed with "59FIFTY®" and the flag
@@ -187,13 +194,18 @@ const tapeRepeat = 90;
 const tapeStitchPitch = 2.5;
 const hubClearance = 15;
 
-function tapeMaps(resources: HatResources, anisotropy: number) {
+async function tapeMaps(
+  resources: HatResources,
+  anisotropy: number,
+  task: BuildTask
+) {
   const column = tapeMm * tapePx;
   const width = 2 * column;
   const rows = tapeRepeat * tapePx;
   const {print, elements} = tapeArt(column, rows, tapePx, tapeMm);
   const out = fields(width * rows);
   for (let y = 0; y < rows; y++) {
+    if (y % 8 === 0) await task.checkpoint();
     const along = (y + 0.5) / tapePx;
     const phase = (along % tapeStitchPitch) / tapeStitchPitch;
     const dash = Math.sin(Math.PI * clamp01((phase - 0.14) / 0.72));
@@ -223,7 +235,16 @@ function tapeMaps(resources: HatResources, anisotropy: number) {
     }
   }
   return {
-    maps: surfaceMaps(resources, width, rows, out, 0.45, anisotropy, true),
+    maps: await surfaceMaps(
+      resources,
+      width,
+      rows,
+      out,
+      0.45,
+      anisotropy,
+      true,
+      task
+    ),
     elements,
   };
 }
@@ -401,7 +422,11 @@ function bandLengthAt(y: number) {
 }
 
 /** A matte knit band with the base stitch row and the crease of its fold. */
-function bandMaps(resources: HatResources, anisotropy: number) {
+async function bandMaps(
+  resources: HatResources,
+  anisotropy: number,
+  task: BuildTask
+) {
   const width = Math.round(bandRepeat * bandPx);
   const lengthMm = bandLengths[bandLengths.length - 1] ?? 0;
   const rows = Math.ceil(lengthMm * bandPx);
@@ -410,6 +435,7 @@ function bandMaps(resources: HatResources, anisotropy: number) {
   const out = fields(width * rows);
   const course = 0.7;
   for (let y = 0; y < rows; y++) {
+    if (y % 8 === 0) await task.checkpoint();
     const along = (y + 0.5) / bandPx;
     const index = Math.floor(along / course);
     const rib = Math.sin(Math.PI * (along / course - index)) ** 0.7;
@@ -435,7 +461,7 @@ function bandMaps(resources: HatResources, anisotropy: number) {
       out.roughness[p] = 0.97 - 0.12 * thread;
     }
   }
-  return surfaceMaps(resources, width, rows, out, 0.35, anisotropy, true);
+  return surfaceMaps(resources, width, rows, out, 0.35, anisotropy, true, task);
 }
 
 const bandPoint = new Vector3();
@@ -496,12 +522,17 @@ const rivetRegion: LabelRegion = {x: 432, y: 80, width: 64, rows: 64};
 const eyeletRadius = 2.9;
 const rivetRadius = 3.2;
 
-function atlasMaps(resources: HatResources, anisotropy: number) {
+async function atlasMaps(
+  resources: HatResources,
+  anisotropy: number,
+  task: BuildTask
+) {
   const art = labelArt(atlasWidth, atlasRows, atlasPx, brandRegion, sizeRegion);
   const out = fields(atlasWidth * atlasRows);
   const inside = ({x, y, width, rows}: LabelRegion, px: number, py: number) =>
     px >= x && px < x + width && py >= y && py < y + rows;
   for (let y = 0; y < atlasRows; y++) {
+    if (y % 8 === 0) await task.checkpoint();
     for (let x = 0; x < atlasWidth; x++) {
       const p = y * atlasWidth + x;
       const fibre = hash(x, y, 41);
@@ -563,7 +594,8 @@ function atlasMaps(resources: HatResources, anisotropy: number) {
     out,
     0.4,
     anisotropy,
-    false
+    false,
+    task
   );
 }
 
@@ -698,12 +730,13 @@ function rivet(resources: HatResources) {
   return geometry;
 }
 
-export function createInterior(
+export async function createInterior(
   resources: HatResources,
   twill: SurfaceMaps,
-  anisotropy: number
+  anisotropy: number,
+  task: BuildTask
 ) {
-  const tapeTextures = tapeMaps(resources, anisotropy);
+  const tapeTextures = await tapeMaps(resources, anisotropy, task);
   const buckramTileU = (buckramWidth / buckramPx) * MM;
   const buckramTileV = (buckramHeight / buckramPx) * MM;
   const buckram = withOcclusion(
@@ -733,11 +766,12 @@ export function createInterior(
   );
   const backer = withOcclusion(rivet(resources));
   for (const geometry of [buckram, back, band, trims]) {
-    bakeInteriorOcclusion(geometry, {flip: true});
+    await bakeInteriorOcclusion(geometry, {flip: true}, task);
   }
-  for (const geometry of [tapes, backer]) bakeInteriorOcclusion(geometry);
+  for (const geometry of [tapes, backer])
+    await bakeInteriorOcclusion(geometry, {}, task);
 
-  const atlas = atlasMaps(resources, anisotropy);
+  const atlas = await atlasMaps(resources, anisotropy, task);
   // The back of the crown twill is duller than its face.
   const matte = detailTexture(
     resources,
@@ -754,7 +788,7 @@ export function createInterior(
       buckram,
       clothMaterial(resources, {
         color: '#dcd8d0',
-        maps: buckramMaps(resources, anisotropy),
+        maps: await buckramMaps(resources, anisotropy, task),
         normalScale: 0.5,
         sheen: 0.4,
         sheenColor: '#303030',
@@ -789,7 +823,7 @@ export function createInterior(
       band,
       clothMaterial(resources, {
         color: '#ffffff',
-        maps: bandMaps(resources, anisotropy),
+        maps: await bandMaps(resources, anisotropy, task),
         normalScale: 0.5,
         sheen: 0.25,
         sheenColor: '#1c1c1c',

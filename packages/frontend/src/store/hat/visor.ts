@@ -1,4 +1,5 @@
 import {Mesh, Vector2, Vector3} from 'three';
+import {BuildTask} from './buildTask';
 import {gridGeometry} from './geometry';
 import {clothMaterial, fabricColor, withOcclusion} from './materials';
 import {bakeOcclusion, crownSolid} from './occlusion';
@@ -60,13 +61,14 @@ const smoothstep = (edge0: number, edge1: number, x: number) => {
 };
 
 /** The twill's height, shade and roughness averaged over step x step blocks. */
-function boxedTwill(twill: Twill) {
+async function boxedTwill(twill: Twill, task: BuildTask) {
   const size = twillSize;
   const weight = 1 / (step * step);
   const height = new Float32Array(size * size);
   const shade = new Float32Array(size * size);
   const roughness = new Float32Array(size * size);
   for (let y = 0; y < size; y++) {
+    if (y % 8 === 0) await task.checkpoint();
     for (let x = 0; x < size; x++) {
       let h = 0;
       let c = 0;
@@ -112,7 +114,12 @@ function sampleTile(values: Float32Array, x: number, y: number) {
  * a shallow groove holding near-flush tonal thread. Past the edge line the
  * map carries the rolled edge, with its wales running along the edge.
  */
-function visorMaps(resources: HatResources, twill: Twill, anisotropy: number) {
+async function visorMaps(
+  resources: HatResources,
+  twill: Twill,
+  anisotropy: number,
+  task: BuildTask
+) {
   // Edge samples about 0.25 mm apart, with unit tangents.
   const count = 1601;
   const outline = visorOutline(count);
@@ -166,9 +173,9 @@ function visorMaps(resources: HatResources, twill: Twill, anisotropy: number) {
     seeds[row * lowWidth + column] = 1;
     seedIndex[row * lowWidth + column] = i;
   }
-  const {nearest} = distanceTransform(seeds, lowWidth, lowRows);
+  const {nearest} = await distanceTransform(seeds, lowWidth, lowRows, task);
 
-  const tile = boxedTwill(twill);
+  const tile = await boxedTwill(twill, task);
   const tileHeight = tile.height;
   const tileShade = tile.shade;
   const tileRoughness = tile.roughness;
@@ -186,6 +193,7 @@ function visorMaps(resources: HatResources, twill: Twill, anisotropy: number) {
   const shade = new Float32Array(mapWidth * mapRows);
   const roughness = new Float32Array(mapWidth * mapRows);
   for (let row = 0; row < mapRows; row++) {
+    if (row % 4 === 0) await task.checkpoint();
     const z = z0 + (row + 0.5) * texel;
     // Mirrored in z: the wales run from the wearer's right front toward the
     // left back, as on New Era's visors, rather than across the default view,
@@ -285,7 +293,14 @@ function visorMaps(resources: HatResources, twill: Twill, anisotropy: number) {
     }),
     normalMap: detailTexture(
       resources,
-      normalPixels(height, mapWidth, mapRows, 1 / (2 * texel), false),
+      await normalPixels(
+        height,
+        mapWidth,
+        mapRows,
+        1 / (2 * texel),
+        false,
+        task
+      ),
       mapWidth,
       mapRows,
       options
@@ -468,18 +483,24 @@ const creaseTilt = (45 * Math.PI) / 180;
 const creaseWidth = 12 * MM;
 const contactWidth = 3 * MM;
 
-export function createVisor(
+export async function createVisor(
   resources: HatResources,
   twill: Twill,
-  anisotropy: number
+  anisotropy: number,
+  task = new BuildTask()
 ) {
-  const maps = visorMaps(resources, twill, anisotropy);
+  const maps = await visorMaps(resources, twill, anisotropy, task);
   const layout = visorColumns();
   const upper = withOcclusion(visorSurface(resources, true, layout));
-  bakeOcclusion(upper, crownSolid(), {
-    strength: 1.15,
-    include: position => position.y > visorTop - 1e-5,
-  });
+  await bakeOcclusion(
+    upper,
+    crownSolid(),
+    {
+      strength: 1.15,
+      include: position => position.y > visorTop - 1e-5,
+    },
+    task
+  );
   const colors = upper.getAttribute('color');
   const positions = upper.getAttribute('position');
   const normals = upper.getAttribute('normal');

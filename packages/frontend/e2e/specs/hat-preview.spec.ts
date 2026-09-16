@@ -66,6 +66,73 @@ describe('3D hat preview', function () {
 
   after(async () => fixtures.remove());
 
+  it('keeps the cart responsive while building the preview and cancels on navigation', async () => {
+    const probe = await browser.addInitScript(() => {
+      const getContext = HTMLCanvasElement.prototype.getContext;
+      HTMLCanvasElement.prototype.getContext = function (
+        this: HTMLCanvasElement,
+        type,
+        ...args
+      ) {
+        const context = getContext.call(this, type, ...args);
+        if (type === 'webgl2' && this.hasAttribute('aria-label')) {
+          const canvas = this;
+          document.documentElement.setAttribute('data-hat-building', 'true');
+          canvas.addEventListener(
+            'webglcontextlost',
+            () => {
+              document.documentElement.setAttribute(
+                'data-build-context-lost',
+                'true'
+              );
+            },
+            {once: true}
+          );
+          let ticks = 0;
+          const interval = setInterval(() => {
+            if (canvas.style.visibility === 'visible' || !canvas.isConnected) {
+              clearInterval(interval);
+              return;
+            }
+            document.documentElement.setAttribute(
+              'data-build-ticks',
+              String(++ticks)
+            );
+          }, 8);
+        }
+        return context;
+      } as typeof getContext;
+    });
+    try {
+      await BasePage.openStaging('store');
+      await browser.waitUntil(() =>
+        browser.execute(
+          () =>
+            Number(document.documentElement.getAttribute('data-build-ticks')) >=
+            3
+        )
+      );
+      await (await browser.$('button=Add to cart')).click();
+      await expect(
+        await browser.$('aside[aria-label="Shopping cart"]')
+      ).toExist();
+      // The cart must respond before the expensive preview has finished.
+      await expect(await browser.$(canvasSelector)).not.toBeDisplayed();
+      await (await browser.$('a[href="/company"]')).click();
+      await browser.waitUntil(() =>
+        browser.execute(
+          () =>
+            document.documentElement.getAttribute('data-build-context-lost') ===
+            'true'
+        )
+      );
+      await (await browser.$('a[href="/store"]')).click();
+      await (await browser.$(canvasSelector)).waitForDisplayed();
+    } finally {
+      await probe.remove();
+    }
+  });
+
   it('renders a full turn, responds to dragging and keys, and resets', async () => {
     await BasePage.openStaging('store');
     const canvas = await browser.$(canvasSelector);

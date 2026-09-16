@@ -26,7 +26,9 @@ const Stage = styled.div`
 
 export default function HatPreview({src, name}: {src: string; name: string}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const viewerRef = useRef<ReturnType<typeof createHatViewer> | null>(null);
+  const viewerRef = useRef<Awaited<ReturnType<typeof createHatViewer>> | null>(
+    null
+  );
   const [ready, setReady] = useState(false);
   const instructions = useId();
 
@@ -56,9 +58,18 @@ export default function HatPreview({src, name}: {src: string; name: string}) {
       loadArtwork('/static/image/store/new-era-flag.svg'),
       loadArtwork('/static/image/store/mlb-batterman.svg'),
     ])
-      .then(([{createHatViewer}, front, side, rear]) => {
+      .then(async ([{createHatViewer}, front, side, rear]) => {
         if (controller.signal.aborted) return;
-        viewerRef.current = createHatViewer(canvas, {front, side, rear});
+        const viewer = await createHatViewer(
+          canvas,
+          {front, side, rear},
+          controller.signal
+        );
+        if (controller.signal.aborted) {
+          viewer.dispose();
+          return;
+        }
+        viewerRef.current = viewer;
         setReady(true);
       })
       .catch(error => {

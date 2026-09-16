@@ -24,6 +24,7 @@ import {
   tAtLength,
 } from './shape';
 import {type StitchField, type StitchStyle, stitchField} from './stitchField';
+import type {BuildTask} from './buildTask';
 import {detailTexture, greyPixels, normalPixels} from './textures';
 
 export interface Placement {
@@ -402,11 +403,12 @@ function fabricIndex(meshes: Mesh[], bounds: Box3) {
  * triangles it covers (same material, UVs and baked occlusion) and darkened
  * toward the stitching, so it blends into the crown with no seam.
  */
-function contactShadow(
+async function contactShadow(
   resources: HatResources,
   field: StitchField,
   sample: (x: number, y: number, target: Vector3, up: Vector3) => void,
-  fabric: readonly Object3D[]
+  fabric: readonly Object3D[],
+  task: BuildTask
 ) {
   const meshes = fabric.filter(
     (object): object is Mesh =>
@@ -425,6 +427,7 @@ function contactShadow(
     return value > -reach - cell && value < inner + cell;
   };
   for (let y = 0; y < rows; y += cell) {
+    await task.checkpoint();
     for (let x = 0; x < width; x += cell) {
       if (!inBand(y * width + x)) continue;
       sample(x + 0.5, y + 0.5, point, up);
@@ -452,6 +455,7 @@ function contactShadow(
   };
   const nodeKey = (x: number, y: number) => y * width + x;
   for (let y = 0; y < rows; y += cell) {
+    await task.checkpoint();
     for (let x = 0; x < width; x += cell) {
       const i = nodeKey(x, y);
       // Nodes of any cell that touches the band.
@@ -484,7 +488,8 @@ function contactShadow(
         down,
         0.03
       )) {
-        const material = meshes[mesh ?? 0]?.material as Material;
+        const material = meshes[mesh ?? 0]?.material;
+        if (!material || Array.isArray(material)) continue;
         let hits = hitsByMaterial.get(material);
         if (!hits) {
           hits = new Map();
@@ -579,6 +584,7 @@ function contactShadow(
   };
   // Whole cells, counter-clockwise so faces point out of the crown.
   for (let y = 0; y + cell < rows; y += cell) {
+    await task.checkpoint();
     for (let x = 0; x + cell < width; x += cell) {
       const corners = [
         [x, y],
@@ -613,12 +619,13 @@ function contactShadow(
  * fill stitching, and a contact shadow settles them into `fabric`, the meshes
  * they are sewn onto.
  */
-export function createEmbroidery(
+export async function createEmbroidery(
   resources: HatResources,
   source: string,
   placement: Placement,
   anisotropy: number,
-  fabric: readonly Object3D[]
+  fabric: readonly Object3D[],
+  task: BuildTask
 ) {
   const data = new SVGLoader().parse(source);
   const outlineBox = (paths: typeof data.paths) => {
@@ -661,13 +668,14 @@ export function createEmbroidery(
   const rows = Math.ceil((box.max.y - box.min.y) / unit);
   box.max.x = box.min.x + width * unit;
   box.max.y = box.min.y + rows * unit;
-  const field = stitchField(
+  const field = await stitchField(
     data.paths,
     box,
     width,
     rows,
     texel,
-    placement.stitching
+    placement.stitching,
+    task
   );
   // Texel coordinates run up the artwork; SVG y runs down it.
   const toModel = (x: number, y: number) =>
@@ -688,14 +696,22 @@ export function createEmbroidery(
     colors.set(key, [...(colors.get(key) ?? []), index]);
   });
   const meshes: Mesh[] = [];
-  const shadow = contactShadow(resources, field, sample, fabric);
+  const shadow = await contactShadow(resources, field, sample, fabric, task);
   const maps = {
     map: detailTexture(resources, greyPixels(field.shade), width, rows, {
       anisotropy,
+      srgb: true,
     }),
     normalMap: detailTexture(
       resources,
-      normalPixels(field.surface, width, rows, 1 / (2 * texel), false),
+      await normalPixels(
+        field.surface,
+        width,
+        rows,
+        1 / (2 * texel),
+        false,
+        task
+      ),
       width,
       rows,
       {anisotropy}
@@ -714,6 +730,7 @@ export function createEmbroidery(
   const up = new Vector3();
   const cell = Math.max(1, Math.round(threadCell / texel));
   for (const members of colors.values()) {
+    await task.checkpoint();
     const group = new Uint8Array(width * rows);
     const lift = new Float32Array(width * rows);
     for (let i = 0; i < group.length; i++) {
@@ -728,6 +745,7 @@ export function createEmbroidery(
     }
     if (colors.size > 1) {
       for (let y = 0; y < rows; y++) {
+        if (y % 8 === 0) await task.checkpoint();
         for (let x = 0; x < width; x++) {
           const i = y * width + x;
           const own = field.id[i] ?? -1;

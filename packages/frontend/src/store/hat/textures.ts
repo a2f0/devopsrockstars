@@ -7,6 +7,7 @@ import {
   RGBAFormat,
   SRGBColorSpace,
 } from 'three';
+import {BuildTask} from './buildTask';
 import type {HatResources} from './resources';
 
 /** A seeded generator, so procedural detail is identical on every load. */
@@ -58,12 +59,13 @@ export function detailTexture(
  * Encodes a height field as a tangent-space normal map. `slope` converts a
  * height difference between neighboring texels into a surface gradient.
  */
-export function normalPixels(
+export async function normalPixels(
   height: Float32Array,
   width: number,
   rows: number,
   slope: number,
-  wrap: boolean
+  wrap: boolean,
+  task = new BuildTask()
 ) {
   const pixels = new Uint8Array(width * rows * 4);
   const at = (x: number, y: number) => {
@@ -74,6 +76,7 @@ export function normalPixels(
     return height[row * width + column] ?? 0;
   };
   for (let y = 0; y < rows; y++) {
+    if (y % 8 === 0) await task.checkpoint();
     for (let x = 0; x < width; x++) {
       const dx = (at(x + 1, y) - at(x - 1, y)) * slope;
       const dy = (at(x, y + 1) - at(x, y - 1)) * slope;
@@ -149,7 +152,10 @@ export interface Twill {
  * dip where each float dives under, like New Era's polyester crown fabric.
  * Each wale's floats get their own phase so no cross diagonal forms.
  */
-export function twillField(seed = 5950): Twill {
+export async function twillField(
+  seed = 5950,
+  task = new BuildTask()
+): Promise<Twill> {
   const random = seededRandom(seed);
   const size = twillSize;
   const wale = size / wales;
@@ -163,6 +169,7 @@ export function twillField(seed = 5950): Twill {
   const streak = new Float32Array(size * size);
   const gain = Math.sqrt(12 * (2 * reach + 1));
   for (let y = 0; y < size; y++) {
+    if (y % 8 === 0) await task.checkpoint();
     for (let x = 0; x < size; x++) {
       let sum = 0;
       for (let i = -reach; i <= reach; i++) {
@@ -176,6 +183,7 @@ export function twillField(seed = 5950): Twill {
   const height = new Float32Array(size * size);
   const crest = new Float32Array(size * size);
   for (let y = 0; y < size; y++) {
+    if (y % 8 === 0) await task.checkpoint();
     for (let x = 0; x < size; x++) {
       const across = (x + y + 0.5) / wale;
       const index = Math.floor(across);
@@ -223,11 +231,12 @@ export function twillRoughness(twill: Twill, p: number) {
   );
 }
 
-export function twillMaps(
+export async function twillMaps(
   resources: HatResources,
   twill: Twill,
-  anisotropy: number
-): SurfaceMaps {
+  anisotropy: number,
+  task = new BuildTask()
+): Promise<SurfaceMaps> {
   const size = twillSize;
   const shade = new Float32Array(size * size);
   const roughness = new Float32Array(size * size);
@@ -243,7 +252,7 @@ export function twillMaps(
     }),
     normalMap: detailTexture(
       resources,
-      normalPixels(twill.height, size, size, 1.2, true),
+      await normalPixels(twill.height, size, size, 1.2, true, task),
       size,
       size,
       options
@@ -315,10 +324,11 @@ function distanceLine(
  * Exact Euclidean distance (in texels) from every texel to the nearest seed,
  * plus the index of that seed texel.
  */
-export function distanceTransform(
+export async function distanceTransform(
   seeds: Uint8Array,
   width: number,
-  rows: number
+  rows: number,
+  task = new BuildTask()
 ) {
   const n = Math.max(width, rows);
   const f = new Float64Array(n);
@@ -330,6 +340,7 @@ export function distanceTransform(
   const nearestRow = new Int32Array(width * rows);
   for (let i = 0; i < width * rows; i++) grid[i] = seeds[i] ? 0 : 1e20;
   for (let x = 0; x < width; x++) {
+    if (x % 8 === 0) await task.checkpoint();
     for (let y = 0; y < rows; y++) f[y] = grid[y * width + x] ?? 0;
     distanceLine(f, rows, d, line, v, z);
     for (let y = 0; y < rows; y++) {
@@ -340,6 +351,7 @@ export function distanceTransform(
   const distance = new Float32Array(width * rows);
   const nearest = new Int32Array(width * rows);
   for (let y = 0; y < rows; y++) {
+    if (y % 8 === 0) await task.checkpoint();
     for (let x = 0; x < width; x++) f[x] = grid[y * width + x] ?? 0;
     distanceLine(f, width, d, line, v, z);
     for (let x = 0; x < width; x++) {

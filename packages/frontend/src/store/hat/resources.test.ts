@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {BoxGeometry, Group, Mesh, MeshPhysicalMaterial, Texture} from 'three';
 import {createHatModel, disposeHatModel} from '../hatModel';
+import {BuildTask} from './buildTask';
 import {HatResources} from './resources';
 
 test('disposal releases shared geometry, material arrays and every texture slot once', () => {
@@ -42,7 +43,7 @@ test('merged intermediate geometries are released before the completed assembly'
   assert.equal(finished, 1);
 });
 
-test('a failed model build releases allocations in both completed and unfinished parts', t => {
+test('a failed model build releases allocations in both completed and unfinished parts', async t => {
   const allocations = new Map<{dispose(): void}, number>();
   const own = HatResources.prototype.own;
   t.mock.method(HatResources.prototype, 'own', function <
@@ -57,13 +58,47 @@ test('a failed model build releases allocations in both completed and unfinished
         dispose();
       });
     }
-    return own.call(this, item);
+    const owned = own.call(this, item);
+    // Fail after registration, while a builder still owns unattached parts.
+    if (allocations.size === 20) throw new Error('injected builder failure');
+    return owned;
   });
-  // Node has no canvas: interior artwork fails after crown and visor allocation.
-  assert.throws(
+  await assert.rejects(
     () => createHatModel({front: '', side: '', rear: ''}),
-    /document is not defined/
+    /injected builder failure/
   );
-  assert.ok(allocations.size > 20);
+  assert.equal(allocations.size, 20);
+  for (const count of allocations.values()) assert.equal(count, 1);
+});
+
+test('cancelling a partial model build releases its allocations', async t => {
+  const controller = new AbortController();
+  const allocations = new Map<{dispose(): void}, number>();
+  const own = HatResources.prototype.own;
+  t.mock.method(HatResources.prototype, 'own', function <
+    T extends {dispose(): void},
+  >(this: HatResources, item: T) {
+    if (!allocations.has(item)) {
+      allocations.set(item, 0);
+      const dispose = item.dispose.bind(item);
+      const disposable: {dispose(): void} = item;
+      t.mock.method(disposable, 'dispose', () => {
+        allocations.set(item, (allocations.get(item) ?? 0) + 1);
+        dispose();
+      });
+    }
+    const owned = own.call(this, item);
+    if (allocations.size === 10) controller.abort();
+    return owned;
+  });
+  await assert.rejects(
+    createHatModel(
+      {front: '', side: '', rear: ''},
+      8,
+      new BuildTask(controller.signal)
+    ),
+    {name: 'AbortError'}
+  );
+  assert.ok(allocations.size >= 10);
   for (const count of allocations.values()) assert.equal(count, 1);
 });

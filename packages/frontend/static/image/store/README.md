@@ -93,12 +93,25 @@ printing uses vector glyphs rasterized locally, without loading fonts.
 
 The camera and studio lighting stay fixed while the cap turns. Framing tightens
 at side elevations and widens for top and underside views. All meshes share
-one physical-material feature set; rendering uses a fixed 2x pixel ratio for
-supersampling on every display. The viewer renders only on changes.
+one physical-material feature set; rendering uses 2x supersampling on every
+display, capped at 1,048,576 drawing-buffer pixels. The viewer renders only on
+changes.
+
+Model construction yields to the browser between stages and during texture and
+occlusion calculations, using an 8 ms work budget between checkpoints. The cart
+remains interactive while the static SVG is shown. Navigating away cancels the
+build and releases its partial allocations and graphics context.
+
+A Chromium 152 desktop profile measured 1.6 s construction with 76 timer ticks,
+and 2.6 s with 226 ticks at 4x CPU slowdown. The longest observed main-thread
+tasks were 282 ms cold and 149 ms throttled; native canvas setup and remaining
+synchronous stages still take time. These are desktop measurements, not a
+physical mobile-device benchmark.
 
 `hat/resources.ts` owns textures, materials, and geometries from allocation,
 including intermediate parts. Model failures release these resources; viewer
 failures also release the environment and WebGL context so the static SVG can
 take over. Hat unit tests cover assembly cleanup, silhouette constraints, and
-SVG stitching. `e2e/specs/hat-preview.spec.ts` checks interaction, fresh-load
-determinism, SVG-derived thread colors, and fallback behavior.
+SVG stitching. `e2e/specs/hat-preview.spec.ts` checks cart responsiveness during
+construction, cancellation, interaction, fresh-load determinism, SVG-derived
+thread colors, and fallback behavior.

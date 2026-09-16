@@ -6,6 +6,7 @@ import {
   Vector2,
   Vector3,
 } from 'three';
+import type {BuildTask} from './buildTask';
 import {gridGeometry} from './geometry';
 import {clothMaterial, fabricColor, withOcclusion} from './materials';
 import {bakeOcclusion, crownSolid, unionSolid, visorSolid} from './occlusion';
@@ -415,10 +416,11 @@ function baseFold(resources: HatResources) {
   return gridGeometry(resources, columns, profile.length, positions, uvs);
 }
 
-export function createCrown(
+export async function createCrown(
   resources: HatResources,
   twill: SurfaceMaps,
-  anisotropy: number
+  anisotropy: number,
+  task: BuildTask
 ) {
   const occluder = unionSolid(crownSolid(), visorSolid());
   // Only the lower front, near the visor, can be occluded by another part.
@@ -437,16 +439,19 @@ export function createCrown(
     eyeletMaps(resources, twill, normalScale, anisotropy)
   );
 
-  const shell = resources.merge(
-    seamAngles.map((_, panel) => gore(resources, panel))
-  );
-  bakeOcclusion(shell, occluder, {include: near});
+  const panels = [];
+  for (const [panel] of seamAngles.entries()) {
+    await task.checkpoint();
+    panels.push(gore(resources, panel));
+  }
+  const shell = resources.merge(panels);
+  await bakeOcclusion(shell, occluder, {include: near}, task);
   const stitches = withOcclusion(stitchRibbons(resources, layout));
-  bakeOcclusion(stitches, occluder, {include: near});
+  await bakeOcclusion(stitches, occluder, {include: near}, task);
   const eyeletGeometry = eyeletDiscs(resources, eyeletRadius(twill));
   const buttonGeometry = button(resources);
   const fold = withOcclusion(baseFold(resources), 0.6);
-  bakeOcclusion(fold, occluder);
+  await bakeOcclusion(fold, occluder, {}, task);
 
   return [
     new Mesh(shell, fabric),

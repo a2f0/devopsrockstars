@@ -1,4 +1,5 @@
 import {Group, Mesh, Texture} from 'three';
+import {BuildTask} from './hat/buildTask';
 import {createCrown} from './hat/crown';
 import {createEmbroidery, frontLogo} from './hat/embroidery';
 import {createInterior} from './hat/interior';
@@ -20,19 +21,28 @@ export interface HatArtwork {
  * and deterministically. Proportions and placements follow the artwork
  * README. `anisotropy` is the texture filtering the renderer supports.
  */
-export function createHatModel(artwork: HatArtwork, anisotropy = 8) {
+export async function createHatModel(
+  artwork: HatArtwork,
+  anisotropy = 8,
+  task = new BuildTask()
+) {
   const hat = new Group();
   const resources = new HatResources();
   try {
-    const twill = twillField();
-    const maps = twillMaps(resources, twill, anisotropy);
-    hat.add(...createCrown(resources, maps, anisotropy));
-    hat.add(...createVisor(resources, twill, anisotropy));
-    hat.add(...createInterior(resources, maps, anisotropy));
+    await task.checkpoint(true);
+    const twill = await twillField(5950, task);
+    const maps = await twillMaps(resources, twill, anisotropy, task);
+    await task.checkpoint(true);
+    hat.add(...(await createCrown(resources, maps, anisotropy, task)));
+    await task.checkpoint(true);
+    hat.add(...(await createVisor(resources, twill, anisotropy, task)));
+    await task.checkpoint(true);
+    hat.add(...(await createInterior(resources, maps, anisotropy, task)));
     // Marks are sewn through the crown built so far.
     const fabric = [...hat.children];
+    await task.checkpoint(true);
     hat.add(
-      ...createEmbroidery(
+      ...(await createEmbroidery(
         resources,
         frontLogo(artwork.front),
         {
@@ -46,12 +56,14 @@ export function createHatModel(artwork: HatArtwork, anisotropy = 8) {
           stitching: {relief: 1.2, satinWidth: 8},
         },
         anisotropy,
-        fabric
-      )
+        fabric,
+        task
+      ))
     );
     // +X is the viewer's right when facing the front (the wearer's left).
+    await task.checkpoint(true);
     hat.add(
-      ...createEmbroidery(
+      ...(await createEmbroidery(
         resources,
         artwork.side,
         {
@@ -63,11 +75,13 @@ export function createHatModel(artwork: HatArtwork, anisotropy = 8) {
           stitching: {relief: 0.35, satinWidth: 4},
         },
         anisotropy,
-        fabric
-      )
+        fabric,
+        task
+      ))
     );
+    await task.checkpoint(true);
     hat.add(
-      ...createEmbroidery(
+      ...(await createEmbroidery(
         resources,
         artwork.rear,
         {
@@ -79,9 +93,11 @@ export function createHatModel(artwork: HatArtwork, anisotropy = 8) {
           stitching: {relief: 0.6, satinWidth: 3},
         },
         anisotropy,
-        fabric
-      )
+        fabric,
+        task
+      ))
     );
+    await task.checkpoint(true);
   } catch (error) {
     resources.dispose();
     throw error;

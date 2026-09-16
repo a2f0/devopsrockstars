@@ -21,6 +21,7 @@ import {
   WebGLRenderer,
 } from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import {BuildTask} from './hat/buildTask';
 import {createHatModel, disposeHatModel, type HatArtwork} from './hatModel';
 
 // A long lens from slightly above, like New Era's catalogue photography.
@@ -107,10 +108,12 @@ function framing(polar: number) {
   return 0.95 + (1.44 - 0.95) * side;
 }
 
-export function createHatViewer(
+export async function createHatViewer(
   canvas: HTMLCanvasElement,
-  artwork: HatArtwork
+  artwork: HatArtwork,
+  signal?: AbortSignal
 ) {
+  signal?.throwIfAborted();
   const renderer = new WebGLRenderer({
     canvas,
     alpha: true,
@@ -129,15 +132,21 @@ export function createHatViewer(
     renderer.dispose();
     if (!renderer.getContext().isContextLost()) renderer.forceContextLoss();
   };
+  // Release this canvas's context before a replacement effect starts a viewer.
+  signal?.addEventListener('abort', dispose, {once: true});
+  releases.push(() => signal?.removeEventListener('abort', dispose));
   try {
     renderer.toneMapping = NeutralToneMapping;
-    const hat = createHatModel(
+    const task = new BuildTask(signal);
+    const hat = await createHatModel(
       artwork,
-      Math.min(8, renderer.capabilities.getMaxAnisotropy())
+      Math.min(8, renderer.capabilities.getMaxAnisotropy()),
+      task
     );
     releases.push(() => disposeHatModel(hat));
     const environment = studioEnvironment(renderer);
     releases.push(() => environment.dispose());
+    await task.checkpoint(true);
 
     const scene = new Scene();
     scene.environment = environment.texture;
@@ -210,8 +219,11 @@ export function createHatViewer(
     const resize = () => {
       const {width, height} = canvas.getBoundingClientRect();
       if (!width || !height) return;
-      // Supersample even on 1x displays: it resolves stitching and twill.
-      renderer.setPixelRatio(2);
+      // Resolve stitching on 1x displays too, while bounding fragment work if
+      // the canvas is enlarged. The budget is independent of display density.
+      renderer.setPixelRatio(
+        Math.min(2, Math.sqrt(1_048_576 / (width * height)))
+      );
       renderer.setSize(width, height, false);
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
