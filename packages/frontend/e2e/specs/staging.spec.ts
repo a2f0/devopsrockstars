@@ -154,7 +154,9 @@ describe('store page', () => {
       await BasePage.openStaging('store');
       await BasePage.waitForAppReady();
       await expect(
-        await browser.$('img[alt="DevOps Rockstars 59FIFTY"]')
+        await browser.$(
+          'canvas[aria-label="DevOps Rockstars 59FIFTY, interactive 3D preview"]'
+        )
       ).toExist();
       // The description keeps the line breaks the catalog stores: copy that
       // would fit on one line at this width still renders as two.

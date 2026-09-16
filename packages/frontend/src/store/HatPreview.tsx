@@ -1,5 +1,6 @@
 import React, {useEffect, useId, useRef, useState} from 'react';
-import styled from 'styled-components';
+import styled, {keyframes} from 'styled-components';
+import whiteStar from '../../static/image/white-star-only.svg';
 import type {createHatViewer} from './hatViewer';
 
 const Preview = styled.div`
@@ -10,18 +11,77 @@ const Stage = styled.div`
   position: relative;
   aspect-ratio: 612 / 390;
 
-  img, canvas {
+  canvas {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
   }
 
-  img { object-fit: contain; }
   canvas { cursor: grab; }
   canvas:active { cursor: grabbing; }
   canvas:focus-visible { outline: 1px solid #aaa; outline-offset: 4px; }
-  [hidden] { display: none; }
+`;
+
+const orbit = keyframes`
+  to { transform: rotate(360deg); }
+`;
+
+// A sixth of a turn lands the six-pointed mark on the same silhouette.
+const turn = keyframes`
+  0% { transform: rotate(0deg) scale(0.94); opacity: 0.65; }
+  50% { transform: rotate(30deg) scale(1); opacity: 1; }
+  100% { transform: rotate(60deg) scale(0.94); opacity: 0.65; }
+`;
+
+const PreviewStatus = styled.div`
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  color: #aaa;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+`;
+
+const LoadingStar = styled.span<{$loading: boolean}>`
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 104px;
+  height: 104px;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 1px solid #ffffff14;
+    border-top-color: #ffffff99;
+    border-bottom-color: #ffffff33;
+    border-radius: 50%;
+    animation: ${orbit} 2.8s linear infinite;
+  }
+
+  img {
+    display: block;
+    width: 88px;
+    height: 88px;
+    animation: ${turn} 1.8s ease-in-out infinite;
+  }
+
+  &::before, img {
+    animation-play-state: ${props => (props.$loading ? 'running' : 'paused')};
+  }
+
+  ${props => !props.$loading && 'opacity: 0.4; &::before { display: none; }'}
+
+  @media (prefers-reduced-motion: reduce) {
+    &::before, img { animation: none; }
+  }
 `;
 
 export default function HatPreview({src, name}: {src: string; name: string}) {
@@ -29,22 +89,26 @@ export default function HatPreview({src, name}: {src: string; name: string}) {
   const viewerRef = useRef<Awaited<ReturnType<typeof createHatViewer>> | null>(
     null
   );
-  const [ready, setReady] = useState(false);
+  const [status, setStatus] = useState<'loading' | 'ready' | 'unavailable'>(
+    'loading'
+  );
+  const ready = status === 'ready';
   const instructions = useId();
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const controller = new AbortController();
-    setReady(false);
+    setStatus('loading');
     const dispose = () => {
       viewerRef.current?.dispose();
       viewerRef.current = null;
     };
     const contextLost = () => {
+      if (controller.signal.aborted) return;
       controller.abort();
       dispose();
-      setReady(false);
+      setStatus('unavailable');
     };
     canvas.addEventListener('webglcontextlost', contextLost);
     const loadArtwork = (path: string) =>
@@ -70,17 +134,19 @@ export default function HatPreview({src, name}: {src: string; name: string}) {
           return;
         }
         viewerRef.current = viewer;
-        setReady(true);
+        setStatus('ready');
       })
       .catch(error => {
         if (!controller.signal.aborted) {
-          console.warn('Using the static hat preview:', error);
+          console.warn('Could not load the 3D hat preview:', error);
+          setStatus('unavailable');
+          controller.abort();
           dispose();
         }
       });
     return () => {
-      controller.abort();
       canvas.removeEventListener('webglcontextlost', contextLost);
+      controller.abort();
       dispose();
     };
   }, [src]);
@@ -88,7 +154,16 @@ export default function HatPreview({src, name}: {src: string; name: string}) {
   return (
     <Preview>
       <Stage>
-        <img src={src} alt={name} hidden={ready} />
+        {!ready && (
+          <PreviewStatus role="status">
+            <LoadingStar $loading={status === 'loading'} aria-hidden="true">
+              <img src={whiteStar} alt="" draggable={false} />
+            </LoadingStar>
+            <span>
+              {status === 'loading' ? 'Loading hat…' : 'Preview unavailable'}
+            </span>
+          </PreviewStatus>
+        )}
         <canvas
           ref={canvasRef}
           style={{visibility: ready ? 'visible' : 'hidden'}}

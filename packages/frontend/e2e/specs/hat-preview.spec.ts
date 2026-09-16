@@ -6,6 +6,25 @@ import {BasePage} from '../pageObjects/base';
 
 const canvasSelector = 'canvas[aria-label$="interactive 3D preview"]';
 const imageSelector = 'img[alt="DevOps Rockstars 59FIFTY"]';
+const statusSelector = '[role="status"]';
+
+async function expectUnavailable() {
+  await expect(await browser.$(statusSelector)).toHaveText(
+    'PREVIEW UNAVAILABLE'
+  );
+  await expect(await browser.$(canvasSelector)).not.toBeDisplayed();
+  await expect(await browser.$(imageSelector)).not.toExist();
+  assert.equal(
+    await browser.execute(selector => {
+      const status = document.querySelector(selector);
+      return status
+        ?.getAnimations({subtree: true})
+        .some(animation => animation.playState === 'running');
+    }, statusSelector),
+    false,
+    'A failed preview must not keep spinning.'
+  );
+}
 
 async function canvasSnapshot(elementId: string) {
   // Device emulation uses BiDi. Keep the screenshot on that protocol too:
@@ -65,6 +84,63 @@ describe('3D hat preview', function () {
   });
 
   after(async () => fixtures.remove());
+
+  it('shows the animated brand star until the model is ready without shifting the layout', async () => {
+    const delayArtwork = await browser.addInitScript(() => {
+      const artworkReady = new Promise<void>(resolve => {
+        window.addEventListener('release-hat-artwork', () => resolve(), {
+          once: true,
+        });
+      });
+      const originalFetch = globalThis.fetch.bind(globalThis);
+      globalThis.fetch = async (input, init) => {
+        const response = await originalFetch(input, init);
+        if (String(input).endsWith('/static/image/store/5950.svg')) {
+          await artworkReady;
+        }
+        return response;
+      };
+    });
+    try {
+      await BasePage.openStaging('store');
+      const status = await browser.$(statusSelector);
+      await expect(status).toHaveText('LOADING HAT…');
+      const star = await status.$('img');
+      await expect(star).toBeDisplayed();
+      await browser.waitUntil(() =>
+        browser.execute(selector => {
+          const image = document.querySelector<HTMLImageElement>(
+            `${selector} img`
+          );
+          return Boolean(image?.complete && image.naturalWidth > 0);
+        }, statusSelector)
+      );
+      await expect(await browser.$(imageSelector)).not.toExist();
+      const canvas = await browser.$(canvasSelector);
+      await expect(canvas).not.toBeDisplayed();
+      await expect(canvas).toHaveAttribute('tabindex', '-1');
+      const transform = await star.getCSSProperty('transform');
+      await browser.waitUntil(
+        async () =>
+          (await star.getCSSProperty('transform')).value !== transform.value
+      );
+      const size = await browser.$('select[aria-label$="size"]');
+      await expect(size).toBeEnabled();
+      const position = await size.getLocation();
+      await browser.execute(() => {
+        window.dispatchEvent(new Event('release-hat-artwork'));
+      });
+      await canvas.waitForDisplayed();
+      await expect(status).not.toExist();
+      await expect(canvas).toHaveAttribute('tabindex', '0');
+      assert.deepEqual(await size.getLocation(), position);
+    } finally {
+      await browser.execute(() => {
+        window.dispatchEvent(new Event('release-hat-artwork'));
+      });
+      await delayArtwork.remove();
+    }
+  });
 
   it('keeps the cart responsive while building the preview and cancels on navigation', async () => {
     const probe = await browser.addInitScript(() => {
@@ -328,7 +404,7 @@ describe('3D hat preview', function () {
     }
   });
 
-  it('keeps the SVG and purchase controls when WebGL is unavailable', async () => {
+  it('stops loading and keeps purchase controls when WebGL is unavailable', async () => {
     const disableWebGL = await browser.addInitScript(() => {
       const getContext = HTMLCanvasElement.prototype.getContext;
       HTMLCanvasElement.prototype.getContext = function (
@@ -350,8 +426,7 @@ describe('3D hat preview', function () {
           () => document.documentElement.dataset['webglAttempted'] === 'true'
         )
       );
-      await expect(await browser.$(imageSelector)).toBeDisplayed();
-      await expect(await browser.$(canvasSelector)).not.toBeDisplayed();
+      await expectUnavailable();
       await (await browser.$('button=Add to cart')).click();
       await expect(
         await browser.$('aside[aria-label="Shopping cart"]')
@@ -361,7 +436,7 @@ describe('3D hat preview', function () {
     }
   });
 
-  it('returns to the SVG if the graphics context is lost', async () => {
+  it('shows an unavailable message if the graphics context is lost', async () => {
     await BasePage.openStaging('store');
     await (await browser.$(canvasSelector)).waitForDisplayed();
     assert.ok(
@@ -374,8 +449,7 @@ describe('3D hat preview', function () {
         return Boolean(extension);
       })
     );
-    await expect(await browser.$(imageSelector)).toBeDisplayed();
-    await expect(await browser.$(canvasSelector)).not.toBeDisplayed();
+    await expectUnavailable();
   });
 
   it('releases the graphics context and falls back when model construction fails', async () => {
@@ -418,22 +492,21 @@ describe('3D hat preview', function () {
             'true'
         )
       );
-      await expect(await browser.$(imageSelector)).toBeDisplayed();
-      await expect(await browser.$(canvasSelector)).not.toBeDisplayed();
+      await expectUnavailable();
       await expect(await browser.$('select[aria-label$="size"]')).toBeEnabled();
     } finally {
       await malformedArtwork.remove();
     }
   });
 
-  it('keeps the SVG if either embroidery asset cannot be loaded', async () => {
+  it('stops loading if either embroidery asset cannot be loaded', async () => {
     for (const asset of ['new-era-flag.svg', 'mlb-batterman.svg']) {
       const failAsset = await browser.addInitScript(asset => {
         const originalFetch = globalThis.fetch.bind(globalThis);
         const originalWarn = console.warn.bind(console);
         let rejected = false;
         console.warn = (...args) => {
-          if (rejected && args[0] === 'Using the static hat preview:') {
+          if (rejected && args[0] === 'Could not load the 3D hat preview:') {
             document.documentElement.setAttribute('data-failed-artwork', asset);
           }
           originalWarn(...args);
@@ -456,8 +529,7 @@ describe('3D hat preview', function () {
             asset
           )
         );
-        await expect(await browser.$(imageSelector)).toBeDisplayed();
-        await expect(await browser.$(canvasSelector)).not.toBeDisplayed();
+        await expectUnavailable();
         await expect(
           await browser.$('select[aria-label$="size"]')
         ).toBeEnabled();

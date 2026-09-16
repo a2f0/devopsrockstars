@@ -100,8 +100,9 @@ native resolution on a 2x display. The viewer renders only on changes.
 
 Model construction yields to the browser between stages and during texture and
 occlusion calculations, using an 8 ms work budget between checkpoints. The cart
-remains interactive while the static SVG is shown. Navigating away cancels the
-build and releases its partial allocations and graphics context.
+remains interactive while the six-pointed star loader is shown. Its animation
+respects reduced-motion preferences. Navigating away cancels the build and
+releases its partial allocations and graphics context.
 
 A Chromium 152 desktop profile measured 1.6 s construction with 76 timer ticks,
 and 2.6 s with 226 ticks at 4x CPU slowdown. The longest observed main-thread
@@ -111,8 +112,10 @@ physical mobile-device benchmark.
 
 `hat/resources.ts` owns textures, materials, and geometries from allocation,
 including intermediate parts. Model failures release these resources; viewer
-failures also release the environment and WebGL context so the static SVG can
-take over. Hat unit tests cover assembly cleanup, silhouette constraints, and
-SVG stitching. `e2e/specs/hat-preview.spec.ts` checks cart responsiveness during
-construction, cancellation, interaction, fresh-load determinism, SVG-derived
-thread colors, and fallback behavior.
+failures also release the environment and WebGL context. A stopped star and an
+unavailable message replace the loader on failure; purchase controls remain
+usable. The legacy `5950.svg` is used only as the front embroidery source, not
+as a loading placeholder. Hat unit tests cover assembly cleanup, silhouette
+constraints, and SVG stitching. `e2e/specs/hat-preview.spec.ts` checks the loader,
+cart responsiveness during construction, cancellation, interaction, fresh-load
+determinism, SVG-derived thread colors, and fallback behavior.
