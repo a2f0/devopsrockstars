@@ -6,24 +6,18 @@ import {BasePage} from '../pageObjects/base';
 
 const canvasSelector = 'canvas[aria-label$="interactive 3D preview"]';
 const imageSelector = 'img[alt="DevOps Rockstars 59FIFTY"]';
+const loadingSelector = '[data-hat-loading]';
 const statusSelector = '[role="status"]';
 
 async function expectUnavailable() {
-  await expect(await browser.$(statusSelector)).toHaveText(
-    'PREVIEW UNAVAILABLE'
+  await browser.waitUntil(async () =>
+    String(await browser.$(statusSelector).getProperty('textContent')).includes(
+      '3D preview unavailable'
+    )
   );
   await expect(await browser.$(canvasSelector)).not.toBeDisplayed();
-  await expect(await browser.$(imageSelector)).not.toExist();
-  assert.equal(
-    await browser.execute(selector => {
-      const status = document.querySelector(selector);
-      return status
-        ?.getAnimations({subtree: true})
-        .some(animation => animation.playState === 'running');
-    }, statusSelector),
-    false,
-    'A failed preview must not keep spinning.'
-  );
+  await expect(await browser.$(imageSelector)).toBeDisplayed();
+  await expect(await browser.$(loadingSelector)).not.toExist();
 }
 
 async function canvasSnapshot(elementId: string) {
@@ -85,7 +79,7 @@ describe('3D hat preview', function () {
 
   after(async () => fixtures.remove());
 
-  it('shows the animated brand star until the model is ready without shifting the layout', async () => {
+  it('animates the brand star, respects reduced motion, and keeps the layout stable', async () => {
     const delayArtwork = await browser.addInitScript(() => {
       const artworkReady = new Promise<void>(resolve => {
         window.addEventListener('release-hat-artwork', () => resolve(), {
@@ -103,9 +97,11 @@ describe('3D hat preview', function () {
     });
     try {
       await BasePage.openStaging('store');
+      const loading = await browser.$(loadingSelector);
+      await expect(loading).toHaveText('LOADING HAT…');
       const status = await browser.$(statusSelector);
-      await expect(status).toHaveText('LOADING HAT…');
-      const star = await status.$('img');
+      const statusId = await status.elementId;
+      const star = await loading.$('img');
       await expect(star).toBeDisplayed();
       await browser.waitUntil(() =>
         browser.execute(selector => {
@@ -113,7 +109,7 @@ describe('3D hat preview', function () {
             `${selector} img`
           );
           return Boolean(image?.complete && image.naturalWidth > 0);
-        }, statusSelector)
+        }, loadingSelector)
       );
       await expect(await browser.$(imageSelector)).not.toExist();
       const canvas = await browser.$(canvasSelector);
@@ -124,6 +120,18 @@ describe('3D hat preview', function () {
         async () =>
           (await star.getCSSProperty('transform')).value !== transform.value
       );
+      await browser.sendCommand('Emulation.setEmulatedMedia', {
+        features: [{name: 'prefers-reduced-motion', value: 'reduce'}],
+      });
+      await browser.waitUntil(() =>
+        browser.execute(selector => {
+          const loading = document.querySelector(selector);
+          return (
+            matchMedia('(prefers-reduced-motion: reduce)').matches &&
+            loading?.getAnimations({subtree: true}).length === 0
+          );
+        }, loadingSelector)
+      );
       const size = await browser.$('select[aria-label$="size"]');
       await expect(size).toBeEnabled();
       const position = await size.getLocation();
@@ -131,13 +139,20 @@ describe('3D hat preview', function () {
         window.dispatchEvent(new Event('release-hat-artwork'));
       });
       await canvas.waitForDisplayed();
-      await expect(status).not.toExist();
+      await expect(loading).not.toExist();
+      await browser.waitUntil(async () =>
+        String(await status.getProperty('textContent')).includes(
+          '3D preview ready'
+        )
+      );
+      assert.equal(await browser.$(statusSelector).elementId, statusId);
       await expect(canvas).toHaveAttribute('tabindex', '0');
       assert.deepEqual(await size.getLocation(), position);
     } finally {
       await browser.execute(() => {
         window.dispatchEvent(new Event('release-hat-artwork'));
       });
+      await browser.sendCommand('Emulation.setEmulatedMedia', {features: []});
       await delayArtwork.remove();
     }
   });

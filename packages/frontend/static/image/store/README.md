@@ -112,10 +112,13 @@ physical mobile-device benchmark.
 
 `hat/resources.ts` owns textures, materials, and geometries from allocation,
 including intermediate parts. Model failures release these resources; viewer
-failures also release the environment and WebGL context. A stopped star and an
-unavailable message replace the loader on failure; purchase controls remain
-usable. The legacy `5950.svg` is used only as the front embroidery source, not
-as a loading placeholder. Hat unit tests cover assembly cleanup, silhouette
+failures also release the environment and WebGL context. On failure, the loader
+is removed and static hat artwork appears with an unavailable message; purchase
+controls remain usable. A persistent live region announces loading, readiness,
+and failures to screen readers. The legacy `5950.svg` supplies the front
+embroidery and the failure image, but is never the loading placeholder.
+Hat unit tests cover assembly cleanup, silhouette
 constraints, and SVG stitching. `e2e/specs/hat-preview.spec.ts` checks the loader,
+reduced motion, announcements,
 cart responsiveness during construction, cancellation, interaction, fresh-load
 determinism, SVG-derived thread colors, and fallback behavior.

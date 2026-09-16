@@ -1,6 +1,6 @@
 import React, {useEffect, useId, useRef, useState} from 'react';
 import styled, {keyframes} from 'styled-components';
-import whiteStar from '../../static/image/white-star-only.svg';
+import whiteStar from '/static/image/white-star-only.svg';
 import type {createHatViewer} from './hatViewer';
 
 const Preview = styled.div`
@@ -11,13 +11,14 @@ const Stage = styled.div`
   position: relative;
   aspect-ratio: 612 / 390;
 
-  canvas {
+  > img, canvas {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
   }
 
+  > img { object-fit: contain; }
   canvas { cursor: grab; }
   canvas:active { cursor: grabbing; }
   canvas:focus-visible { outline: 1px solid #aaa; outline-offset: 4px; }
@@ -48,7 +49,28 @@ const PreviewStatus = styled.div`
   text-transform: uppercase;
 `;
 
-const LoadingStar = styled.span<{$loading: boolean}>`
+const UnavailableMessage = styled.span`
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  margin: 0;
+  color: #aaa;
+  font-size: 12px;
+`;
+
+const Announcement = styled.span`
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+`;
+
+const LoadingStar = styled.span`
   position: relative;
   display: grid;
   place-items: center;
@@ -73,12 +95,6 @@ const LoadingStar = styled.span<{$loading: boolean}>`
     animation: ${turn} 1.8s ease-in-out infinite;
   }
 
-  &::before, img {
-    animation-play-state: ${props => (props.$loading ? 'running' : 'paused')};
-  }
-
-  ${props => !props.$loading && 'opacity: 0.4; &::before { display: none; }'}
-
   @media (prefers-reduced-motion: reduce) {
     &::before, img { animation: none; }
   }
@@ -93,7 +109,21 @@ export default function HatPreview({src, name}: {src: string; name: string}) {
     'loading'
   );
   const ready = status === 'ready';
+  const [announcement, setAnnouncement] = useState('');
   const instructions = useId();
+
+  // Mount an empty live region before filling it, and retain it after loading.
+  useEffect(() => {
+    setAnnouncement(
+      `${name}: ${
+        status === 'loading'
+          ? 'loading preview.'
+          : ready
+            ? '3D preview ready.'
+            : '3D preview unavailable. Showing a static image.'
+      }`
+    );
+  }, [name, status, ready]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -154,15 +184,21 @@ export default function HatPreview({src, name}: {src: string; name: string}) {
   return (
     <Preview>
       <Stage>
-        {!ready && (
-          <PreviewStatus role="status">
-            <LoadingStar $loading={status === 'loading'} aria-hidden="true">
+        {status === 'loading' && (
+          <PreviewStatus data-hat-loading aria-hidden="true">
+            <LoadingStar>
               <img src={whiteStar} alt="" draggable={false} />
             </LoadingStar>
-            <span>
-              {status === 'loading' ? 'Loading hat…' : 'Preview unavailable'}
-            </span>
+            <span>Loading hat…</span>
           </PreviewStatus>
+        )}
+        {status === 'unavailable' && (
+          <>
+            <img src={src} alt={name} />
+            <UnavailableMessage aria-hidden="true">
+              3D preview unavailable
+            </UnavailableMessage>
+          </>
         )}
         <canvas
           ref={canvasRef}
@@ -197,6 +233,7 @@ export default function HatPreview({src, name}: {src: string; name: string}) {
           }}
         />
       </Stage>
+      <Announcement role="status">{announcement}</Announcement>
       <span id={instructions} hidden>
         Drag or use arrow keys to rotate. Press Home to reset the view.
       </span>

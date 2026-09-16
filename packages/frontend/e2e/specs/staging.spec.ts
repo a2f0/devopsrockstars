@@ -153,11 +153,8 @@ describe('store page', () => {
       await browser.execute(() => sessionStorage.clear());
       await BasePage.openStaging('store');
       await BasePage.waitForAppReady();
-      await expect(
-        await browser.$(
-          'canvas[aria-label="DevOps Rockstars 59FIFTY, interactive 3D preview"]'
-        )
-      ).toExist();
+      const size = await browser.$('select[aria-label$="size"]');
+      await expect(size).toBeEnabled();
       // The description keeps the line breaks the catalog stores: copy that
       // would fit on one line at this width still renders as two.
       assert.strictEqual(
@@ -171,7 +168,6 @@ describe('store page', () => {
       );
       // Picking a size must not throw: the handler reads the event before
       // React clears it. The first variant is selected by default.
-      const size = await browser.$('select[aria-label$="size"]');
       await size.selectByVisibleText('7 1/4');
       await expect(size).toHaveValue('hat-5950-7-1-4');
       await (await browser.$('button=Add to cart')).click();
