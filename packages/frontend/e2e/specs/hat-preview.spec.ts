@@ -7,6 +7,16 @@ import {BasePage} from '../pageObjects/base';
 const canvasSelector = 'canvas[aria-label$="interactive 3D preview"]';
 const imageSelector = 'img[alt="DevOps Rockstars 59FIFTY"]';
 
+async function canvasSnapshot(elementId: string) {
+  // Device emulation uses BiDi. Keep the screenshot on that protocol too:
+  // Chrome's classic element endpoint can lose its crop offset afterward.
+  const {data} = await browser.browsingContextCaptureScreenshot({
+    context: await browser.getWindowHandle(),
+    clip: {type: 'element', element: {sharedId: elementId}},
+  });
+  return data;
+}
+
 async function saveFailureRenders(renders: Record<string, string>) {
   const directory = join(
     process.env['RUNNER_TEMP'] ?? tmpdir(),
@@ -63,8 +73,7 @@ describe('3D hat preview', function () {
     await expect(await browser.$(imageSelector)).not.toBeDisplayed();
     // Compare rendered pixels, so changing UI state without rotating the model
     // cannot satisfy the test. Capture only the canvas to exclude page changes.
-    const snapshot = async () =>
-      browser.takeElementScreenshot(await canvas.elementId);
+    const snapshot = async () => canvasSnapshot(await canvas.elementId);
     const renderState = () =>
       browser.execute(() => {
         const target = document.querySelector('canvas');
@@ -137,9 +146,7 @@ describe('3D hat preview', function () {
       await recreated.click();
       const recreatedState = await renderState();
       assert.deepEqual(recreatedState.bounds, initialState.bounds);
-      const fresh = await browser.takeElementScreenshot(
-        await recreated.elementId
-      );
+      const fresh = await canvasSnapshot(await recreated.elementId);
       if (fresh !== initial) await saveFailureRenders({initial, fresh});
       assert.ok(
         fresh === initial,
@@ -162,7 +169,7 @@ describe('3D hat preview', function () {
         await canvas.click();
         for (let step = 0; step < steps; step++)
           await browser.keys('ArrowRight');
-        return browser.takeElementScreenshot(await canvas.elementId);
+        return canvasSnapshot(await canvas.elementId);
       };
       const original = await snapshot();
       // Recolor only this asset, then require its white stitches to turn red in
