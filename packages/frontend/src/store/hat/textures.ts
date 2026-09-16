@@ -221,13 +221,13 @@ export function twillShade(twill: Twill, p: number) {
   );
 }
 
-/** Twill roughness in 0..1: float crests are smooth, grooves are dull. */
+/** Twill roughness in 0..1: float crests stay matte, grooves are duller. */
 export function twillRoughness(twill: Twill, p: number) {
   return (
     0.95 -
-    0.62 * (twill.crest[p] ?? 0) +
+    0.45 * (twill.crest[p] ?? 0) +
     0.1 * (twill.streak[p] ?? 0) -
-    ((twill.fibre[p] ?? 0) > 1 - 0.015 ? 0.15 : 0)
+    ((twill.fibre[p] ?? 0) > 1 - 0.015 ? 0.1 : 0)
   );
 }
 

@@ -39,9 +39,10 @@ export function clothMaterial(
     roughness = 1,
     normalScale = 0.3,
     sheen = 1,
-    sheenColor = '#555555',
+    // Keep the black twill's grazing highlights soft and subdued.
+    sheenColor = '#404040',
     sheenRoughness = 0.6,
-    specularIntensity = 0.65,
+    specularIntensity = 0.4,
     metalness = 0,
   }: ClothOptions
 ) {
