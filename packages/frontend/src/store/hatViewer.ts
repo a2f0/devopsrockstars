@@ -123,7 +123,7 @@ export async function createHatViewer(
     antialias: false,
   });
   // Releases run in reverse, and also when construction fails part way, so
-  // the preview can fall back to the static artwork without leaking.
+  // the preview can show its unavailable state without leaking.
   const releases: (() => void)[] = [];
   let disposed = false;
   const dispose = () => {
