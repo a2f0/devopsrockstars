@@ -178,9 +178,9 @@ describe('store page', () => {
       ).toHaveText('7 1/4', {containing: true});
       await (await browser.$('a=Checkout')).click();
 
-      await (await browser.$('input[autocomplete="name"]')).setValue(
-        'Grace Hopper'
-      );
+      const customerName = await browser.$('input[autocomplete="name"]');
+      await customerName.waitForDisplayed();
+      await customerName.setValue('Grace Hopper');
       await (await browser.$('input[autocomplete="email"]')).setValue(
         'grace@example.com'
       );
