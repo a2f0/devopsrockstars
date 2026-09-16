@@ -58,6 +58,7 @@ describe('3D hat preview', function () {
         const rect = target?.getBoundingClientRect();
         return {
           density: devicePixelRatio,
+          viewport: [innerWidth, innerHeight],
           buffer: gl && [gl.drawingBufferWidth, gl.drawingBufferHeight],
           antialias: gl?.getContextAttributes()?.antialias,
           bounds: rect && [rect.x, rect.y, rect.width, rect.height],
@@ -77,23 +78,34 @@ describe('3D hat preview', function () {
     await browser.keys('Home');
     assert.equal(await snapshot(), initial);
 
+    const viewport = await browser.execute(() => ({
+      width: innerWidth,
+      height: innerHeight,
+      devicePixelRatio,
+    }));
     const restoreDevice = await browser.emulate('device', 'iPhone 12');
-    await expect(canvas).toBeDisplayed();
-    const beforeTouch = await snapshot();
-    await browser
-      .action('pointer', {parameters: {pointerType: 'touch'}})
-      .move({origin: canvas, x: 0, y: 0})
-      .down({button: 0})
-      .move({origin: canvas, x: 70, y: 20, duration: 300})
-      .up({button: 0})
-      .perform();
-    assert.notEqual(await snapshot(), beforeTouch);
-    assert.ok(
-      await browser.execute(
-        () => document.documentElement.scrollWidth <= window.innerWidth
-      )
-    );
-    await restoreDevice();
+    try {
+      await expect(canvas).toBeDisplayed();
+      const beforeTouch = await snapshot();
+      await browser
+        .action('pointer', {parameters: {pointerType: 'touch'}})
+        .move({origin: canvas, x: 0, y: 0})
+        .down({button: 0})
+        .move({origin: canvas, x: 70, y: 20, duration: 300})
+        .up({button: 0})
+        .perform();
+      assert.notEqual(await snapshot(), beforeTouch);
+      assert.ok(
+        await browser.execute(
+          () => document.documentElement.scrollWidth <= window.innerWidth
+        )
+      );
+    } finally {
+      await restoreDevice();
+      // WebdriverIO restores its Desktop Chrome preset, not the viewport
+      // from before emulation. Pixel comparisons need the original layout.
+      await browser.setViewport(viewport);
+    }
 
     // Navigation tears down the context and controls; returning recreates them.
     await (await browser.$('a[href="/company"]')).click();
@@ -110,6 +122,7 @@ describe('3D hat preview', function () {
       await recreated.waitForDisplayed();
       await recreated.click();
       const recreatedState = await renderState();
+      assert.deepEqual(recreatedState.bounds, initialState.bounds);
       assert.ok(
         (await browser.takeElementScreenshot(await recreated.elementId)) ===
           initial,
