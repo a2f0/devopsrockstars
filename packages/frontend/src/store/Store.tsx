@@ -123,7 +123,7 @@ const Store = React.memo(() => {
             </ProductCopy>
             <ProductDetails>
               {priceVariant ? (
-                <Price>
+                <Price $hidden={previewIsLoading} data-product-price>
                   {formatMoney(priceVariant.unitAmount, priceVariant.currency)}
                 </Price>
               ) : null}
