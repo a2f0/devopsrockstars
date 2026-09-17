@@ -170,6 +170,7 @@ describe('3D hat preview', function () {
     } finally {
       await browser.execute(() => {
         window.dispatchEvent(new Event('release-hat-artwork'));
+        sessionStorage.removeItem('devopsrockstars.store.cart');
       });
       await browser.sendCommand('Emulation.setEmulatedMedia', {features: []});
       await delayArtwork.remove();
@@ -232,6 +233,48 @@ describe('3D hat preview', function () {
       await (await browser.$(canvasSelector)).waitForDisplayed();
     } finally {
       await probe.remove();
+    }
+  });
+
+  it('keeps a restored cart hidden until the preview finishes loading', async () => {
+    const restoreCart = await browser.addInitScript(() => {
+      sessionStorage.setItem(
+        'devopsrockstars.store.cart',
+        JSON.stringify([{variantId: 'hat-small', quantity: 1}])
+      );
+      const artworkReady = new Promise<void>(resolve => {
+        window.addEventListener('release-hat-artwork', () => resolve(), {
+          once: true,
+        });
+      });
+      const originalFetch = globalThis.fetch.bind(globalThis);
+      globalThis.fetch = async (input, init) => {
+        const response = await originalFetch(input, init);
+        if (String(input).endsWith('/static/image/store/5950.svg')) {
+          await artworkReady;
+        }
+        return response;
+      };
+    });
+    try {
+      await BasePage.openStaging('store');
+      await expect(await browser.$(loadingSelector)).toExist();
+      await expect(await browser.$('p=Fitted, black.')).not.toBeDisplayed();
+      await expect(
+        await browser.$('aside[aria-label="Shopping cart"]')
+      ).not.toExist();
+      await browser.execute(() => {
+        window.dispatchEvent(new Event('release-hat-artwork'));
+      });
+      await expect(
+        await browser.$('aside[aria-label="Shopping cart"]')
+      ).toBeDisplayed();
+    } finally {
+      await browser.execute(() => {
+        window.dispatchEvent(new Event('release-hat-artwork'));
+        sessionStorage.removeItem('devopsrockstars.store.cart');
+      });
+      await restoreCart.remove();
     }
   });
 
