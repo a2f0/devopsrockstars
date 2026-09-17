@@ -258,6 +258,8 @@ describe('3D hat preview', function () {
     });
     try {
       await BasePage.openStaging('store');
+      await expect(await browser.$(loadingSelector)).toExist();
+      await expect(await browser.$('p=Fitted, black.')).not.toBeDisplayed();
       await expect(
         await browser.$('aside[aria-label="Shopping cart"]')
       ).not.toExist();
