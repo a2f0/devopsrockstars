@@ -70,8 +70,9 @@ export const ProductCopy = styled.p<{$hidden?: boolean}>`
   white-space: pre-line;
 `;
 
-export const Price = styled.div`
+export const Price = styled.div<{$hidden?: boolean}>`
   font-size: 24px;
+  visibility: ${({$hidden}) => ($hidden ? 'hidden' : 'visible')};
 `;
 
 export const Field = styled.label<{$hidden?: boolean}>`
