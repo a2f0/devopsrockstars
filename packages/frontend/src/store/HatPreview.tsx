@@ -140,10 +140,13 @@ export default function HatPreview({
     let timeout: number | undefined;
     let remainingTimeout = modelLoadTimeoutMs;
     let timeoutStartedAt = performance.now();
+    let settled = false;
     const updateStatus = (nextStatus: HatPreviewStatus) => {
       if (nextStatus !== 'loading' && timeout !== undefined) {
         window.clearTimeout(timeout);
+        timeout = undefined;
       }
+      if (nextStatus !== 'loading') settled = true;
       setStatus(nextStatus);
       if (nextStatus !== 'loading') onStatusChangeRef.current?.(nextStatus);
     };
@@ -169,26 +172,31 @@ export default function HatPreview({
         return response.text();
       });
     const timeoutPreview = () => {
-      if (controller.signal.aborted) return;
+      if (controller.signal.aborted || settled) return;
       console.warn('3D hat preview timed out while building the model.');
       controller.abort();
       dispose();
       updateStatus('unavailable');
     };
     const startTimeout = () => {
+      if (controller.signal.aborted || settled || document.hidden) return;
+      if (timeout !== undefined) window.clearTimeout(timeout);
       timeoutStartedAt = performance.now();
       timeout = window.setTimeout(timeoutPreview, remainingTimeout);
     };
     const visibilityChange = () => {
       if (document.hidden) {
-        remainingTimeout -= performance.now() - timeoutStartedAt;
-        if (timeout !== undefined) window.clearTimeout(timeout);
+        if (timeout !== undefined) {
+          remainingTimeout -= performance.now() - timeoutStartedAt;
+          window.clearTimeout(timeout);
+          timeout = undefined;
+        }
       } else if (!controller.signal.aborted) {
         startTimeout();
       }
     };
     document.addEventListener('visibilitychange', visibilityChange);
-    startTimeout();
+    if (!document.hidden) startTimeout();
     void Promise.all([
       import('./hatViewer'),
       loadArtwork(src),
