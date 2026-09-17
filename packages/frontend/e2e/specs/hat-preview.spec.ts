@@ -429,6 +429,28 @@ describe('3D hat preview', function () {
     }
   });
 
+  it('falls back if model construction takes too long', async () => {
+    const shortenModelTimeout = await browser.addInitScript(() => {
+      const originalSetTimeout = window.setTimeout;
+      window.setTimeout = ((...args: Parameters<typeof window.setTimeout>) => {
+        const [handler, delay, ...rest] = args;
+        return originalSetTimeout(
+          handler,
+          delay === 5_000 ? 0 : delay,
+          ...rest
+        );
+      }) as typeof window.setTimeout;
+    });
+    try {
+      await BasePage.openStaging('store');
+      await expectUnavailable();
+      await expect(await browser.$('select[aria-label$="size"]')).toBeEnabled();
+      await expect(await browser.$('button=Add to cart')).toBeDisplayed();
+    } finally {
+      await shortenModelTimeout.remove();
+    }
+  });
+
   it('shows an unavailable message if the graphics context is lost', async () => {
     await BasePage.openStaging('store');
     await (await browser.$(canvasSelector)).waitForDisplayed();

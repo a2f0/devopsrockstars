@@ -112,6 +112,11 @@ export default function HatPreview({
   const ready = status === 'ready';
   const [announcement, setAnnouncement] = useState('');
   const instructions = useId();
+  const onStatusChangeRef = useRef(onStatusChange);
+
+  useEffect(() => {
+    onStatusChangeRef.current = onStatusChange;
+  }, [onStatusChange]);
 
   // Mount an empty live region before filling it, and retain it after loading.
   useEffect(() => {
@@ -136,9 +141,8 @@ export default function HatPreview({
         window.clearTimeout(timeout);
       }
       setStatus(nextStatus);
-      onStatusChange?.(nextStatus);
+      if (nextStatus !== 'loading') onStatusChangeRef.current?.(nextStatus);
     };
-    updateStatus('loading');
     const dispose = () => {
       viewerRef.current?.dispose();
       viewerRef.current = null;
@@ -155,12 +159,6 @@ export default function HatPreview({
         if (!response.ok) throw new Error('Could not load the hat artwork.');
         return response.text();
       });
-    timeout = window.setTimeout(() => {
-      if (controller.signal.aborted) return;
-      controller.abort();
-      dispose();
-      updateStatus('unavailable');
-    }, 15_000);
     void Promise.all([
       import('./hatViewer'),
       loadArtwork(src),
@@ -169,6 +167,13 @@ export default function HatPreview({
     ])
       .then(async ([{createHatViewer}, front, side, rear]) => {
         if (controller.signal.aborted) return;
+        timeout = window.setTimeout(() => {
+          if (controller.signal.aborted) return;
+          console.warn('3D hat preview timed out while building the model.');
+          controller.abort();
+          dispose();
+          updateStatus('unavailable');
+        }, 5_000);
         const viewer = await createHatViewer(
           canvas,
           {front, side, rear},
