@@ -85,12 +85,19 @@ const Store = React.memo(() => {
     );
   }
 
+  const previewIsLoading = storefront.products.some(
+    product =>
+      product.imagePath === '/static/image/store/5950.svg' &&
+      previewStatuses[product.id] !== 'ready' &&
+      previewStatuses[product.id] !== 'unavailable'
+  );
+
   return (
     <StorePage>
       {storefront.products.map(product => {
         const hasHatPreview =
           product.imagePath === '/static/image/store/5950.svg';
-        const previewIsLoading =
+        const productPreviewIsLoading =
           hasHatPreview &&
           previewStatuses[product.id] !== 'ready' &&
           previewStatuses[product.id] !== 'unavailable';
@@ -118,16 +125,16 @@ const Store = React.memo(() => {
                 <img src={product.imagePath} alt={product.name} />
               )}
             </ProductArt>
-            <ProductCopy $hidden={previewIsLoading}>
+            <ProductCopy $hidden={productPreviewIsLoading}>
               {product.description}
             </ProductCopy>
             <ProductDetails>
               {priceVariant ? (
-                <Price $hidden={previewIsLoading} data-product-price>
+                <Price $hidden={productPreviewIsLoading} data-product-price>
                   {formatMoney(priceVariant.unitAmount, priceVariant.currency)}
                 </Price>
               ) : null}
-              <Field $hidden={previewIsLoading}>
+              <Field $hidden={productPreviewIsLoading}>
                 Size
                 <Select
                   aria-label={`${product.name} size`}
@@ -154,7 +161,7 @@ const Store = React.memo(() => {
                 </Select>
               </Field>
               <Button
-                $hidden={previewIsLoading}
+                $hidden={productPreviewIsLoading}
                 type="button"
                 disabled={!variant}
                 onClick={() => variant && cart.add(variant.id)}
@@ -166,7 +173,7 @@ const Store = React.memo(() => {
         );
       })}
 
-      {cart.items.length > 0 ? (
+      {!previewIsLoading && cart.items.length > 0 ? (
         <CartPanel aria-label="Shopping cart">
           <Eyebrow>Your cart</Eyebrow>
           {cart.items.map(item => {
