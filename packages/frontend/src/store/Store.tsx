@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {loadStorefront} from './api';
 import {useStoreCart} from './cart';
 import type {StorefrontResponse} from '@devopsrockstars/shared-types';
@@ -46,6 +46,19 @@ const Store = React.memo(() => {
   const {storefront, error} = useStorefront();
   const cart = useStoreCart();
   const [selected, setSelected] = useState<Record<string, string>>({});
+  const [previewStatuses, setPreviewStatuses] = useState<
+    Record<string, 'loading' | 'ready' | 'unavailable'>
+  >({});
+  const setPreviewStatus = useCallback(
+    (productId: string, status: 'loading' | 'ready' | 'unavailable') => {
+      setPreviewStatuses(current =>
+        current[productId] === status
+          ? current
+          : {...current, [productId]: status}
+      );
+    },
+    []
+  );
   const variants = useMemo(
     () =>
       new Map(
@@ -75,6 +88,12 @@ const Store = React.memo(() => {
   return (
     <StorePage>
       {storefront.products.map(product => {
+        const hasHatPreview =
+          product.imagePath === '/static/image/store/5950.svg';
+        const previewIsLoading =
+          hasHatPreview &&
+          previewStatuses[product.id] !== 'ready' &&
+          previewStatuses[product.id] !== 'unavailable';
         const available = product.variants.filter(
           variant => variant.availableQuantity > 0
         );
@@ -87,53 +106,66 @@ const Store = React.memo(() => {
         return (
           <ProductGrid key={product.id}>
             <ProductArt>
-              {product.imagePath === '/static/image/store/5950.svg' ? (
-                <HatPreview src={product.imagePath} name={product.name} />
+              {hasHatPreview ? (
+                <HatPreview
+                  src={product.imagePath}
+                  name={product.name}
+                  onStatusChange={status =>
+                    setPreviewStatus(product.id, status)
+                  }
+                />
               ) : (
                 <img src={product.imagePath} alt={product.name} />
               )}
             </ProductArt>
-            <ProductCopy>{product.description}</ProductCopy>
-            <ProductDetails>
-              {priceVariant ? (
-                <Price>
-                  {formatMoney(priceVariant.unitAmount, priceVariant.currency)}
-                </Price>
-              ) : null}
-              <Field>
-                Size
-                <Select
-                  aria-label={`${product.name} size`}
-                  disabled={available.length === 0}
-                  value={variantId}
-                  onChange={event => {
-                    // Read the value before the updater runs: React clears
-                    // currentTarget once the handler returns.
-                    const nextVariantId = event.currentTarget.value;
-                    setSelected(current => ({
-                      ...current,
-                      [product.id]: nextVariantId,
-                    }));
-                  }}
+            {!previewIsLoading && (
+              <ProductCopy>{product.description}</ProductCopy>
+            )}
+            {!previewIsLoading && (
+              <ProductDetails>
+                {priceVariant ? (
+                  <Price>
+                    {formatMoney(
+                      priceVariant.unitAmount,
+                      priceVariant.currency
+                    )}
+                  </Price>
+                ) : null}
+                <Field>
+                  Size
+                  <Select
+                    aria-label={`${product.name} size`}
+                    disabled={available.length === 0}
+                    value={variantId}
+                    onChange={event => {
+                      // Read the value before the updater runs: React clears
+                      // currentTarget once the handler returns.
+                      const nextVariantId = event.currentTarget.value;
+                      setSelected(current => ({
+                        ...current,
+                        [product.id]: nextVariantId,
+                      }));
+                    }}
+                  >
+                    {available.length === 0 ? (
+                      <option value="">Sold out</option>
+                    ) : null}
+                    {available.map(item => (
+                      <option key={item.id} value={item.id}>
+                        {item.label}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+                <Button
+                  type="button"
+                  disabled={!variant}
+                  onClick={() => variant && cart.add(variant.id)}
                 >
-                  {available.length === 0 ? (
-                    <option value="">Sold out</option>
-                  ) : null}
-                  {available.map(item => (
-                    <option key={item.id} value={item.id}>
-                      {item.label}
-                    </option>
-                  ))}
-                </Select>
-              </Field>
-              <Button
-                type="button"
-                disabled={!variant}
-                onClick={() => variant && cart.add(variant.id)}
-              >
-                {variant ? 'Add to cart' : 'Sold out'}
-              </Button>
-            </ProductDetails>
+                  {variant ? 'Add to cart' : 'Sold out'}
+                </Button>
+              </ProductDetails>
+            )}
           </ProductGrid>
         );
       })}

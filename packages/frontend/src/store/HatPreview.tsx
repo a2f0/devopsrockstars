@@ -93,7 +93,15 @@ const LoadingStar = styled.span`
   }
 `;
 
-export default function HatPreview({src, name}: {src: string; name: string}) {
+export default function HatPreview({
+  src,
+  name,
+  onStatusChange,
+}: {
+  src: string;
+  name: string;
+  onStatusChange?: (status: 'loading' | 'ready' | 'unavailable') => void;
+}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const viewerRef = useRef<Awaited<ReturnType<typeof createHatViewer>> | null>(
     null
@@ -117,6 +125,10 @@ export default function HatPreview({src, name}: {src: string; name: string}) {
       }`
     );
   }, [name, status, ready]);
+
+  useEffect(() => {
+    onStatusChange?.(status);
+  }, [onStatusChange, status]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
