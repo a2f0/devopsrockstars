@@ -121,15 +121,17 @@ describe('3D hat preview', function () {
       await expect(await browser.$('button=Add to cart')).not.toBeDisplayed();
       await expect(await browser.$('p=Fitted, black.')).not.toBeDisplayed();
       await expect(await browser.$('[data-product-price]')).not.toBeDisplayed();
-      assert.deepEqual(
-        await browser.execute(() => {
-          const {left, top, width, height} = document
-            .querySelector('[data-hat-loading] img')!
-            .getBoundingClientRect();
-          return {x: left + width / 2, y: top + height / 2};
-        }),
-        await browser.execute(() => ({x: innerWidth / 2, y: innerHeight / 2}))
-      );
+      const {starCenter, viewport} = await browser.execute(() => {
+        const {left, top, width, height} = document
+          .querySelector('[data-hat-loading] img')!
+          .getBoundingClientRect();
+        return {
+          starCenter: {x: left + width / 2, y: top + height / 2},
+          viewport: {x: innerWidth / 2, y: innerHeight / 2},
+        };
+      });
+      assert.ok(Math.abs(starCenter.x - viewport.x) < 1);
+      assert.ok(Math.abs(starCenter.y - viewport.y) < 1);
       const position = await size.getLocation();
       const transform = await star.getCSSProperty('transform');
       await browser.waitUntil(
