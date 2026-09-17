@@ -432,11 +432,18 @@ describe('3D hat preview', function () {
   it('falls back if model construction takes too long', async () => {
     const shortenModelTimeout = await browser.addInitScript(() => {
       const originalSetTimeout = window.setTimeout;
+      const originalWarn = console.warn.bind(console);
+      console.warn = (...args) => {
+        if (args[0] === '3D hat preview timed out while building the model.') {
+          document.documentElement.dataset['modelTimedOut'] = 'true';
+        }
+        originalWarn(...args);
+      };
       window.setTimeout = ((...args: Parameters<typeof window.setTimeout>) => {
         const [handler, delay, ...rest] = args;
         return originalSetTimeout(
           handler,
-          delay === 5_000 ? 0 : delay,
+          delay === 15_000 ? 0 : delay,
           ...rest
         );
       }) as typeof window.setTimeout;
@@ -444,6 +451,11 @@ describe('3D hat preview', function () {
     try {
       await BasePage.openStaging('store');
       await expectUnavailable();
+      await browser.waitUntil(() =>
+        browser.execute(
+          () => document.documentElement.dataset['modelTimedOut'] === 'true'
+        )
+      );
       await expect(await browser.$('select[aria-label$="size"]')).toBeEnabled();
       await expect(await browser.$('button=Add to cart')).toBeDisplayed();
     } finally {

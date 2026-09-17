@@ -94,6 +94,7 @@ const LoadingStar = styled.span`
 `;
 
 export type HatPreviewStatus = 'loading' | 'ready' | 'unavailable';
+const modelLoadTimeoutMs = 15_000;
 
 export default function HatPreview({
   src,
@@ -113,6 +114,7 @@ export default function HatPreview({
   const [announcement, setAnnouncement] = useState('');
   const instructions = useId();
   const onStatusChangeRef = useRef(onStatusChange);
+  const previousSrc = useRef(src);
 
   useEffect(() => {
     onStatusChangeRef.current = onStatusChange;
@@ -136,6 +138,8 @@ export default function HatPreview({
     if (!canvas) return;
     const controller = new AbortController();
     let timeout: number | undefined;
+    let remainingTimeout = modelLoadTimeoutMs;
+    let timeoutStartedAt = performance.now();
     const updateStatus = (nextStatus: HatPreviewStatus) => {
       if (nextStatus !== 'loading' && timeout !== undefined) {
         window.clearTimeout(timeout);
@@ -143,6 +147,11 @@ export default function HatPreview({
       setStatus(nextStatus);
       if (nextStatus !== 'loading') onStatusChangeRef.current?.(nextStatus);
     };
+    setStatus('loading');
+    if (previousSrc.current !== src) {
+      previousSrc.current = src;
+      onStatusChangeRef.current?.('loading');
+    }
     const dispose = () => {
       viewerRef.current?.dispose();
       viewerRef.current = null;
@@ -159,6 +168,27 @@ export default function HatPreview({
         if (!response.ok) throw new Error('Could not load the hat artwork.');
         return response.text();
       });
+    const timeoutPreview = () => {
+      if (controller.signal.aborted) return;
+      console.warn('3D hat preview timed out while building the model.');
+      controller.abort();
+      dispose();
+      updateStatus('unavailable');
+    };
+    const startTimeout = () => {
+      timeoutStartedAt = performance.now();
+      timeout = window.setTimeout(timeoutPreview, remainingTimeout);
+    };
+    const visibilityChange = () => {
+      if (document.hidden) {
+        remainingTimeout -= performance.now() - timeoutStartedAt;
+        if (timeout !== undefined) window.clearTimeout(timeout);
+      } else if (!controller.signal.aborted) {
+        startTimeout();
+      }
+    };
+    document.addEventListener('visibilitychange', visibilityChange);
+    startTimeout();
     void Promise.all([
       import('./hatViewer'),
       loadArtwork(src),
@@ -167,13 +197,6 @@ export default function HatPreview({
     ])
       .then(async ([{createHatViewer}, front, side, rear]) => {
         if (controller.signal.aborted) return;
-        timeout = window.setTimeout(() => {
-          if (controller.signal.aborted) return;
-          console.warn('3D hat preview timed out while building the model.');
-          controller.abort();
-          dispose();
-          updateStatus('unavailable');
-        }, 5_000);
         const viewer = await createHatViewer(
           canvas,
           {front, side, rear},
@@ -196,6 +219,7 @@ export default function HatPreview({
       });
     return () => {
       if (timeout !== undefined) window.clearTimeout(timeout);
+      document.removeEventListener('visibilitychange', visibilityChange);
       canvas.removeEventListener('webglcontextlost', contextLost);
       controller.abort();
       dispose();
