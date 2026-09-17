@@ -32,17 +32,13 @@ const turn = keyframes`
 `;
 
 const PreviewStatus = styled.div`
-  position: absolute;
+  position: fixed;
   inset: 0;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 22px;
-  color: #aaa;
-  font-size: 11px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  pointer-events: none;
+  z-index: 1;
 `;
 
 const UnavailableMessage = styled.span`
@@ -242,7 +238,6 @@ export default function HatPreview({
             <LoadingStar>
               <img src={whiteStar} alt="" draggable={false} />
             </LoadingStar>
-            <span>Loading hat…</span>
           </PreviewStatus>
         )}
         {status === 'unavailable' && (

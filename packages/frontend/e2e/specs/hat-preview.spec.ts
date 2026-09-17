@@ -99,7 +99,7 @@ describe('3D hat preview', function () {
     try {
       await BasePage.openStaging('store');
       const loading = await browser.$(loadingSelector);
-      await expect(loading).toHaveText('LOADING HAT…');
+      await expect(loading).toHaveText('');
       const status = await browser.$(statusSelector);
       const statusId = await status.elementId;
       const star = await loading.$('img');
@@ -120,6 +120,18 @@ describe('3D hat preview', function () {
       await expect(size).not.toBeDisplayed();
       await expect(await browser.$('button=Add to cart')).not.toBeDisplayed();
       await expect(await browser.$('p=Fitted, black.')).not.toBeDisplayed();
+      await expect(await browser.$('[data-product-price]')).not.toBeDisplayed();
+      const {starCenter, viewport} = await browser.execute(() => {
+        const {left, top, width, height} = document
+          .querySelector('[data-hat-loading] img')!
+          .getBoundingClientRect();
+        return {
+          starCenter: {x: left + width / 2, y: top + height / 2},
+          viewport: {x: innerWidth / 2, y: innerHeight / 2},
+        };
+      });
+      assert.ok(Math.abs(starCenter.x - viewport.x) < 1);
+      assert.ok(Math.abs(starCenter.y - viewport.y) < 1);
       const position = await size.getLocation();
       const transform = await star.getCSSProperty('transform');
       await browser.waitUntil(
@@ -153,6 +165,7 @@ describe('3D hat preview', function () {
       await expect(size).toBeEnabled();
       await expect(await browser.$('button=Add to cart')).toBeDisplayed();
       await expect(await browser.$('p=Fitted, black.')).toBeDisplayed();
+      await expect(await browser.$('[data-product-price]')).toBeDisplayed();
       assert.deepEqual(await size.getLocation(), position);
     } finally {
       await browser.execute(() => {
