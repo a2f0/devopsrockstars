@@ -18,6 +18,7 @@ async function expectUnavailable() {
   await expect(await browser.$(canvasSelector)).not.toBeDisplayed();
   await expect(await browser.$(imageSelector)).toBeDisplayed();
   await expect(await browser.$(loadingSelector)).not.toExist();
+  await expect(await browser.$('p=Fitted, black.')).toBeDisplayed();
 }
 
 async function canvasSnapshot(elementId: string) {
@@ -115,6 +116,11 @@ describe('3D hat preview', function () {
       const canvas = await browser.$(canvasSelector);
       await expect(canvas).not.toBeDisplayed();
       await expect(canvas).toHaveAttribute('tabindex', '-1');
+      const size = await browser.$('select[aria-label$="size"]');
+      await expect(size).not.toBeDisplayed();
+      await expect(await browser.$('button=Add to cart')).not.toBeDisplayed();
+      await expect(await browser.$('p=Fitted, black.')).not.toBeDisplayed();
+      const position = await size.getLocation();
       const transform = await star.getCSSProperty('transform');
       await browser.waitUntil(
         async () =>
@@ -132,9 +138,6 @@ describe('3D hat preview', function () {
           );
         }, loadingSelector)
       );
-      const size = await browser.$('select[aria-label$="size"]');
-      await expect(size).toBeEnabled();
-      const position = await size.getLocation();
       await browser.execute(() => {
         window.dispatchEvent(new Event('release-hat-artwork'));
       });
@@ -147,6 +150,9 @@ describe('3D hat preview', function () {
       );
       assert.equal(await browser.$(statusSelector).elementId, statusId);
       await expect(canvas).toHaveAttribute('tabindex', '0');
+      await expect(size).toBeEnabled();
+      await expect(await browser.$('button=Add to cart')).toBeDisplayed();
+      await expect(await browser.$('p=Fitted, black.')).toBeDisplayed();
       assert.deepEqual(await size.getLocation(), position);
     } finally {
       await browser.execute(() => {
@@ -157,7 +163,7 @@ describe('3D hat preview', function () {
     }
   });
 
-  it('keeps the cart responsive while building the preview and cancels on navigation', async () => {
+  it('cancels the preview build on navigation', async () => {
     const probe = await browser.addInitScript(() => {
       const getContext = HTMLCanvasElement.prototype.getContext;
       let armed = true;
@@ -169,49 +175,24 @@ describe('3D hat preview', function () {
         const context = getContext.call(this, type, ...args);
         if (armed && type === 'webgl2' && this.hasAttribute('aria-label')) {
           armed = false;
-          const canvas = this;
           const root = document.documentElement;
           let becameVisible = false;
-          let navigating = false;
-          const observer = new MutationObserver(() => {
-            becameVisible ||= canvas.style.visibility === 'visible';
-            if (
-              !navigating &&
-              document.querySelector('aside[aria-label="Shopping cart"]')
-            ) {
-              navigating = true;
-              root.setAttribute(
-                'data-cart-before-preview',
-                String(!becameVisible)
-              );
-              document
-                .querySelector<HTMLAnchorElement>('a[href="/company"]')
-                ?.click();
-            }
-          });
-          observer.observe(document.body, {
-            childList: true,
-            subtree: true,
-            attributes: true,
-            attributeFilter: ['style'],
-          });
-          canvas.addEventListener(
+          this.addEventListener(
             'webglcontextlost',
             () => {
-              becameVisible ||= canvas.style.visibility === 'visible';
+              becameVisible ||= this.style.visibility === 'visible';
               root.setAttribute(
                 'data-cancelled-before-preview',
                 String(!becameVisible)
               );
-              observer.disconnect();
             },
             {once: true}
           );
-          // Run input inside the page at the first yielded browser task. Remote
-          // WebDriver round trips cannot race a fast build to its completion.
+          // Navigate at the first yielded browser task. Remote WebDriver round
+          // trips cannot reliably race a fast build to its completion.
           setTimeout(() => {
-            [...document.querySelectorAll('button')]
-              .find(button => button.textContent === 'Add to cart')
+            document
+              .querySelector<HTMLAnchorElement>('a[href="/company"]')
               ?.click();
           }, 0);
         }
@@ -227,15 +208,12 @@ describe('3D hat preview', function () {
       );
       assert.deepEqual(
         await browser.execute(() => ({
-          cart: document.documentElement.getAttribute(
-            'data-cart-before-preview'
-          ),
           cancelled: document.documentElement.getAttribute(
             'data-cancelled-before-preview'
           ),
           path: location.pathname,
         })),
-        {cart: 'true', cancelled: 'true', path: '/company'}
+        {cancelled: 'true', path: '/company'}
       );
       await (await browser.$('a[href="/store"]')).click();
       await (await browser.$(canvasSelector)).waitForDisplayed();
@@ -448,6 +426,40 @@ describe('3D hat preview', function () {
       ).toExist();
     } finally {
       await disableWebGL.remove();
+    }
+  });
+
+  it('falls back if model construction takes too long', async () => {
+    const shortenModelTimeout = await browser.addInitScript(() => {
+      const originalSetTimeout = window.setTimeout;
+      const originalWarn = console.warn.bind(console);
+      console.warn = (...args) => {
+        if (args[0] === '3D hat preview timed out while building the model.') {
+          document.documentElement.dataset['modelTimedOut'] = 'true';
+        }
+        originalWarn(...args);
+      };
+      window.setTimeout = ((...args: Parameters<typeof window.setTimeout>) => {
+        const [handler, delay, ...rest] = args;
+        return originalSetTimeout(
+          handler,
+          delay === 15_000 ? 0 : delay,
+          ...rest
+        );
+      }) as typeof window.setTimeout;
+    });
+    try {
+      await BasePage.openStaging('store');
+      await expectUnavailable();
+      await browser.waitUntil(() =>
+        browser.execute(
+          () => document.documentElement.dataset['modelTimedOut'] === 'true'
+        )
+      );
+      await expect(await browser.$('select[aria-label$="size"]')).toBeEnabled();
+      await expect(await browser.$('button=Add to cart')).toBeDisplayed();
+    } finally {
+      await shortenModelTimeout.remove();
     }
   });
 

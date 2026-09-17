@@ -1,9 +1,9 @@
-import React, {useEffect, useMemo, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {loadStorefront} from './api';
 import {useStoreCart} from './cart';
 import type {StorefrontResponse} from '@devopsrockstars/shared-types';
 import {formatMoney} from './format';
-import HatPreview from './HatPreview';
+import HatPreview, {type HatPreviewStatus} from './HatPreview';
 import {
   ActionLink,
   Button,
@@ -46,6 +46,19 @@ const Store = React.memo(() => {
   const {storefront, error} = useStorefront();
   const cart = useStoreCart();
   const [selected, setSelected] = useState<Record<string, string>>({});
+  const [previewStatuses, setPreviewStatuses] = useState<
+    Record<string, HatPreviewStatus>
+  >({});
+  const setPreviewStatus = useCallback(
+    (productId: string, status: HatPreviewStatus) => {
+      setPreviewStatuses(current =>
+        current[productId] === status
+          ? current
+          : {...current, [productId]: status}
+      );
+    },
+    []
+  );
   const variants = useMemo(
     () =>
       new Map(
@@ -75,6 +88,12 @@ const Store = React.memo(() => {
   return (
     <StorePage>
       {storefront.products.map(product => {
+        const hasHatPreview =
+          product.imagePath === '/static/image/store/5950.svg';
+        const previewIsLoading =
+          hasHatPreview &&
+          previewStatuses[product.id] !== 'ready' &&
+          previewStatuses[product.id] !== 'unavailable';
         const available = product.variants.filter(
           variant => variant.availableQuantity > 0
         );
@@ -87,20 +106,28 @@ const Store = React.memo(() => {
         return (
           <ProductGrid key={product.id}>
             <ProductArt>
-              {product.imagePath === '/static/image/store/5950.svg' ? (
-                <HatPreview src={product.imagePath} name={product.name} />
+              {hasHatPreview ? (
+                <HatPreview
+                  src={product.imagePath}
+                  name={product.name}
+                  onStatusChange={status =>
+                    setPreviewStatus(product.id, status)
+                  }
+                />
               ) : (
                 <img src={product.imagePath} alt={product.name} />
               )}
             </ProductArt>
-            <ProductCopy>{product.description}</ProductCopy>
+            <ProductCopy $hidden={previewIsLoading}>
+              {product.description}
+            </ProductCopy>
             <ProductDetails>
               {priceVariant ? (
                 <Price>
                   {formatMoney(priceVariant.unitAmount, priceVariant.currency)}
                 </Price>
               ) : null}
-              <Field>
+              <Field $hidden={previewIsLoading}>
                 Size
                 <Select
                   aria-label={`${product.name} size`}
@@ -127,6 +154,7 @@ const Store = React.memo(() => {
                 </Select>
               </Field>
               <Button
+                $hidden={previewIsLoading}
                 type="button"
                 disabled={!variant}
                 onClick={() => variant && cart.add(variant.id)}

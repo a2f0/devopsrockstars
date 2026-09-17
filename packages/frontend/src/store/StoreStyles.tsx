@@ -62,10 +62,11 @@ export const ProductDetails = styled.div`
 `;
 
 // Newlines in the stored description render as line breaks.
-export const ProductCopy = styled.p`
+export const ProductCopy = styled.p<{$hidden?: boolean}>`
   color: #c7c7c7;
   font-size: 16px;
   line-height: 1.5;
+  visibility: ${({$hidden}) => ($hidden ? 'hidden' : 'visible')};
   white-space: pre-line;
 `;
 
@@ -73,13 +74,14 @@ export const Price = styled.div`
   font-size: 24px;
 `;
 
-export const Field = styled.label`
+export const Field = styled.label<{$hidden?: boolean}>`
   display: flex;
   flex-direction: column;
   gap: 6px;
   min-width: 0;
   color: #bbb;
   font-size: 13px;
+  visibility: ${({$hidden}) => ($hidden ? 'hidden' : 'visible')};
 `;
 
 const controlStyles = `
@@ -171,7 +173,7 @@ export const Select = styled.select`
   }
 `;
 
-export const Button = styled.button`
+export const Button = styled.button<{$hidden?: boolean}>`
   min-height: 42px;
   border: 1px solid #aaa;
   border-radius: 0;
@@ -182,6 +184,7 @@ export const Button = styled.button`
   padding: 9px 18px;
   cursor: pointer;
   pointer-events: auto;
+  visibility: ${({$hidden}) => ($hidden ? 'hidden' : 'visible')};
 
   &:hover:not(:disabled),
   &:focus-visible {
