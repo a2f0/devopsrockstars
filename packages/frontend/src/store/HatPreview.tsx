@@ -24,10 +24,6 @@ const Stage = styled.div`
   canvas:focus-visible { outline: 1px solid #aaa; outline-offset: 4px; }
 `;
 
-const orbit = keyframes`
-  to { transform: rotate(360deg); }
-`;
-
 // A sixth of a turn lands the six-pointed mark on the same silhouette.
 const turn = keyframes`
   0% { transform: rotate(0deg) scale(0.94); opacity: 0.65; }
@@ -81,11 +77,8 @@ const LoadingStar = styled.span`
     content: '';
     position: absolute;
     inset: 0;
-    border: 1px solid #ffffff14;
-    border-top-color: #ffffff99;
-    border-bottom-color: #ffffff33;
+    border: 1px solid #ffffff24;
     border-radius: 50%;
-    animation: ${orbit} 2.8s linear infinite;
   }
 
   img {
@@ -96,7 +89,7 @@ const LoadingStar = styled.span`
   }
 
   @media (prefers-reduced-motion: reduce) {
-    &::before, img { animation: none; }
+    img { animation: none; }
   }
 `;
 
