@@ -93,17 +93,32 @@ const LoadingStar = styled.span`
   }
 `;
 
-export default function HatPreview({src, name}: {src: string; name: string}) {
+export type HatPreviewStatus = 'loading' | 'ready' | 'unavailable';
+const modelLoadTimeoutMs = 15_000;
+
+export default function HatPreview({
+  src,
+  name,
+  onStatusChange,
+}: {
+  src: string;
+  name: string;
+  onStatusChange?: (status: HatPreviewStatus) => void;
+}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const viewerRef = useRef<Awaited<ReturnType<typeof createHatViewer>> | null>(
     null
   );
-  const [status, setStatus] = useState<'loading' | 'ready' | 'unavailable'>(
-    'loading'
-  );
+  const [status, setStatus] = useState<HatPreviewStatus>('loading');
   const ready = status === 'ready';
   const [announcement, setAnnouncement] = useState('');
   const instructions = useId();
+  const onStatusChangeRef = useRef(onStatusChange);
+  const previousSrc = useRef(src);
+
+  useEffect(() => {
+    onStatusChangeRef.current = onStatusChange;
+  }, [onStatusChange]);
 
   // Mount an empty live region before filling it, and retain it after loading.
   useEffect(() => {
@@ -122,7 +137,24 @@ export default function HatPreview({src, name}: {src: string; name: string}) {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const controller = new AbortController();
+    let timeout: number | undefined;
+    let remainingTimeout = modelLoadTimeoutMs;
+    let timeoutStartedAt = performance.now();
+    let settled = false;
+    const updateStatus = (nextStatus: HatPreviewStatus) => {
+      if (nextStatus !== 'loading' && timeout !== undefined) {
+        window.clearTimeout(timeout);
+        timeout = undefined;
+      }
+      if (nextStatus !== 'loading') settled = true;
+      setStatus(nextStatus);
+      if (nextStatus !== 'loading') onStatusChangeRef.current?.(nextStatus);
+    };
     setStatus('loading');
+    if (previousSrc.current !== src) {
+      previousSrc.current = src;
+      onStatusChangeRef.current?.('loading');
+    }
     const dispose = () => {
       viewerRef.current?.dispose();
       viewerRef.current = null;
@@ -131,7 +163,7 @@ export default function HatPreview({src, name}: {src: string; name: string}) {
       if (controller.signal.aborted) return;
       controller.abort();
       dispose();
-      setStatus('unavailable');
+      updateStatus('unavailable');
     };
     canvas.addEventListener('webglcontextlost', contextLost);
     const loadArtwork = (path: string) =>
@@ -139,6 +171,32 @@ export default function HatPreview({src, name}: {src: string; name: string}) {
         if (!response.ok) throw new Error('Could not load the hat artwork.');
         return response.text();
       });
+    const timeoutPreview = () => {
+      if (controller.signal.aborted || settled) return;
+      console.warn('3D hat preview timed out while building the model.');
+      controller.abort();
+      dispose();
+      updateStatus('unavailable');
+    };
+    const startTimeout = () => {
+      if (controller.signal.aborted || settled || document.hidden) return;
+      if (timeout !== undefined) window.clearTimeout(timeout);
+      timeoutStartedAt = performance.now();
+      timeout = window.setTimeout(timeoutPreview, remainingTimeout);
+    };
+    const visibilityChange = () => {
+      if (document.hidden) {
+        if (timeout !== undefined) {
+          remainingTimeout -= performance.now() - timeoutStartedAt;
+          window.clearTimeout(timeout);
+          timeout = undefined;
+        }
+      } else if (!controller.signal.aborted) {
+        startTimeout();
+      }
+    };
+    document.addEventListener('visibilitychange', visibilityChange);
+    if (!document.hidden) startTimeout();
     void Promise.all([
       import('./hatViewer'),
       loadArtwork(src),
@@ -157,17 +215,19 @@ export default function HatPreview({src, name}: {src: string; name: string}) {
           return;
         }
         viewerRef.current = viewer;
-        setStatus('ready');
+        updateStatus('ready');
       })
       .catch(error => {
         if (!controller.signal.aborted) {
           console.warn('Could not load the 3D hat preview:', error);
-          setStatus('unavailable');
+          updateStatus('unavailable');
           controller.abort();
           dispose();
         }
       });
     return () => {
+      if (timeout !== undefined) window.clearTimeout(timeout);
+      document.removeEventListener('visibilitychange', visibilityChange);
       canvas.removeEventListener('webglcontextlost', contextLost);
       controller.abort();
       dispose();
