@@ -18,6 +18,7 @@ async function expectUnavailable() {
   await expect(await browser.$(canvasSelector)).not.toBeDisplayed();
   await expect(await browser.$(imageSelector)).toBeDisplayed();
   await expect(await browser.$(loadingSelector)).not.toExist();
+  await expect(await browser.$('p=Fitted, black.')).toBeDisplayed();
 }
 
 async function canvasSnapshot(elementId: string) {
@@ -115,9 +116,11 @@ describe('3D hat preview', function () {
       const canvas = await browser.$(canvasSelector);
       await expect(canvas).not.toBeDisplayed();
       await expect(canvas).toHaveAttribute('tabindex', '-1');
-      await expect(await browser.$('select[aria-label$="size"]')).not.toExist();
-      await expect(await browser.$('button=Add to cart')).not.toExist();
-      await expect(await browser.$('p=Fitted, black.')).not.toExist();
+      const size = await browser.$('select[aria-label$="size"]');
+      await expect(size).not.toBeDisplayed();
+      await expect(await browser.$('button=Add to cart')).not.toBeDisplayed();
+      await expect(await browser.$('p=Fitted, black.')).not.toBeDisplayed();
+      const position = await size.getLocation();
       const transform = await star.getCSSProperty('transform');
       await browser.waitUntil(
         async () =>
@@ -147,10 +150,10 @@ describe('3D hat preview', function () {
       );
       assert.equal(await browser.$(statusSelector).elementId, statusId);
       await expect(canvas).toHaveAttribute('tabindex', '0');
-      const size = await browser.$('select[aria-label$="size"]');
       await expect(size).toBeEnabled();
       await expect(await browser.$('button=Add to cart')).toBeDisplayed();
       await expect(await browser.$('p=Fitted, black.')).toBeDisplayed();
+      assert.deepEqual(await size.getLocation(), position);
     } finally {
       await browser.execute(() => {
         window.dispatchEvent(new Event('release-hat-artwork'));
@@ -174,22 +177,6 @@ describe('3D hat preview', function () {
           armed = false;
           const root = document.documentElement;
           let becameVisible = false;
-          let navigating = false;
-          const observer = new MutationObserver(() => {
-            becameVisible ||= this.style.visibility === 'visible';
-            if (!navigating) {
-              navigating = true;
-              document
-                .querySelector<HTMLAnchorElement>('a[href="/company"]')
-                ?.click();
-            }
-          });
-          observer.observe(document.body, {
-            childList: true,
-            subtree: true,
-            attributes: true,
-            attributeFilter: ['style'],
-          });
           this.addEventListener(
             'webglcontextlost',
             () => {
@@ -198,7 +185,6 @@ describe('3D hat preview', function () {
                 'data-cancelled-before-preview',
                 String(!becameVisible)
               );
-              observer.disconnect();
             },
             {once: true}
           );

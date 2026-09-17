@@ -3,7 +3,7 @@ import {loadStorefront} from './api';
 import {useStoreCart} from './cart';
 import type {StorefrontResponse} from '@devopsrockstars/shared-types';
 import {formatMoney} from './format';
-import HatPreview from './HatPreview';
+import HatPreview, {type HatPreviewStatus} from './HatPreview';
 import {
   ActionLink,
   Button,
@@ -47,10 +47,10 @@ const Store = React.memo(() => {
   const cart = useStoreCart();
   const [selected, setSelected] = useState<Record<string, string>>({});
   const [previewStatuses, setPreviewStatuses] = useState<
-    Record<string, 'loading' | 'ready' | 'unavailable'>
+    Record<string, HatPreviewStatus>
   >({});
   const setPreviewStatus = useCallback(
-    (productId: string, status: 'loading' | 'ready' | 'unavailable') => {
+    (productId: string, status: HatPreviewStatus) => {
       setPreviewStatuses(current =>
         current[productId] === status
           ? current
@@ -118,54 +118,50 @@ const Store = React.memo(() => {
                 <img src={product.imagePath} alt={product.name} />
               )}
             </ProductArt>
-            {!previewIsLoading && (
-              <ProductCopy>{product.description}</ProductCopy>
-            )}
-            {!previewIsLoading && (
-              <ProductDetails>
-                {priceVariant ? (
-                  <Price>
-                    {formatMoney(
-                      priceVariant.unitAmount,
-                      priceVariant.currency
-                    )}
-                  </Price>
-                ) : null}
-                <Field>
-                  Size
-                  <Select
-                    aria-label={`${product.name} size`}
-                    disabled={available.length === 0}
-                    value={variantId}
-                    onChange={event => {
-                      // Read the value before the updater runs: React clears
-                      // currentTarget once the handler returns.
-                      const nextVariantId = event.currentTarget.value;
-                      setSelected(current => ({
-                        ...current,
-                        [product.id]: nextVariantId,
-                      }));
-                    }}
-                  >
-                    {available.length === 0 ? (
-                      <option value="">Sold out</option>
-                    ) : null}
-                    {available.map(item => (
-                      <option key={item.id} value={item.id}>
-                        {item.label}
-                      </option>
-                    ))}
-                  </Select>
-                </Field>
-                <Button
-                  type="button"
-                  disabled={!variant}
-                  onClick={() => variant && cart.add(variant.id)}
+            <ProductCopy $hidden={previewIsLoading}>
+              {product.description}
+            </ProductCopy>
+            <ProductDetails>
+              {priceVariant ? (
+                <Price>
+                  {formatMoney(priceVariant.unitAmount, priceVariant.currency)}
+                </Price>
+              ) : null}
+              <Field $hidden={previewIsLoading}>
+                Size
+                <Select
+                  aria-label={`${product.name} size`}
+                  disabled={available.length === 0}
+                  value={variantId}
+                  onChange={event => {
+                    // Read the value before the updater runs: React clears
+                    // currentTarget once the handler returns.
+                    const nextVariantId = event.currentTarget.value;
+                    setSelected(current => ({
+                      ...current,
+                      [product.id]: nextVariantId,
+                    }));
+                  }}
                 >
-                  {variant ? 'Add to cart' : 'Sold out'}
-                </Button>
-              </ProductDetails>
-            )}
+                  {available.length === 0 ? (
+                    <option value="">Sold out</option>
+                  ) : null}
+                  {available.map(item => (
+                    <option key={item.id} value={item.id}>
+                      {item.label}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+              <Button
+                $hidden={previewIsLoading}
+                type="button"
+                disabled={!variant}
+                onClick={() => variant && cart.add(variant.id)}
+              >
+                {variant ? 'Add to cart' : 'Sold out'}
+              </Button>
+            </ProductDetails>
           </ProductGrid>
         );
       })}
