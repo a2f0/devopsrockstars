@@ -1,4 +1,10 @@
-import React, {useEffect, useId, useRef, useState} from 'react';
+import React, {
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 import styled, {keyframes} from 'styled-components';
 import whiteStar from '/static/image/white-star-only.svg';
 import type {createHatViewer} from './hatViewer';
@@ -11,14 +17,13 @@ const Stage = styled.div`
   position: relative;
   aspect-ratio: 612 / 390;
 
-  > img, canvas {
+  canvas {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
   }
 
-  > img { object-fit: contain; }
   canvas { cursor: grab; }
   canvas:active { cursor: grabbing; }
   canvas:focus-visible { outline: 1px solid #aaa; outline-offset: 4px; }
@@ -93,12 +98,20 @@ const LoadingStar = styled.span`
 type HatPreviewStatus = 'loading' | 'ready' | 'unavailable';
 const modelLoadTimeoutMs = 15_000;
 
-export default function HatPreview({src, name}: {src: string; name: string}) {
+export default function HatPreview({
+  name,
+  active,
+}: {
+  name: string;
+  active: boolean;
+}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const viewerRef = useRef<Awaited<ReturnType<typeof createHatViewer>> | null>(
     null
   );
   const [status, setStatus] = useState<HatPreviewStatus>('loading');
+  const [attempt, setAttempt] = useState(0);
+  const wasActive = useRef(active);
   const ready = status === 'ready';
   const [announcement, setAnnouncement] = useState('');
   const instructions = useId();
@@ -111,10 +124,21 @@ export default function HatPreview({src, name}: {src: string; name: string}) {
           ? 'loading preview.'
           : ready
             ? '3D preview ready.'
-            : '3D preview unavailable. Showing a static image.'
+            : '3D preview unavailable.'
       }`
     );
   }, [name, status, ready]);
+
+  useEffect(() => {
+    const entering = active && !wasActive.current;
+    wasActive.current = active;
+    // A failed background attempt must not poison every subsequent visit.
+    // Retry once on entry, never in a loop on devices without WebGL support.
+    if (entering && status === 'unavailable') {
+      setStatus('loading');
+      setAttempt(current => current + 1);
+    }
+  }, [active, status]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -177,7 +201,7 @@ export default function HatPreview({src, name}: {src: string; name: string}) {
     if (!document.hidden) startTimeout();
     void Promise.all([
       import('./hatViewer'),
-      loadArtwork(src),
+      loadArtwork('/static/image/store/5950.svg'),
       loadArtwork('/static/image/store/new-era-flag.svg'),
       loadArtwork('/static/image/store/mlb-batterman.svg'),
     ])
@@ -210,12 +234,17 @@ export default function HatPreview({src, name}: {src: string; name: string}) {
       controller.abort();
       dispose();
     };
-  }, [src]);
+  }, [attempt]);
+
+  // Moving the already-built canvas into the Store may change its dimensions.
+  // Paint at the final size before the browser reveals it, without rebuilding.
+  useLayoutEffect(() => {
+    if (active && ready) viewerRef.current?.resize();
+  }, [active, ready]);
 
   return (
     <Preview>
       <Stage>
-        {!ready && <img src={src} alt={name} />}
         {status === 'loading' && (
           <PreviewStatus data-hat-loading aria-hidden="true">
             <LoadingStar>
@@ -229,6 +258,7 @@ export default function HatPreview({src, name}: {src: string; name: string}) {
           </UnavailableMessage>
         )}
         <canvas
+          key={attempt}
           ref={canvasRef}
           style={{visibility: ready ? 'visible' : 'hidden'}}
           tabIndex={ready ? 0 : -1}
@@ -261,7 +291,10 @@ export default function HatPreview({src, name}: {src: string; name: string}) {
           }}
         />
       </Stage>
-      <Announcement data-hat-preview-status role="status">
+      <Announcement
+        data-hat-preview-status
+        role={active ? 'status' : undefined}
+      >
         {announcement}
       </Announcement>
       <span id={instructions} hidden>
