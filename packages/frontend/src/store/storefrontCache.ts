@@ -16,6 +16,10 @@ export function createStorefrontCache(
     return cached && now() - cachedAt < freshnessMs ? cached : null;
   }
 
+  function storedStorefront() {
+    return cached;
+  }
+
   function fetchStorefront(refresh: boolean): Promise<StorefrontResponse> {
     if (pending) {
       // A direct Store visit should retry if its shared background request fails.
@@ -44,10 +48,15 @@ export function createStorefrontCache(
 
   return {
     cachedStorefront,
+    storedStorefront,
     prefetchStorefront: () => fetchStorefront(false),
     refreshStorefront: () => fetchStorefront(true),
   };
 }
 
-export const {cachedStorefront, prefetchStorefront, refreshStorefront} =
-  createStorefrontCache(loadStorefront);
+export const {
+  cachedStorefront,
+  storedStorefront,
+  prefetchStorefront,
+  refreshStorefront,
+} = createStorefrontCache(loadStorefront);
