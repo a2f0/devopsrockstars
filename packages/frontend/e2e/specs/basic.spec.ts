@@ -1,6 +1,26 @@
 import assert from 'node:assert';
 import {BasePage} from '../pageObjects/base';
 
+async function expectNoHatPreparation() {
+  await expect(
+    await browser.$('canvas[aria-label$="interactive 3D preview"]')
+  ).not.toExist();
+  await expect(await browser.$('[data-hat-preview-status]')).not.toExist();
+  assert.deepStrictEqual(
+    await browser.execute(() =>
+      performance
+        .getEntriesByType('resource')
+        .filter(
+          entry =>
+            new URL(entry.name).pathname === '/static/image/store/5950.svg'
+        )
+        .map(entry => entry.name)
+    ),
+    [],
+    'Production must not fetch the hat embroidery artwork'
+  );
+}
+
 describe('index page', () => {
   it('loads correctly', async () => {
     await BasePage.open('');
@@ -8,6 +28,7 @@ describe('index page', () => {
     const title = await browser.getTitle();
     assert.strictEqual(title, '\u200E');
     await expect(BasePage.skyline).toExist();
+    await expectNoHatPreparation();
   });
 });
 
@@ -20,6 +41,7 @@ describe('company page', () => {
     await expect(await browser.$('h1=Contact')).toExist();
     const title = await browser.getTitle();
     assert.strictEqual(title, '\u200E');
+    await expectNoHatPreparation();
   });
 });
 

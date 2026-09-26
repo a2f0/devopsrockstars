@@ -2,7 +2,7 @@ import type {StorefrontResponse} from '@devopsrockstars/shared-types';
 import React, {useEffect, useMemo, useState} from 'react';
 import {useStoreCart} from './cart';
 import {formatMoney} from './format';
-import HatPreview from './HatPreview';
+import PreparedHatPreview from './PreparedHatPreview';
 import {
   ActionLink,
   Button,
@@ -113,7 +113,7 @@ const Store = React.memo(() => {
           <ProductGrid key={product.id}>
             <ProductArt>
               {hasHatPreview ? (
-                <HatPreview src={product.imagePath} name={product.name} />
+                <PreparedHatPreview name={product.name} />
               ) : (
                 <img src={product.imagePath} alt={product.name} />
               )}

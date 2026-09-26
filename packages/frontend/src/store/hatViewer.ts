@@ -238,6 +238,7 @@ export async function createHatViewer(
     resize();
 
     return {
+      resize,
       rotate(horizontal: number, vertical = 0) {
         const position = new Vector3().subVectors(
           orbit.position,

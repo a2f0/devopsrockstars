@@ -9,6 +9,21 @@ const imageSelector = 'img[alt="DevOps Rockstars 59FIFTY"]';
 const loadingSelector = '[data-hat-loading]';
 const statusSelector = '[data-hat-preview-status]';
 
+async function waitForPreparedPreview() {
+  // The app allows 15 seconds for preparation. Software rendering on CI can
+  // exceed WebDriver's default 10-second wait, especially on the Home page.
+  await browser.waitUntil(
+    async () =>
+      String(
+        await browser.$(statusSelector).getProperty('textContent')
+      ).includes('3D preview ready'),
+    {
+      timeout: 20_000,
+      timeoutMsg: 'The background 3D preview did not become ready',
+    }
+  );
+}
+
 async function expectUnavailable() {
   await browser.waitUntil(async () =>
     String(await browser.$(statusSelector).getProperty('textContent')).includes(
@@ -16,7 +31,7 @@ async function expectUnavailable() {
     )
   );
   await expect(await browser.$(canvasSelector)).not.toBeDisplayed();
-  await expect(await browser.$(imageSelector)).toBeDisplayed();
+  await expect(await browser.$(imageSelector)).not.toExist();
   await expect(await browser.$(loadingSelector)).not.toExist();
   await expect(await browser.$('p=Fitted, black.')).toBeDisplayed();
 }
@@ -139,7 +154,7 @@ describe('3D hat preview', function () {
           return Boolean(image?.complete && image.naturalWidth > 0);
         }, loadingSelector)
       );
-      await expect(await browser.$(imageSelector)).toBeDisplayed();
+      await expect(await browser.$(imageSelector)).not.toExist();
       const canvas = await browser.$(canvasSelector);
       await expect(canvas).not.toBeDisplayed();
       await expect(canvas).toHaveAttribute('tabindex', '-1');
@@ -209,7 +224,110 @@ describe('3D hat preview', function () {
     }
   });
 
-  it('cancels the preview build on navigation', async () => {
+  it('prepares and renders the model on Home and Company before Store navigation', async () => {
+    const probe = await browser.addInitScript(() => {
+      const getContext = HTMLCanvasElement.prototype.getContext;
+      const contexts = new Set<RenderingContext>();
+      HTMLCanvasElement.prototype.getContext = function (
+        this: HTMLCanvasElement,
+        type,
+        ...args
+      ) {
+        const context = getContext.call(this, type, ...args);
+        if (context && type === 'webgl2' && this.hasAttribute('aria-label')) {
+          contexts.add(context);
+          document.documentElement.dataset['previewContexts'] = String(
+            contexts.size
+          );
+        }
+        return context;
+      } as typeof getContext;
+      const draw = WebGL2RenderingContext.prototype.drawElements;
+      WebGL2RenderingContext.prototype.drawElements = function (...args) {
+        if (this.canvas instanceof HTMLCanvasElement) {
+          this.canvas.dataset['drawCalls'] = String(
+            Number(this.canvas.dataset['drawCalls'] ?? 0) + 1
+          );
+        }
+        return draw.apply(this, args);
+      };
+    });
+    try {
+      for (const path of ['', 'company']) {
+        await BasePage.openStaging(path);
+        await waitForPreparedPreview();
+        const canvas = await browser.$(canvasSelector);
+        const canvasId = await canvas.elementId;
+        await expect(canvas).not.toBeDisplayed();
+        assert.ok(
+          Number(await canvas.getAttribute('data-draw-calls')) > 0,
+          'The hidden preview must finish a GPU render before navigation'
+        );
+        assert.equal(
+          await browser.execute(() => {
+            const canvas =
+              document.querySelector<HTMLCanvasElement>('canvas[aria-label]');
+            canvas?.focus();
+            return document.activeElement === canvas;
+          }),
+          false,
+          'The parked preview must not receive keyboard focus'
+        );
+
+        for (let visit = 0; visit < 2; visit++) {
+          const firstFrame = await browser.execute(async () => {
+            const canvas =
+              document.querySelector<HTMLCanvasElement>('canvas[aria-label]');
+            // The router may defer committing the next route. Inspect the
+            // first Store commit before paint, without waiting for its preview.
+            const storeMounted = new Promise<void>(resolve => {
+              const observer = new MutationObserver(() => {
+                if (!document.querySelector('[data-product-price]')) return;
+                observer.disconnect();
+                resolve();
+              });
+              observer.observe(document.body, {childList: true, subtree: true});
+            });
+            document
+              .querySelector<HTMLAnchorElement>('a[href="/store"]')
+              ?.click();
+            await storeMounted;
+            return {
+              path: location.pathname,
+              sameCanvas:
+                canvas === document.querySelector('canvas[aria-label]'),
+              visible: canvas?.checkVisibility({
+                opacityProperty: true,
+                visibilityProperty: true,
+              }),
+              interactive: !canvas?.closest('[inert]'),
+              loading: Boolean(document.querySelector('[data-hat-loading]')),
+              oldImage: Boolean(
+                document.querySelector('img[alt="DevOps Rockstars 59FIFTY"]')
+              ),
+              contexts: document.documentElement.dataset['previewContexts'],
+            };
+          });
+          assert.deepEqual(firstFrame, {
+            path: '/store',
+            sameCanvas: true,
+            visible: true,
+            interactive: true,
+            loading: false,
+            oldImage: false,
+            contexts: '1',
+          });
+          assert.equal(await browser.$(canvasSelector).elementId, canvasId);
+          await (await browser.$('a[href="/company"]')).click();
+          await expect(canvas).not.toBeDisplayed();
+        }
+      }
+    } finally {
+      await probe.remove();
+    }
+  });
+
+  it('continues a preview build across navigation without losing its context', async () => {
     const probe = await browser.addInitScript(() => {
       const getContext = HTMLCanvasElement.prototype.getContext;
       let armed = true;
@@ -221,21 +339,13 @@ describe('3D hat preview', function () {
         const context = getContext.call(this, type, ...args);
         if (armed && type === 'webgl2' && this.hasAttribute('aria-label')) {
           armed = false;
-          const root = document.documentElement;
-          let becameVisible = false;
-          this.addEventListener(
-            'webglcontextlost',
-            () => {
-              becameVisible ||= this.style.visibility === 'visible';
-              root.setAttribute(
-                'data-cancelled-before-preview',
-                String(!becameVisible)
-              );
-            },
-            {once: true}
-          );
-          // Navigate at the first yielded browser task. Remote WebDriver round
-          // trips cannot reliably race a fast build to its completion.
+          this.addEventListener('webglcontextlost', () => {
+            document.documentElement.setAttribute(
+              'data-preview-context-lost',
+              ''
+            );
+          });
+          // Navigate during the first yielded model-building task.
           setTimeout(() => {
             document
               .querySelector<HTMLAnchorElement>('a[href="/company"]')
@@ -247,25 +357,50 @@ describe('3D hat preview', function () {
     });
     try {
       await BasePage.openStaging('store');
-      await browser.waitUntil(() =>
-        browser.execute(() =>
-          document.documentElement.hasAttribute('data-cancelled-before-preview')
-        )
-      );
+      await waitForPreparedPreview();
       assert.deepEqual(
         await browser.execute(() => ({
-          cancelled: document.documentElement.getAttribute(
-            'data-cancelled-before-preview'
+          lost: document.documentElement.hasAttribute(
+            'data-preview-context-lost'
           ),
           path: location.pathname,
         })),
-        {cancelled: 'true', path: '/company'}
+        {lost: false, path: '/company'}
       );
+      const canvasId = await browser.$(canvasSelector).elementId;
       await (await browser.$('a[href="/store"]')).click();
-      await (await browser.$(canvasSelector)).waitForDisplayed();
+      await expect(await browser.$(canvasSelector)).toBeDisplayed();
+      assert.equal(await browser.$(canvasSelector).elementId, canvasId);
     } finally {
       await probe.remove();
     }
+  });
+
+  it('rebuilds a lost parked context when the Store is opened', async () => {
+    await BasePage.openStaging('');
+    await waitForPreparedPreview();
+    const parkedCanvasId = await browser.$(canvasSelector).elementId;
+    assert.ok(
+      await browser.execute(() => {
+        const canvas =
+          document.querySelector<HTMLCanvasElement>('canvas[aria-label]');
+        const extension = canvas
+          ?.getContext('webgl2')
+          ?.getExtension('WEBGL_lose_context');
+        extension?.loseContext();
+        return Boolean(extension);
+      })
+    );
+    await browser.waitUntil(async () =>
+      String(
+        await browser.$(statusSelector).getProperty('textContent')
+      ).includes('3D preview unavailable')
+    );
+    await (await browser.$('a[href="/store"]')).click();
+    await waitForPreparedPreview();
+    assert.notEqual(await browser.$(canvasSelector).elementId, parkedCanvasId);
+    await expect(await browser.$(canvasSelector)).toBeDisplayed();
+    await expect(await browser.$(imageSelector)).not.toExist();
   });
 
   it('shows a restored cart while the preview finishes loading', async () => {
@@ -347,7 +482,7 @@ describe('3D hat preview', function () {
       });
       await (await browser.$('a[href="/store"]')).click();
       await expect(await browser.$(loadingSelector)).toExist();
-      await expect(await browser.$(imageSelector)).toBeDisplayed();
+      await expect(await browser.$(imageSelector)).not.toExist();
       await expect(await browser.$('p=Fitted, black.')).toBeDisplayed();
       await expect(await browser.$('[data-product-price]')).toBeDisplayed();
       await expect(await browser.$('button=Add to cart')).toBeDisplayed();
@@ -450,7 +585,7 @@ describe('3D hat preview', function () {
       await browser.setViewport(viewport);
     }
 
-    // Navigation tears down the context and controls; returning recreates them.
+    // Navigation parks the existing context and controls; returning reuses them.
     await (await browser.$('a[href="/company"]')).click();
     await (await browser.$('a[href="/store"]')).click();
     await expect(await browser.$(canvasSelector)).toBeDisplayed();

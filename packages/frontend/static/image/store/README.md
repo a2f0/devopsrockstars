@@ -101,8 +101,14 @@ native resolution on a 2x display. The viewer renders only on changes.
 Model construction yields to the browser between stages and during texture and
 occlusion calculations, using an 8 ms work budget between checkpoints. The cart
 remains interactive while the six-pointed star loader is shown. Its animation
-respects reduced-motion preferences. Navigating away cancels the build and
-releases its partial allocations and graphics context.
+respects reduced-motion preferences. On staging, the preview builds in a
+clipped, inert container as soon as the app mounts, including on Home and
+Company. Opening the Store moves the same canvas into the product area;
+navigating away parks it again without rebuilding the model or graphics
+context. The parked canvas has real dimensions so texture upload and the
+first GPU render also finish in advance. If preparation fails or the context is
+lost, the next Store visit retries with a fresh canvas. Production does not
+prepare a viewer.
 
 A Chromium 152 desktop profile measured 1.6 s construction with 76 timer ticks,
 and 2.6 s with 226 ticks at 4x CPU slowdown. The longest observed main-thread
@@ -113,12 +119,13 @@ physical mobile-device benchmark.
 `hat/resources.ts` owns textures, materials, and geometries from allocation,
 including intermediate parts. Model failures release these resources; viewer
 failures also release the environment and WebGL context. On failure, the loader
-is removed and static hat artwork appears with an unavailable message; purchase
-controls remain usable. A persistent live region announces loading, readiness,
-and failures to screen readers. The legacy `5950.svg` supplies the front
-embroidery and the failure image, but is never the loading placeholder.
+is removed and an unavailable message appears; purchase controls remain usable.
+A persistent live region announces loading, readiness, and failures to screen
+readers. `5950.svg` now contains only the front embroidery paths. The old cap
+illustration is removed and is never used as a loading or failure image.
 Hat unit tests cover assembly cleanup, silhouette
 constraints, and SVG stitching. `e2e/specs/hat-preview.spec.ts` checks the loader,
 reduced motion, announcements,
-cart responsiveness during construction, cancellation, interaction, fresh-load
+cart responsiveness during construction, background preparation and canvas
+reuse across navigation, interaction, fresh-load
 determinism, SVG-derived thread colors, and fallback behavior.
