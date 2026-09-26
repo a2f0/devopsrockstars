@@ -261,7 +261,9 @@ export default function HatPreview({src, name}: {src: string; name: string}) {
           }}
         />
       </Stage>
-      <Announcement role="status">{announcement}</Announcement>
+      <Announcement data-hat-preview-status role="status">
+        {announcement}
+      </Announcement>
       <span id={instructions} hidden>
         Drag or use arrow keys to rotate. Press Home to reset the view.
       </span>

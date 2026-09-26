@@ -7,7 +7,7 @@ import {BasePage} from '../pageObjects/base';
 const canvasSelector = 'canvas[aria-label$="interactive 3D preview"]';
 const imageSelector = 'img[alt="DevOps Rockstars 59FIFTY"]';
 const loadingSelector = '[data-hat-loading]';
-const statusSelector = '[role="status"]';
+const statusSelector = '[data-hat-preview-status]';
 
 async function expectUnavailable() {
   await browser.waitUntil(async () =>
@@ -73,7 +73,7 @@ describe('3D hat preview', function () {
               );
             });
           }
-          return Response.json({
+          const response = Response.json({
             products: [
               {
                 id: 'hat-5950',
@@ -92,6 +92,13 @@ describe('3D hat preview', function () {
               },
             ],
           });
+          const readJson = response.json.bind(response);
+          response.json = async () => {
+            const body = await readJson();
+            document.documentElement.setAttribute('data-storefront-read', '');
+            return body;
+          };
+          return response;
         }
         return originalFetch(input, init);
       };
@@ -330,8 +337,8 @@ describe('3D hat preview', function () {
     try {
       await BasePage.openStaging('company');
       await browser.waitUntil(() =>
-        browser.execute(
-          () => document.documentElement.dataset['storefrontRequests'] === '1'
+        browser.execute(() =>
+          document.documentElement.hasAttribute('data-storefront-read')
         )
       );
       await browser.execute(() => {
