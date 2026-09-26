@@ -9,6 +9,21 @@ const imageSelector = 'img[alt="DevOps Rockstars 59FIFTY"]';
 const loadingSelector = '[data-hat-loading]';
 const statusSelector = '[data-hat-preview-status]';
 
+async function waitForPreparedPreview() {
+  // The app allows 15 seconds for preparation. Software rendering on CI can
+  // exceed WebDriver's default 10-second wait, especially on the Home page.
+  await browser.waitUntil(
+    async () =>
+      String(
+        await browser.$(statusSelector).getProperty('textContent')
+      ).includes('3D preview ready'),
+    {
+      timeout: 20_000,
+      timeoutMsg: 'The background 3D preview did not become ready',
+    }
+  );
+}
+
 async function expectUnavailable() {
   await browser.waitUntil(async () =>
     String(await browser.$(statusSelector).getProperty('textContent')).includes(
@@ -240,11 +255,7 @@ describe('3D hat preview', function () {
     try {
       for (const path of ['', 'company']) {
         await BasePage.openStaging(path);
-        await browser.waitUntil(async () =>
-          String(
-            await browser.$(statusSelector).getProperty('textContent')
-          ).includes('3D preview ready')
-        );
+        await waitForPreparedPreview();
         const canvas = await browser.$(canvasSelector);
         const canvasId = await canvas.elementId;
         await expect(canvas).not.toBeDisplayed();
@@ -346,11 +357,7 @@ describe('3D hat preview', function () {
     });
     try {
       await BasePage.openStaging('store');
-      await browser.waitUntil(async () =>
-        String(
-          await browser.$(statusSelector).getProperty('textContent')
-        ).includes('3D preview ready')
-      );
+      await waitForPreparedPreview();
       assert.deepEqual(
         await browser.execute(() => ({
           lost: document.documentElement.hasAttribute(
@@ -371,11 +378,7 @@ describe('3D hat preview', function () {
 
   it('rebuilds a lost parked context when the Store is opened', async () => {
     await BasePage.openStaging('');
-    await browser.waitUntil(async () =>
-      String(
-        await browser.$(statusSelector).getProperty('textContent')
-      ).includes('3D preview ready')
-    );
+    await waitForPreparedPreview();
     const parkedCanvasId = await browser.$(canvasSelector).elementId;
     assert.ok(
       await browser.execute(() => {
@@ -394,11 +397,7 @@ describe('3D hat preview', function () {
       ).includes('3D preview unavailable')
     );
     await (await browser.$('a[href="/store"]')).click();
-    await browser.waitUntil(async () =>
-      String(
-        await browser.$(statusSelector).getProperty('textContent')
-      ).includes('3D preview ready')
-    );
+    await waitForPreparedPreview();
     assert.notEqual(await browser.$(canvasSelector).elementId, parkedCanvasId);
     await expect(await browser.$(canvasSelector)).toBeDisplayed();
     await expect(await browser.$(imageSelector)).not.toExist();
