@@ -15,6 +15,7 @@ import NotFound from './NotFound';
 import Search from './Search';
 import Skyline from './Skyline';
 import Checkout from './store/Checkout';
+import {HatPreviewProvider} from './store/PreparedHatPreview';
 import Receipt from './store/Receipt';
 import Store from './store/Store';
 import {prefetchStorefront} from './store/storefrontCache';
@@ -54,21 +55,23 @@ function AppRouter() {
             <Header />
             <FlexMain>
               <FlexContainerColumn>
-                <Routes>
-                  <Route path="/" element={<Skyline />} />
-                  <Route path="/company" element={<Company />} />
-                  {features.search ? (
-                    <Route path="/search" element={<Search />} />
-                  ) : null}
-                  {features.store ? (
-                    <>
-                      <Route path="/store" element={<Store />} />
-                      <Route path="/store/checkout" element={<Checkout />} />
-                      <Route path="/store/receipt" element={<Receipt />} />
-                    </>
-                  ) : null}
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
+                <HatPreviewProvider>
+                  <Routes>
+                    <Route path="/" element={<Skyline />} />
+                    <Route path="/company" element={<Company />} />
+                    {features.search ? (
+                      <Route path="/search" element={<Search />} />
+                    ) : null}
+                    {features.store ? (
+                      <>
+                        <Route path="/store" element={<Store />} />
+                        <Route path="/store/checkout" element={<Checkout />} />
+                        <Route path="/store/receipt" element={<Receipt />} />
+                      </>
+                    ) : null}
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </HatPreviewProvider>
               </FlexContainerColumn>
             </FlexMain>
             <Footer />
