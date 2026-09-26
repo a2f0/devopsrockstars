@@ -32,8 +32,9 @@ const turn = keyframes`
 `;
 
 const PreviewStatus = styled.div`
-  position: fixed;
-  inset: 0;
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -66,8 +67,8 @@ const LoadingStar = styled.span`
   position: relative;
   display: grid;
   place-items: center;
-  width: 104px;
-  height: 104px;
+  width: 52px;
+  height: 52px;
 
   &::before {
     content: '';
@@ -79,8 +80,8 @@ const LoadingStar = styled.span`
 
   img {
     display: block;
-    width: 88px;
-    height: 88px;
+    width: 40px;
+    height: 40px;
     animation: ${turn} 1.8s ease-in-out infinite;
   }
 
@@ -233,6 +234,7 @@ export default function HatPreview({
   return (
     <Preview>
       <Stage>
+        {!ready && <img src={src} alt={name} />}
         {status === 'loading' && (
           <PreviewStatus data-hat-loading aria-hidden="true">
             <LoadingStar>
@@ -241,12 +243,9 @@ export default function HatPreview({
           </PreviewStatus>
         )}
         {status === 'unavailable' && (
-          <>
-            <img src={src} alt={name} />
-            <UnavailableMessage aria-hidden="true">
-              3D preview unavailable
-            </UnavailableMessage>
-          </>
+          <UnavailableMessage aria-hidden="true">
+            3D preview unavailable
+          </UnavailableMessage>
         )}
         <canvas
           ref={canvasRef}
