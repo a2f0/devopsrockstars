@@ -1,7 +1,6 @@
-import React, {useCallback, useEffect, useMemo, useState} from 'react';
-import {loadStorefront} from './api';
-import {useStoreCart} from './cart';
 import type {StorefrontResponse} from '@devopsrockstars/shared-types';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import {useStoreCart} from './cart';
 import {formatMoney} from './format';
 import HatPreview, {type HatPreviewStatus} from './HatPreview';
 import {
@@ -21,22 +20,31 @@ import {
   Status,
   StorePage,
 } from './StoreStyles';
+import {cachedStorefront, refreshStorefront} from './storefrontCache';
 
 function useStorefront() {
-  const [storefront, setStorefront] = useState<StorefrontResponse | null>(null);
+  const [storefront, setStorefront] = useState<StorefrontResponse | null>(
+    cachedStorefront
+  );
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const controller = new AbortController();
-    void loadStorefront(controller.signal)
-      .then(setStorefront)
+    let mounted = true;
+    void refreshStorefront()
+      .then(result => {
+        if (mounted) setStorefront(result);
+      })
       .catch(loadError => {
-        if (!controller.signal.aborted) {
+        if (mounted) {
           console.error('Failed to load the store:', loadError);
+          // A failed refresh leaves inventory availability unverified.
+          setStorefront(null);
           setError('The store is temporarily unavailable.');
         }
       });
-    return () => controller.abort();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   return {storefront, error};
