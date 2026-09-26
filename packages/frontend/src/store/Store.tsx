@@ -1,8 +1,8 @@
 import type {StorefrontResponse} from '@devopsrockstars/shared-types';
-import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import {useStoreCart} from './cart';
 import {formatMoney} from './format';
-import HatPreview, {type HatPreviewStatus} from './HatPreview';
+import HatPreview from './HatPreview';
 import {
   ActionLink,
   Button,
@@ -11,6 +11,7 @@ import {
   CartRow,
   Eyebrow,
   Field,
+  InventoryStatus,
   Price,
   ProductArt,
   ProductCopy,
@@ -20,25 +21,36 @@ import {
   Status,
   StorePage,
 } from './StoreStyles';
-import {cachedStorefront, refreshStorefront} from './storefrontCache';
+import {
+  cachedStorefront,
+  refreshStorefront,
+  storedStorefront,
+} from './storefrontCache';
 
 function useStorefront() {
   const [storefront, setStorefront] = useState<StorefrontResponse | null>(
-    cachedStorefront
+    storedStorefront
   );
   const [error, setError] = useState<string | null>(null);
+  const [inventoryReady, setInventoryReady] = useState(
+    () => cachedStorefront() !== null
+  );
 
   useEffect(() => {
     let mounted = true;
     void refreshStorefront()
       .then(result => {
-        if (mounted) setStorefront(result);
+        if (mounted) {
+          setStorefront(result);
+          setInventoryReady(true);
+        }
       })
       .catch(loadError => {
         if (mounted) {
           console.error('Failed to load the store:', loadError);
           // A failed refresh leaves inventory availability unverified.
           setStorefront(null);
+          setInventoryReady(false);
           setError('The store is temporarily unavailable.');
         }
       });
@@ -47,26 +59,13 @@ function useStorefront() {
     };
   }, []);
 
-  return {storefront, error};
+  return {storefront, error, inventoryReady};
 }
 
 const Store = React.memo(() => {
-  const {storefront, error} = useStorefront();
+  const {storefront, error, inventoryReady} = useStorefront();
   const cart = useStoreCart();
   const [selected, setSelected] = useState<Record<string, string>>({});
-  const [previewStatuses, setPreviewStatuses] = useState<
-    Record<string, HatPreviewStatus>
-  >({});
-  const setPreviewStatus = useCallback(
-    (productId: string, status: HatPreviewStatus) => {
-      setPreviewStatuses(current =>
-        current[productId] === status
-          ? current
-          : {...current, [productId]: status}
-      );
-    },
-    []
-  );
   const variants = useMemo(
     () =>
       new Map(
@@ -93,22 +92,14 @@ const Store = React.memo(() => {
     );
   }
 
-  const previewIsLoading = storefront.products.some(
-    product =>
-      product.imagePath === '/static/image/store/5950.svg' &&
-      previewStatuses[product.id] !== 'ready' &&
-      previewStatuses[product.id] !== 'unavailable'
-  );
-
   return (
     <StorePage>
+      {!inventoryReady ? (
+        <InventoryStatus role="status">Updating inventory…</InventoryStatus>
+      ) : null}
       {storefront.products.map(product => {
         const hasHatPreview =
           product.imagePath === '/static/image/store/5950.svg';
-        const productPreviewIsLoading =
-          hasHatPreview &&
-          previewStatuses[product.id] !== 'ready' &&
-          previewStatuses[product.id] !== 'unavailable';
         const available = product.variants.filter(
           variant => variant.availableQuantity > 0
         );
@@ -122,27 +113,19 @@ const Store = React.memo(() => {
           <ProductGrid key={product.id}>
             <ProductArt>
               {hasHatPreview ? (
-                <HatPreview
-                  src={product.imagePath}
-                  name={product.name}
-                  onStatusChange={status =>
-                    setPreviewStatus(product.id, status)
-                  }
-                />
+                <HatPreview src={product.imagePath} name={product.name} />
               ) : (
                 <img src={product.imagePath} alt={product.name} />
               )}
             </ProductArt>
-            <ProductCopy $hidden={productPreviewIsLoading}>
-              {product.description}
-            </ProductCopy>
+            <ProductCopy>{product.description}</ProductCopy>
             <ProductDetails>
               {priceVariant ? (
-                <Price $hidden={productPreviewIsLoading} data-product-price>
+                <Price data-product-price>
                   {formatMoney(priceVariant.unitAmount, priceVariant.currency)}
                 </Price>
               ) : null}
-              <Field $hidden={productPreviewIsLoading}>
+              <Field>
                 Size
                 <Select
                   aria-label={`${product.name} size`}
@@ -169,9 +152,8 @@ const Store = React.memo(() => {
                 </Select>
               </Field>
               <Button
-                $hidden={productPreviewIsLoading}
                 type="button"
-                disabled={!variant}
+                disabled={!inventoryReady || !variant}
                 onClick={() => variant && cart.add(variant.id)}
               >
                 {variant ? 'Add to cart' : 'Sold out'}
@@ -181,7 +163,7 @@ const Store = React.memo(() => {
         );
       })}
 
-      {!previewIsLoading && cart.items.length > 0 ? (
+      {cart.items.length > 0 ? (
         <CartPanel aria-label="Shopping cart">
           <Eyebrow>Your cart</Eyebrow>
           {cart.items.map(item => {

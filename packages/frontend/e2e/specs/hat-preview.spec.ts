@@ -7,7 +7,7 @@ import {BasePage} from '../pageObjects/base';
 const canvasSelector = 'canvas[aria-label$="interactive 3D preview"]';
 const imageSelector = 'img[alt="DevOps Rockstars 59FIFTY"]';
 const loadingSelector = '[data-hat-loading]';
-const statusSelector = '[role="status"]';
+const statusSelector = '[data-hat-preview-status]';
 
 async function expectUnavailable() {
   await browser.waitUntil(async () =>
@@ -53,7 +53,27 @@ describe('3D hat preview', function () {
       const originalFetch = globalThis.fetch.bind(globalThis);
       globalThis.fetch = async (input, init) => {
         if (String(input).endsWith('/api/storefront')) {
-          return Response.json({
+          const requests =
+            Number(
+              document.documentElement.dataset['storefrontRequests'] ?? '0'
+            ) + 1;
+          document.documentElement.dataset['storefrontRequests'] =
+            String(requests);
+          if (
+            requests > 1 &&
+            document.documentElement.hasAttribute('data-hold-store-refresh')
+          ) {
+            await new Promise<void>(resolve => {
+              window.addEventListener(
+                'release-store-refresh',
+                () => resolve(),
+                {
+                  once: true,
+                }
+              );
+            });
+          }
+          const response = Response.json({
             products: [
               {
                 id: 'hat-5950',
@@ -72,6 +92,13 @@ describe('3D hat preview', function () {
               },
             ],
           });
+          const readJson = response.json.bind(response);
+          response.json = async () => {
+            const body = await readJson();
+            document.documentElement.setAttribute('data-storefront-read', '');
+            return body;
+          };
+          return response;
         }
         return originalFetch(input, init);
       };
@@ -80,7 +107,7 @@ describe('3D hat preview', function () {
 
   after(async () => fixtures.remove());
 
-  it('animates the brand star, respects reduced motion, and keeps the layout stable', async () => {
+  it('shows the store while the preview builds and keeps the layout stable', async () => {
     const delayArtwork = await browser.addInitScript(() => {
       const artworkReady = new Promise<void>(resolve => {
         window.addEventListener('release-hat-artwork', () => resolve(), {
@@ -112,26 +139,30 @@ describe('3D hat preview', function () {
           return Boolean(image?.complete && image.naturalWidth > 0);
         }, loadingSelector)
       );
-      await expect(await browser.$(imageSelector)).not.toExist();
+      await expect(await browser.$(imageSelector)).toBeDisplayed();
       const canvas = await browser.$(canvasSelector);
       await expect(canvas).not.toBeDisplayed();
       await expect(canvas).toHaveAttribute('tabindex', '-1');
       const size = await browser.$('select[aria-label$="size"]');
-      await expect(size).not.toBeDisplayed();
-      await expect(await browser.$('button=Add to cart')).not.toBeDisplayed();
-      await expect(await browser.$('p=Fitted, black.')).not.toBeDisplayed();
-      await expect(await browser.$('[data-product-price]')).not.toBeDisplayed();
-      const {starCenter, viewport} = await browser.execute(() => {
-        const {left, top, width, height} = document
-          .querySelector('[data-hat-loading] img')!
-          .getBoundingClientRect();
+      await expect(size).toBeDisplayed();
+      await expect(await browser.$('button=Add to cart')).toBeDisplayed();
+      await expect(await browser.$('p=Fitted, black.')).toBeDisplayed();
+      await expect(await browser.$('[data-product-price]')).toBeDisplayed();
+      const {starCenter, stage} = await browser.execute(() => {
+        const star = document.querySelector('[data-hat-loading] img');
+        const stage = star?.closest('[data-hat-loading]')?.parentElement;
+        if (!star || !stage) throw new Error('The preview spinner is missing.');
+        const {left, top, width, height} = star.getBoundingClientRect();
+        const bounds = stage.getBoundingClientRect();
         return {
           starCenter: {x: left + width / 2, y: top + height / 2},
-          viewport: {x: innerWidth / 2, y: innerHeight / 2},
+          stage: {right: bounds.right, bottom: bounds.bottom},
         };
       });
-      assert.ok(Math.abs(starCenter.x - viewport.x) < 1);
-      assert.ok(Math.abs(starCenter.y - viewport.y) < 1);
+      assert.ok(stage.right - starCenter.x > 0);
+      assert.ok(stage.right - starCenter.x < 60);
+      assert.ok(stage.bottom - starCenter.y > 0);
+      assert.ok(stage.bottom - starCenter.y < 60);
       const position = await size.getLocation();
       const transform = await star.getCSSProperty('transform');
       await browser.waitUntil(
@@ -155,6 +186,7 @@ describe('3D hat preview', function () {
       });
       await canvas.waitForDisplayed();
       await expect(loading).not.toExist();
+      await expect(await browser.$(imageSelector)).not.toExist();
       await browser.waitUntil(async () =>
         String(await status.getProperty('textContent')).includes(
           '3D preview ready'
@@ -236,7 +268,7 @@ describe('3D hat preview', function () {
     }
   });
 
-  it('keeps a restored cart hidden until the preview finishes loading', async () => {
+  it('shows a restored cart while the preview finishes loading', async () => {
     const restoreCart = await browser.addInitScript(() => {
       sessionStorage.setItem(
         'devopsrockstars.store.cart',
@@ -259,10 +291,10 @@ describe('3D hat preview', function () {
     try {
       await BasePage.openStaging('store');
       await expect(await browser.$(loadingSelector)).toExist();
-      await expect(await browser.$('p=Fitted, black.')).not.toBeDisplayed();
+      await expect(await browser.$('p=Fitted, black.')).toBeDisplayed();
       await expect(
         await browser.$('aside[aria-label="Shopping cart"]')
-      ).not.toExist();
+      ).toBeDisplayed();
       await browser.execute(() => {
         window.dispatchEvent(new Event('release-hat-artwork'));
       });
@@ -275,6 +307,82 @@ describe('3D hat preview', function () {
         sessionStorage.removeItem('devopsrockstars.store.cart');
       });
       await restoreCart.remove();
+    }
+  });
+
+  it('shows cached inventory from Company while refreshing and building the preview', async () => {
+    const advanceClock = await browser.addInitScript(() => {
+      const now = Date.now.bind(Date);
+      let offset = 0;
+      Date.now = () => now() + offset;
+      window.addEventListener('advance-store-clock', () => {
+        offset = 31_000;
+      });
+    });
+    const delayArtwork = await browser.addInitScript(() => {
+      const artworkReady = new Promise<void>(resolve => {
+        window.addEventListener('release-hat-artwork', () => resolve(), {
+          once: true,
+        });
+      });
+      const originalFetch = globalThis.fetch.bind(globalThis);
+      globalThis.fetch = async (input, init) => {
+        const response = await originalFetch(input, init);
+        if (String(input).endsWith('/static/image/store/5950.svg')) {
+          await artworkReady;
+        }
+        return response;
+      };
+    });
+    try {
+      await BasePage.openStaging('company');
+      await browser.waitUntil(() =>
+        browser.execute(() =>
+          document.documentElement.hasAttribute('data-storefront-read')
+        )
+      );
+      await browser.execute(() => {
+        window.dispatchEvent(new Event('advance-store-clock'));
+        document.documentElement.setAttribute('data-hold-store-refresh', '');
+      });
+      await (await browser.$('a[href="/store"]')).click();
+      await expect(await browser.$(loadingSelector)).toExist();
+      await expect(await browser.$(imageSelector)).toBeDisplayed();
+      await expect(await browser.$('p=Fitted, black.')).toBeDisplayed();
+      await expect(await browser.$('[data-product-price]')).toBeDisplayed();
+      await expect(await browser.$('button=Add to cart')).toBeDisplayed();
+      await expect(await browser.$('button=Add to cart')).toBeDisabled();
+      await expect(await browser.$('p=Updating inventory…')).toBeDisplayed();
+      const sizePosition = await (
+        await browser.$('select[aria-label$="size"]')
+      ).getLocation();
+      assert.equal(
+        await browser.execute(() =>
+          document.body.textContent?.includes('Loading inventory…')
+        ),
+        false
+      );
+      await browser.execute(() => {
+        document.documentElement.removeAttribute('data-hold-store-refresh');
+        window.dispatchEvent(new Event('release-store-refresh'));
+        window.dispatchEvent(new Event('release-hat-artwork'));
+      });
+      await expect(await browser.$(canvasSelector)).toBeDisplayed();
+      await expect(await browser.$('button=Add to cart')).toBeEnabled();
+      await expect(await browser.$('p=Updating inventory…')).not.toExist();
+      await expect(await browser.$('[data-product-price]')).toBeDisplayed();
+      assert.deepEqual(
+        await (await browser.$('select[aria-label$="size"]')).getLocation(),
+        sizePosition
+      );
+    } finally {
+      await browser.execute(() => {
+        document.documentElement.removeAttribute('data-hold-store-refresh');
+        window.dispatchEvent(new Event('release-store-refresh'));
+        window.dispatchEvent(new Event('release-hat-artwork'));
+      });
+      await delayArtwork.remove();
+      await advanceClock.remove();
     }
   });
 

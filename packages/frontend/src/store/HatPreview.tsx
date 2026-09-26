@@ -32,8 +32,9 @@ const turn = keyframes`
 `;
 
 const PreviewStatus = styled.div`
-  position: fixed;
-  inset: 0;
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -66,8 +67,8 @@ const LoadingStar = styled.span`
   position: relative;
   display: grid;
   place-items: center;
-  width: 104px;
-  height: 104px;
+  width: 52px;
+  height: 52px;
 
   &::before {
     content: '';
@@ -79,8 +80,8 @@ const LoadingStar = styled.span`
 
   img {
     display: block;
-    width: 88px;
-    height: 88px;
+    width: 40px;
+    height: 40px;
     animation: ${turn} 1.8s ease-in-out infinite;
   }
 
@@ -89,18 +90,10 @@ const LoadingStar = styled.span`
   }
 `;
 
-export type HatPreviewStatus = 'loading' | 'ready' | 'unavailable';
+type HatPreviewStatus = 'loading' | 'ready' | 'unavailable';
 const modelLoadTimeoutMs = 15_000;
 
-export default function HatPreview({
-  src,
-  name,
-  onStatusChange,
-}: {
-  src: string;
-  name: string;
-  onStatusChange?: (status: HatPreviewStatus) => void;
-}) {
+export default function HatPreview({src, name}: {src: string; name: string}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const viewerRef = useRef<Awaited<ReturnType<typeof createHatViewer>> | null>(
     null
@@ -109,12 +102,6 @@ export default function HatPreview({
   const ready = status === 'ready';
   const [announcement, setAnnouncement] = useState('');
   const instructions = useId();
-  const onStatusChangeRef = useRef(onStatusChange);
-  const previousSrc = useRef(src);
-
-  useEffect(() => {
-    onStatusChangeRef.current = onStatusChange;
-  }, [onStatusChange]);
 
   // Mount an empty live region before filling it, and retain it after loading.
   useEffect(() => {
@@ -144,13 +131,8 @@ export default function HatPreview({
       }
       if (nextStatus !== 'loading') settled = true;
       setStatus(nextStatus);
-      if (nextStatus !== 'loading') onStatusChangeRef.current?.(nextStatus);
     };
     setStatus('loading');
-    if (previousSrc.current !== src) {
-      previousSrc.current = src;
-      onStatusChangeRef.current?.('loading');
-    }
     const dispose = () => {
       viewerRef.current?.dispose();
       viewerRef.current = null;
@@ -233,6 +215,7 @@ export default function HatPreview({
   return (
     <Preview>
       <Stage>
+        {!ready && <img src={src} alt={name} />}
         {status === 'loading' && (
           <PreviewStatus data-hat-loading aria-hidden="true">
             <LoadingStar>
@@ -241,12 +224,9 @@ export default function HatPreview({
           </PreviewStatus>
         )}
         {status === 'unavailable' && (
-          <>
-            <img src={src} alt={name} />
-            <UnavailableMessage aria-hidden="true">
-              3D preview unavailable
-            </UnavailableMessage>
-          </>
+          <UnavailableMessage aria-hidden="true">
+            3D preview unavailable
+          </UnavailableMessage>
         )}
         <canvas
           ref={canvasRef}
@@ -281,7 +261,9 @@ export default function HatPreview({
           }}
         />
       </Stage>
-      <Announcement role="status">{announcement}</Announcement>
+      <Announcement data-hat-preview-status role="status">
+        {announcement}
+      </Announcement>
       <span id={instructions} hidden>
         Drag or use arrow keys to rotate. Press Home to reset the view.
       </span>

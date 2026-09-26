@@ -1,6 +1,11 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import ReactDOM from 'react-dom/client';
-import {Route, BrowserRouter as Router, Routes} from 'react-router';
+import {
+  Route,
+  BrowserRouter as Router,
+  Routes,
+  useLocation,
+} from 'react-router';
 import Company from './Company';
 import {features} from './environment';
 import Footer from './Footer';
@@ -12,16 +17,36 @@ import Skyline from './Skyline';
 import Checkout from './store/Checkout';
 import Receipt from './store/Receipt';
 import Store from './store/Store';
+import {prefetchStorefront} from './store/storefrontCache';
 import FlexContainerColumn from './styled-components/FlexContainerColumn';
 import FlexContainerRow from './styled-components/FlexContainerRow';
 import FlexFullHeightMin from './styled-components/FlexFullHeightMin';
 import FlexMain from './styled-components/FlexMain';
 import GlobalStyle from './styled-components/GlobalStyle';
 
+function StorePrefetch() {
+  const {pathname} = useLocation();
+
+  useEffect(() => {
+    if (
+      !features.store ||
+      pathname === '/store' ||
+      pathname.startsWith('/store/')
+    ) {
+      return;
+    }
+    // Keep the inventory warm while visitors browse other pages.
+    void prefetchStorefront().catch(() => {});
+  }, [pathname]);
+
+  return null;
+}
+
 function AppRouter() {
   return (
     <Router>
       <GlobalStyle />
+      <StorePrefetch />
       <FullScreenMap />
       <FlexContainerRow>
         <FlexFullHeightMin>

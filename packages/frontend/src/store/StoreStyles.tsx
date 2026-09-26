@@ -11,6 +11,7 @@ export const StoreShell = styled.section`
 // left-aligned around their forms. It carries its own top padding because it
 // has no heading to space the art away from the navigation.
 export const StorePage = styled(StoreShell)`
+  position: relative;
   padding-top: 32px;
   text-align: center;
 `;
@@ -62,27 +63,24 @@ export const ProductDetails = styled.div`
 `;
 
 // Newlines in the stored description render as line breaks.
-export const ProductCopy = styled.p<{$hidden?: boolean}>`
+export const ProductCopy = styled.p`
   color: #c7c7c7;
   font-size: 16px;
   line-height: 1.5;
-  visibility: ${({$hidden}) => ($hidden ? 'hidden' : 'visible')};
   white-space: pre-line;
 `;
 
-export const Price = styled.div<{$hidden?: boolean}>`
+export const Price = styled.div`
   font-size: 24px;
-  visibility: ${({$hidden}) => ($hidden ? 'hidden' : 'visible')};
 `;
 
-export const Field = styled.label<{$hidden?: boolean}>`
+export const Field = styled.label`
   display: flex;
   flex-direction: column;
   gap: 6px;
   min-width: 0;
   color: #bbb;
   font-size: 13px;
-  visibility: ${({$hidden}) => ($hidden ? 'hidden' : 'visible')};
 `;
 
 const controlStyles = `
@@ -174,7 +172,7 @@ export const Select = styled.select`
   }
 `;
 
-export const Button = styled.button<{$hidden?: boolean}>`
+export const Button = styled.button`
   min-height: 42px;
   border: 1px solid #aaa;
   border-radius: 0;
@@ -185,7 +183,6 @@ export const Button = styled.button<{$hidden?: boolean}>`
   padding: 9px 18px;
   cursor: pointer;
   pointer-events: auto;
-  visibility: ${({$hidden}) => ($hidden ? 'hidden' : 'visible')};
 
   &:hover:not(:disabled),
   &:focus-visible {
@@ -318,6 +315,15 @@ export const Status = styled.p<{$error?: boolean}>`
   color: ${({$error}) => ($error ? '#ff8a8a' : '#aaa')};
   font-size: 14px;
   line-height: 1.4;
+`;
+
+export const InventoryStatus = styled(Status)`
+  position: absolute;
+  top: 4px;
+  right: 0;
+  left: 0;
+  margin: 0;
+  pointer-events: none;
 `;
 
 export const PaymentHost = styled.div`
