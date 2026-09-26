@@ -369,6 +369,41 @@ describe('3D hat preview', function () {
     }
   });
 
+  it('rebuilds a lost parked context when the Store is opened', async () => {
+    await BasePage.openStaging('');
+    await browser.waitUntil(async () =>
+      String(
+        await browser.$(statusSelector).getProperty('textContent')
+      ).includes('3D preview ready')
+    );
+    const parkedCanvasId = await browser.$(canvasSelector).elementId;
+    assert.ok(
+      await browser.execute(() => {
+        const canvas =
+          document.querySelector<HTMLCanvasElement>('canvas[aria-label]');
+        const extension = canvas
+          ?.getContext('webgl2')
+          ?.getExtension('WEBGL_lose_context');
+        extension?.loseContext();
+        return Boolean(extension);
+      })
+    );
+    await browser.waitUntil(async () =>
+      String(
+        await browser.$(statusSelector).getProperty('textContent')
+      ).includes('3D preview unavailable')
+    );
+    await (await browser.$('a[href="/store"]')).click();
+    await browser.waitUntil(async () =>
+      String(
+        await browser.$(statusSelector).getProperty('textContent')
+      ).includes('3D preview ready')
+    );
+    assert.notEqual(await browser.$(canvasSelector).elementId, parkedCanvasId);
+    await expect(await browser.$(canvasSelector)).toBeDisplayed();
+    await expect(await browser.$(imageSelector)).not.toExist();
+  });
+
   it('shows a restored cart while the preview finishes loading', async () => {
     const restoreCart = await browser.addInitScript(() => {
       sessionStorage.setItem(

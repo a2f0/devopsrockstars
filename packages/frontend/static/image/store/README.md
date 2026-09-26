@@ -106,7 +106,9 @@ clipped, inert container as soon as the app mounts, including on Home and
 Company. Opening the Store moves the same canvas into the product area;
 navigating away parks it again without rebuilding the model or graphics
 context. The parked canvas has real dimensions so texture upload and the
-first GPU render also finish in advance. Production does not prepare a viewer.
+first GPU render also finish in advance. If preparation fails or the context is
+lost, the next Store visit retries with a fresh canvas. Production does not
+prepare a viewer.
 
 A Chromium 152 desktop profile measured 1.6 s construction with 76 timer ticks,
 and 2.6 s with 226 ticks at 4x CPU slowdown. The longest observed main-thread

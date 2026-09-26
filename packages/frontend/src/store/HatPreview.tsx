@@ -110,6 +110,8 @@ export default function HatPreview({
     null
   );
   const [status, setStatus] = useState<HatPreviewStatus>('loading');
+  const [attempt, setAttempt] = useState(0);
+  const wasActive = useRef(active);
   const ready = status === 'ready';
   const [announcement, setAnnouncement] = useState('');
   const instructions = useId();
@@ -126,6 +128,17 @@ export default function HatPreview({
       }`
     );
   }, [name, status, ready]);
+
+  useEffect(() => {
+    const entering = active && !wasActive.current;
+    wasActive.current = active;
+    // A failed background attempt must not poison every subsequent visit.
+    // Retry once on entry, never in a loop on devices without WebGL support.
+    if (entering && status === 'unavailable') {
+      setStatus('loading');
+      setAttempt(current => current + 1);
+    }
+  }, [active, status]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -221,7 +234,7 @@ export default function HatPreview({
       controller.abort();
       dispose();
     };
-  }, []);
+  }, [attempt]);
 
   // Moving the already-built canvas into the Store may change its dimensions.
   // Paint at the final size before the browser reveals it, without rebuilding.
@@ -245,6 +258,7 @@ export default function HatPreview({
           </UnavailableMessage>
         )}
         <canvas
+          key={attempt}
           ref={canvasRef}
           style={{visibility: ready ? 'visible' : 'hidden'}}
           tabIndex={ready ? 0 : -1}
