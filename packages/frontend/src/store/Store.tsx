@@ -20,25 +20,36 @@ import {
   Status,
   StorePage,
 } from './StoreStyles';
-import {cachedStorefront, refreshStorefront} from './storefrontCache';
+import {
+  cachedStorefront,
+  refreshStorefront,
+  storedStorefront,
+} from './storefrontCache';
 
 function useStorefront() {
   const [storefront, setStorefront] = useState<StorefrontResponse | null>(
-    cachedStorefront
+    storedStorefront
   );
   const [error, setError] = useState<string | null>(null);
+  const [inventoryReady, setInventoryReady] = useState(
+    () => cachedStorefront() !== null
+  );
 
   useEffect(() => {
     let mounted = true;
     void refreshStorefront()
       .then(result => {
-        if (mounted) setStorefront(result);
+        if (mounted) {
+          setStorefront(result);
+          setInventoryReady(true);
+        }
       })
       .catch(loadError => {
         if (mounted) {
           console.error('Failed to load the store:', loadError);
           // A failed refresh leaves inventory availability unverified.
           setStorefront(null);
+          setInventoryReady(false);
           setError('The store is temporarily unavailable.');
         }
       });
@@ -47,11 +58,11 @@ function useStorefront() {
     };
   }, []);
 
-  return {storefront, error};
+  return {storefront, error, inventoryReady};
 }
 
 const Store = React.memo(() => {
-  const {storefront, error} = useStorefront();
+  const {storefront, error, inventoryReady} = useStorefront();
   const cart = useStoreCart();
   const [selected, setSelected] = useState<Record<string, string>>({});
   const variants = useMemo(
@@ -82,6 +93,7 @@ const Store = React.memo(() => {
 
   return (
     <StorePage>
+      {!inventoryReady ? <Status>Updating inventory…</Status> : null}
       {storefront.products.map(product => {
         const hasHatPreview =
           product.imagePath === '/static/image/store/5950.svg';
@@ -138,7 +150,7 @@ const Store = React.memo(() => {
               </Field>
               <Button
                 type="button"
-                disabled={!variant}
+                disabled={!inventoryReady || !variant}
                 onClick={() => variant && cart.add(variant.id)}
               >
                 {variant ? 'Add to cart' : 'Sold out'}

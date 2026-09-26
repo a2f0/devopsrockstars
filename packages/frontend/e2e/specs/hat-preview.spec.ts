@@ -304,6 +304,14 @@ describe('3D hat preview', function () {
   });
 
   it('shows cached inventory from Company while refreshing and building the preview', async () => {
+    const advanceClock = await browser.addInitScript(() => {
+      const now = Date.now.bind(Date);
+      let offset = 0;
+      Date.now = () => now() + offset;
+      window.addEventListener('advance-store-clock', () => {
+        offset = 31_000;
+      });
+    });
     const delayArtwork = await browser.addInitScript(() => {
       const artworkReady = new Promise<void>(resolve => {
         window.addEventListener('release-hat-artwork', () => resolve(), {
@@ -327,6 +335,7 @@ describe('3D hat preview', function () {
         )
       );
       await browser.execute(() => {
+        window.dispatchEvent(new Event('advance-store-clock'));
         document.documentElement.setAttribute('data-hold-store-refresh', '');
       });
       await (await browser.$('a[href="/store"]')).click();
@@ -335,12 +344,23 @@ describe('3D hat preview', function () {
       await expect(await browser.$('p=Fitted, black.')).toBeDisplayed();
       await expect(await browser.$('[data-product-price]')).toBeDisplayed();
       await expect(await browser.$('button=Add to cart')).toBeDisplayed();
+      await expect(await browser.$('button=Add to cart')).toBeDisabled();
+      await expect(await browser.$('p=Updating inventory…')).toBeDisplayed();
       assert.equal(
         await browser.execute(() =>
           document.body.textContent?.includes('Loading inventory…')
         ),
         false
       );
+      await browser.execute(() => {
+        document.documentElement.removeAttribute('data-hold-store-refresh');
+        window.dispatchEvent(new Event('release-store-refresh'));
+        window.dispatchEvent(new Event('release-hat-artwork'));
+      });
+      await expect(await browser.$(canvasSelector)).toBeDisplayed();
+      await expect(await browser.$('button=Add to cart')).toBeEnabled();
+      await expect(await browser.$('p=Updating inventory…')).not.toExist();
+      await expect(await browser.$('[data-product-price]')).toBeDisplayed();
     } finally {
       await browser.execute(() => {
         document.documentElement.removeAttribute('data-hold-store-refresh');
@@ -348,6 +368,7 @@ describe('3D hat preview', function () {
         window.dispatchEvent(new Event('release-hat-artwork'));
       });
       await delayArtwork.remove();
+      await advanceClock.remove();
     }
   });
 

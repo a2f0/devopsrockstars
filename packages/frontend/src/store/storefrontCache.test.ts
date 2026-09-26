@@ -41,6 +41,7 @@ test('prefetch shares an in-flight request and expires its snapshot', async () =
   assert.equal(calls, 1);
   time++;
   assert.equal(cache.cachedStorefront(), null);
+  assert.equal(cache.storedStorefront(), first);
   assert.equal(await cache.prefetchStorefront(), second);
   assert.equal(calls, 2);
 });
