@@ -37,6 +37,8 @@ function useStorefront() {
       .catch(loadError => {
         if (mounted) {
           console.error('Failed to load the store:', loadError);
+          // A failed refresh leaves inventory availability unverified.
+          setStorefront(null);
           setError('The store is temporarily unavailable.');
         }
       });

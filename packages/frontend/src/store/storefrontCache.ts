@@ -2,40 +2,52 @@ import type {StorefrontResponse} from '@devopsrockstars/shared-types';
 import {loadStorefront} from './api';
 
 const freshnessMs = 30_000;
-let cached: StorefrontResponse | null = null;
-let cachedAt = 0;
-let pending: Promise<StorefrontResponse> | null = null;
 
-export function cachedStorefront() {
-  return cached;
-}
+export function createStorefrontCache(
+  load: () => Promise<StorefrontResponse>,
+  now: () => number = Date.now
+) {
+  let cached: StorefrontResponse | null = null;
+  let cachedAt = 0;
+  let pending: Promise<StorefrontResponse> | null = null;
+  let pendingPrefetch = false;
 
-function fetchStorefront(refresh: boolean): Promise<StorefrontResponse> {
-  if (pending) return pending;
-  if (!refresh && cached && Date.now() - cachedAt < freshnessMs) {
-    return Promise.resolve(cached);
+  function cachedStorefront() {
+    return cached && now() - cachedAt < freshnessMs ? cached : null;
   }
 
-  // Share a request when the user opens the store while prefetch is in flight.
-  pending = loadStorefront().then(
-    storefront => {
-      cached = storefront;
-      cachedAt = Date.now();
-      pending = null;
-      return storefront;
-    },
-    error => {
-      pending = null;
-      throw error;
+  function fetchStorefront(refresh: boolean): Promise<StorefrontResponse> {
+    if (pending) {
+      // A direct Store visit should retry if its shared background request fails.
+      return refresh && pendingPrefetch
+        ? pending.catch(() => fetchStorefront(true))
+        : pending;
     }
-  );
-  return pending;
+    const fresh = cachedStorefront();
+    if (!refresh && fresh) return Promise.resolve(fresh);
+
+    pendingPrefetch = !refresh;
+    pending = load().then(
+      storefront => {
+        cached = storefront;
+        cachedAt = now();
+        pending = null;
+        return storefront;
+      },
+      error => {
+        pending = null;
+        throw error;
+      }
+    );
+    return pending;
+  }
+
+  return {
+    cachedStorefront,
+    prefetchStorefront: () => fetchStorefront(false),
+    refreshStorefront: () => fetchStorefront(true),
+  };
 }
 
-export function prefetchStorefront() {
-  return fetchStorefront(false);
-}
-
-export function refreshStorefront() {
-  return fetchStorefront(true);
-}
+export const {cachedStorefront, prefetchStorefront, refreshStorefront} =
+  createStorefrontCache(loadStorefront);
