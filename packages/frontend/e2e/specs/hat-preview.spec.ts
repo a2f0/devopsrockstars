@@ -143,7 +143,7 @@ describe('3D hat preview', function () {
       await expect(await browser.$('[data-product-price]')).toBeDisplayed();
       const {starCenter, stage} = await browser.execute(() => {
         const star = document.querySelector('[data-hat-loading] img');
-        const stage = star?.parentElement?.parentElement;
+        const stage = star?.closest('[data-hat-loading]')?.parentElement;
         if (!star || !stage) throw new Error('The preview spinner is missing.');
         const {left, top, width, height} = star.getBoundingClientRect();
         const bounds = stage.getBoundingClientRect();
@@ -152,7 +152,9 @@ describe('3D hat preview', function () {
           stage: {right: bounds.right, bottom: bounds.bottom},
         };
       });
+      assert.ok(stage.right - starCenter.x > 0);
       assert.ok(stage.right - starCenter.x < 60);
+      assert.ok(stage.bottom - starCenter.y > 0);
       assert.ok(stage.bottom - starCenter.y < 60);
       const position = await size.getLocation();
       const transform = await star.getCSSProperty('transform');
@@ -341,6 +343,7 @@ describe('3D hat preview', function () {
       );
     } finally {
       await browser.execute(() => {
+        document.documentElement.removeAttribute('data-hold-store-refresh');
         window.dispatchEvent(new Event('release-store-refresh'));
         window.dispatchEvent(new Event('release-hat-artwork'));
       });

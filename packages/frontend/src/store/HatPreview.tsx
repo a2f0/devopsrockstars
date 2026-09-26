@@ -90,18 +90,10 @@ const LoadingStar = styled.span`
   }
 `;
 
-export type HatPreviewStatus = 'loading' | 'ready' | 'unavailable';
+type HatPreviewStatus = 'loading' | 'ready' | 'unavailable';
 const modelLoadTimeoutMs = 15_000;
 
-export default function HatPreview({
-  src,
-  name,
-  onStatusChange,
-}: {
-  src: string;
-  name: string;
-  onStatusChange?: (status: HatPreviewStatus) => void;
-}) {
+export default function HatPreview({src, name}: {src: string; name: string}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const viewerRef = useRef<Awaited<ReturnType<typeof createHatViewer>> | null>(
     null
@@ -110,12 +102,6 @@ export default function HatPreview({
   const ready = status === 'ready';
   const [announcement, setAnnouncement] = useState('');
   const instructions = useId();
-  const onStatusChangeRef = useRef(onStatusChange);
-  const previousSrc = useRef(src);
-
-  useEffect(() => {
-    onStatusChangeRef.current = onStatusChange;
-  }, [onStatusChange]);
 
   // Mount an empty live region before filling it, and retain it after loading.
   useEffect(() => {
@@ -145,13 +131,8 @@ export default function HatPreview({
       }
       if (nextStatus !== 'loading') settled = true;
       setStatus(nextStatus);
-      if (nextStatus !== 'loading') onStatusChangeRef.current?.(nextStatus);
     };
     setStatus('loading');
-    if (previousSrc.current !== src) {
-      previousSrc.current = src;
-      onStatusChangeRef.current?.('loading');
-    }
     const dispose = () => {
       viewerRef.current?.dispose();
       viewerRef.current = null;
