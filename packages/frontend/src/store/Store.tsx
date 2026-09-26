@@ -11,6 +11,7 @@ import {
   CartRow,
   Eyebrow,
   Field,
+  InventoryStatus,
   Price,
   ProductArt,
   ProductCopy,
@@ -93,7 +94,9 @@ const Store = React.memo(() => {
 
   return (
     <StorePage>
-      {!inventoryReady ? <Status>Updating inventory…</Status> : null}
+      {!inventoryReady ? (
+        <InventoryStatus role="status">Updating inventory…</InventoryStatus>
+      ) : null}
       {storefront.products.map(product => {
         const hasHatPreview =
           product.imagePath === '/static/image/store/5950.svg';

@@ -11,6 +11,7 @@ export const StoreShell = styled.section`
 // left-aligned around their forms. It carries its own top padding because it
 // has no heading to space the art away from the navigation.
 export const StorePage = styled(StoreShell)`
+  position: relative;
   padding-top: 32px;
   text-align: center;
 `;
@@ -314,6 +315,15 @@ export const Status = styled.p<{$error?: boolean}>`
   color: ${({$error}) => ($error ? '#ff8a8a' : '#aaa')};
   font-size: 14px;
   line-height: 1.4;
+`;
+
+export const InventoryStatus = styled(Status)`
+  position: absolute;
+  top: 4px;
+  right: 0;
+  left: 0;
+  margin: 0;
+  pointer-events: none;
 `;
 
 export const PaymentHost = styled.div`

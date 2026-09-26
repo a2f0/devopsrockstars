@@ -346,6 +346,9 @@ describe('3D hat preview', function () {
       await expect(await browser.$('button=Add to cart')).toBeDisplayed();
       await expect(await browser.$('button=Add to cart')).toBeDisabled();
       await expect(await browser.$('p=Updating inventory…')).toBeDisplayed();
+      const sizePosition = await (
+        await browser.$('select[aria-label$="size"]')
+      ).getLocation();
       assert.equal(
         await browser.execute(() =>
           document.body.textContent?.includes('Loading inventory…')
@@ -361,6 +364,10 @@ describe('3D hat preview', function () {
       await expect(await browser.$('button=Add to cart')).toBeEnabled();
       await expect(await browser.$('p=Updating inventory…')).not.toExist();
       await expect(await browser.$('[data-product-price]')).toBeDisplayed();
+      assert.deepEqual(
+        await (await browser.$('select[aria-label$="size"]')).getLocation(),
+        sizePosition
+      );
     } finally {
       await browser.execute(() => {
         document.documentElement.removeAttribute('data-hold-store-refresh');
