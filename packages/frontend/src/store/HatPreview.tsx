@@ -38,8 +38,7 @@ const turn = keyframes`
 
 const PreviewStatus = styled.div`
   position: absolute;
-  right: 12px;
-  bottom: 12px;
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
