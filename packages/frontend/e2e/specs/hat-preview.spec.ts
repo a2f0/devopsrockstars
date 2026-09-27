@@ -171,13 +171,14 @@ describe('3D hat preview', function () {
         const bounds = stage.getBoundingClientRect();
         return {
           starCenter: {x: left + width / 2, y: top + height / 2},
-          stage: {right: bounds.right, bottom: bounds.bottom},
+          stage: {
+            x: bounds.left + bounds.width / 2,
+            y: bounds.top + bounds.height / 2,
+          },
         };
       });
-      assert.ok(stage.right - starCenter.x > 0);
-      assert.ok(stage.right - starCenter.x < 60);
-      assert.ok(stage.bottom - starCenter.y > 0);
-      assert.ok(stage.bottom - starCenter.y < 60);
+      assert.ok(Math.abs(stage.x - starCenter.x) < 1);
+      assert.ok(Math.abs(stage.y - starCenter.y) < 1);
       const position = await size.getLocation();
       const transform = await star.getCSSProperty('transform');
       await browser.waitUntil(
