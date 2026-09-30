@@ -105,6 +105,29 @@ export const Input = styled.input`
   ${controlStyles}
 `;
 
+// The size picker has no visible label; its caret sits centered beneath the
+// control instead of inside it, and brightens with the border on focus.
+export const SizePicker = styled.label`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+
+  &::after {
+    content: '';
+    width: 10px;
+    height: 6px;
+    background-color: #bbb;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='black' stroke-width='1.5'/%3E%3C/svg%3E")
+      center / contain no-repeat;
+  }
+
+  &:focus-within::after {
+    background-color: white;
+  }
+`;
+
 export const Select = styled.select`
   ${controlStyles}
   appearance: none;
@@ -112,13 +135,9 @@ export const Select = styled.select`
      system accent, wherever the picker cannot be styled directly. */
   color-scheme: dark;
   accent-color: #666;
-  background-image: linear-gradient(45deg, transparent 50%, white 50%),
-    linear-gradient(135deg, white 50%, transparent 50%);
-  background-position:
-    calc(100% - 15px) 50%,
-    calc(100% - 10px) 50%;
-  background-size: 5px 5px, 5px 5px;
-  background-repeat: no-repeat;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  text-align: center;
+  text-align-last: center;
 
   /* Browsers that render the picker in the page let it match the store
      instead of falling back to the platform menu. */
@@ -130,17 +149,11 @@ export const Select = styled.select`
 
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    background-image: none;
-    text-align: left;
+    justify-content: center;
 
+    /* SizePicker draws the caret below the control. */
     &::picker-icon {
-      color: #bbb;
-      transition: rotate 0.15s ease;
-    }
-
-    &:open::picker-icon {
-      rotate: 180deg;
+      display: none;
     }
 
     &::picker(select) {
@@ -152,6 +165,8 @@ export const Select = styled.select`
     }
 
     option {
+      position: relative;
+      justify-content: center;
       padding: 9px 11px;
       background: #080808;
       color: white;
@@ -166,7 +181,10 @@ export const Select = styled.select`
       background: #242424;
     }
 
+    /* Out of flow, so the checkmark does not push the size off center. */
     option::checkmark {
+      position: absolute;
+      left: 11px;
       color: #bbb;
     }
   }
