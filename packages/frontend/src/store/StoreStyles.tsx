@@ -58,7 +58,7 @@ export const ProductDetails = styled.div`
   width: min(100%, 280px);
   display: flex;
   flex-direction: column;
-  align-items: stretch;
+  align-items: center;
   gap: 18px;
 `;
 
@@ -105,88 +105,108 @@ export const Input = styled.input`
   ${controlStyles}
 `;
 
-// The size picker has no visible label; its caret sits centered beneath the
-// control instead of inside it, and brightens with the border on focus.
-export const SizePicker = styled.label`
+const monospace = 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
+
+// The size picker is wider than the add-to-cart button beneath it.
+export const SizeField = styled.div`
+  position: relative;
+  width: min(100%, 180px);
+`;
+
+export const SizeBox = styled.span`
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #666;
+  background: #080808;
+  font-family: ${monospace};
+  font-size: 15px;
+  padding: 10px 11px;
+  text-align: center;
+`;
+
+export const SizeCaret = styled.span`
+  width: 10px;
+  height: 6px;
+  background-color: #bbb;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='black' stroke-width='1.5'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  transition: rotate 0.15s ease;
+`;
+
+// The trigger spans the bordered box and the caret centered beneath it, so
+// clicking either one opens the list.
+export const SizeTrigger = styled.button`
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  min-width: 0;
+  border: 0;
+  padding: 0;
+  background: none;
+  color: white;
+  font: inherit;
+  cursor: pointer;
 
-  &::after {
-    content: '';
-    width: 10px;
-    height: 6px;
-    background-color: #bbb;
-    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='black' stroke-width='1.5'/%3E%3C/svg%3E")
-      center / contain no-repeat;
+  &:focus {
+    outline: none;
   }
 
-  &:focus-within::after {
+  &:focus ${SizeBox}, &[aria-expanded='true'] ${SizeBox} {
+    border-color: white;
+  }
+
+  &:hover ${SizeCaret}, &:focus ${SizeCaret} {
     background-color: white;
+  }
+
+  &[aria-expanded='true'] ${SizeCaret} {
+    rotate: 180deg;
+  }
+
+  &:disabled {
+    color: #666;
+    cursor: not-allowed;
+  }
+
+  &:disabled ${SizeBox} {
+    border-color: #444;
+  }
+
+  &:disabled ${SizeCaret} {
+    background-color: #444;
   }
 `;
 
-export const Select = styled.select`
-  ${controlStyles}
-  appearance: none;
-  /* Keeps the platform popup dark, and its selection gray rather than the
-     system accent, wherever the picker cannot be styled directly. */
-  color-scheme: dark;
-  accent-color: #666;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+export const SizeList = styled.div`
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  left: 0;
+  z-index: 1;
+  border: 1px solid #666;
+  background: #080808;
+  font-family: ${monospace};
+  font-size: 15px;
   text-align: center;
-  text-align-last: center;
+`;
 
-  /* Browsers that render the picker in the page let it match the store
-     instead of falling back to the platform menu. */
-  @supports (appearance: base-select) {
-    &,
-    &::picker(select) {
-      appearance: base-select;
-    }
+export const SizeOption = styled.div<{$active: boolean}>`
+  position: relative;
+  padding: 9px 11px;
+  background: ${({$active}) => ($active ? '#1a1a1a' : '#080808')};
+  cursor: pointer;
 
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  &[aria-selected='true'] {
+    background: #242424;
+  }
 
-    /* SizePicker draws the caret below the control. */
-    &::picker-icon {
-      display: none;
-    }
-
-    &::picker(select) {
-      border: 1px solid #666;
-      margin-top: 2px;
-      padding: 0;
-      background: #080808;
-      color: white;
-    }
-
-    option {
-      position: relative;
-      justify-content: center;
-      padding: 9px 11px;
-      background: #080808;
-      color: white;
-    }
-
-    option:hover,
-    option:focus {
-      background: #1a1a1a;
-    }
-
-    option:checked {
-      background: #242424;
-    }
-
-    /* Out of flow, so the checkmark does not push the size off center. */
-    option::checkmark {
-      position: absolute;
-      left: 11px;
-      color: #bbb;
-    }
+  /* Out of flow, so the checkmark does not push the size off center. */
+  &[aria-selected='true']::before {
+    content: '✓' / '';
+    position: absolute;
+    left: 11px;
+    color: #bbb;
   }
 `;
 
@@ -213,6 +233,10 @@ export const Button = styled.button`
     color: #666;
     cursor: not-allowed;
   }
+`;
+
+export const AddToCart = styled(Button)`
+  width: min(100%, 140px);
 `;
 
 export const ActionLink = styled(Link)`

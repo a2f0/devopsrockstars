@@ -153,7 +153,7 @@ describe('store page', () => {
       await browser.execute(() => sessionStorage.clear());
       await BasePage.openStaging('store');
       await BasePage.waitForAppReady();
-      const size = await browser.$('select[aria-label$="size"]');
+      const size = await browser.$('[role="combobox"][aria-label$="size"]');
       await expect(size).toBeEnabled();
       // The description keeps the line breaks the catalog stores: copy that
       // would fit on one line at this width still renders as two.
@@ -166,10 +166,28 @@ describe('store page', () => {
         }),
         2
       );
-      // Picking a size must not throw: the handler reads the event before
-      // React clears it. The first variant is selected by default.
-      await size.selectByVisibleText('7 1/4');
-      await expect(size).toHaveValue('hat-5950-7-1-4');
+      // The first variant is selected by default. The caret beneath the box
+      // opens the list, and clicking elsewhere closes it.
+      await expect(size).toHaveText('7 1/8');
+      const caret = await browser.$('[data-size-caret]');
+      const sizes = await browser.$('[role="listbox"][aria-label$="size"]');
+      await caret.click();
+      await expect(sizes).toBeDisplayed();
+      await (await browser.$('[data-product-price]')).click();
+      await expect(sizes).not.toBeDisplayed();
+      await caret.click();
+      await (await sizes.$('[role="option"]=7 1/4')).click();
+      await expect(sizes).not.toBeDisplayed();
+      await expect(size).toHaveText('7 1/4');
+      // The keyboard walks the list; Escape keeps the size, and Enter or
+      // Space picks one without reopening the list.
+      await browser.keys(['ArrowDown', 'ArrowUp', 'Escape']);
+      await expect(size).toHaveText('7 1/4');
+      await browser.keys(['ArrowDown', 'ArrowUp', 'Enter']);
+      await expect(size).toHaveText('7 1/8');
+      await browser.keys(['ArrowDown', 'ArrowDown', ' ']);
+      await expect(sizes).not.toBeDisplayed();
+      await expect(size).toHaveText('7 1/4');
       await (await browser.$('button=Add to cart')).click();
       await expect(
         await browser.$('aside[aria-label="Shopping cart"]')

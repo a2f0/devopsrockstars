@@ -158,7 +158,7 @@ describe('3D hat preview', function () {
       const canvas = await browser.$(canvasSelector);
       await expect(canvas).not.toBeDisplayed();
       await expect(canvas).toHaveAttribute('tabindex', '-1');
-      const size = await browser.$('select[aria-label$="size"]');
+      const size = await browser.$('[role="combobox"][aria-label$="size"]');
       await expect(size).toBeDisplayed();
       await expect(await browser.$('button=Add to cart')).toBeDisplayed();
       await expect(await browser.$('p=Fitted, black.')).toBeDisplayed();
@@ -490,7 +490,7 @@ describe('3D hat preview', function () {
       await expect(await browser.$('button=Add to cart')).toBeDisabled();
       await expect(await browser.$('p=Updating inventory…')).toBeDisplayed();
       const sizePosition = await (
-        await browser.$('select[aria-label$="size"]')
+        await browser.$('[role="combobox"][aria-label$="size"]')
       ).getLocation();
       assert.equal(
         await browser.execute(() =>
@@ -508,7 +508,9 @@ describe('3D hat preview', function () {
       await expect(await browser.$('p=Updating inventory…')).not.toExist();
       await expect(await browser.$('[data-product-price]')).toBeDisplayed();
       assert.deepEqual(
-        await (await browser.$('select[aria-label$="size"]')).getLocation(),
+        await (
+          await browser.$('[role="combobox"][aria-label$="size"]')
+        ).getLocation(),
         sizePosition
       );
     } finally {
@@ -756,7 +758,9 @@ describe('3D hat preview', function () {
           () => document.documentElement.dataset['modelTimedOut'] === 'true'
         )
       );
-      await expect(await browser.$('select[aria-label$="size"]')).toBeEnabled();
+      await expect(
+        await browser.$('[role="combobox"][aria-label$="size"]')
+      ).toBeEnabled();
       await expect(await browser.$('button=Add to cart')).toBeDisplayed();
     } finally {
       await shortenModelTimeout.remove();
@@ -820,7 +824,9 @@ describe('3D hat preview', function () {
         )
       );
       await expectUnavailable();
-      await expect(await browser.$('select[aria-label$="size"]')).toBeEnabled();
+      await expect(
+        await browser.$('[role="combobox"][aria-label$="size"]')
+      ).toBeEnabled();
     } finally {
       await malformedArtwork.remove();
     }
@@ -858,7 +864,7 @@ describe('3D hat preview', function () {
         );
         await expectUnavailable();
         await expect(
-          await browser.$('select[aria-label$="size"]')
+          await browser.$('[role="combobox"][aria-label$="size"]')
         ).toBeEnabled();
       } finally {
         await failAsset.remove();

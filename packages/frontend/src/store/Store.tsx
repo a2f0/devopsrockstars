@@ -3,9 +3,10 @@ import React, {useEffect, useMemo, useState} from 'react';
 import {useStoreCart} from './cart';
 import {formatMoney} from './format';
 import PreparedHatPreview from './PreparedHatPreview';
+import SizePicker from './SizePicker';
 import {
   ActionLink,
-  Button,
+  AddToCart,
   CartActions,
   CartPanel,
   CartRow,
@@ -16,8 +17,6 @@ import {
   ProductCopy,
   ProductDetails,
   ProductGrid,
-  Select,
-  SizePicker,
   Status,
   StorePage,
 } from './StoreStyles';
@@ -125,38 +124,21 @@ const Store = React.memo(() => {
                   {formatMoney(priceVariant.unitAmount, priceVariant.currency)}
                 </Price>
               ) : null}
-              <SizePicker>
-                <Select
-                  aria-label={`${product.name} size`}
-                  disabled={available.length === 0}
-                  value={variantId}
-                  onChange={event => {
-                    // Read the value before the updater runs: React clears
-                    // currentTarget once the handler returns.
-                    const nextVariantId = event.currentTarget.value;
-                    setSelected(current => ({
-                      ...current,
-                      [product.id]: nextVariantId,
-                    }));
-                  }}
-                >
-                  {available.length === 0 ? (
-                    <option value="">Sold out</option>
-                  ) : null}
-                  {available.map(item => (
-                    <option key={item.id} value={item.id}>
-                      {item.label}
-                    </option>
-                  ))}
-                </Select>
-              </SizePicker>
-              <Button
+              <SizePicker
+                label={`${product.name} size`}
+                choices={available}
+                value={variantId}
+                onChange={id =>
+                  setSelected(current => ({...current, [product.id]: id}))
+                }
+              />
+              <AddToCart
                 type="button"
                 disabled={!inventoryReady || !variant}
                 onClick={() => variant && cart.add(variant.id)}
               >
                 {variant ? 'Add to cart' : 'Sold out'}
-              </Button>
+              </AddToCart>
             </ProductDetails>
           </ProductGrid>
         );
