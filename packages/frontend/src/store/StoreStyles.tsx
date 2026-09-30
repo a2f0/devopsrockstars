@@ -116,7 +116,7 @@ export const SizeField = styled.div`
 export const SizeBox = styled.span`
   width: 100%;
   box-sizing: border-box;
-  border: 1px solid #666;
+  border: 1px solid #aaa;
   background: #080808;
   font-family: ${monospace};
   font-size: 15px;
@@ -156,6 +156,12 @@ export const SizeTrigger = styled.button`
     border-color: white;
   }
 
+  /* Matches the add-to-cart button's hover. */
+  &:hover:not(:disabled) ${SizeBox} {
+    border-color: white;
+    background: #1a1a1a;
+  }
+
   &:hover ${SizeCaret}, &:focus ${SizeCaret} {
     background-color: white;
   }
@@ -184,7 +190,7 @@ export const SizeList = styled.div`
   right: 0;
   left: 0;
   z-index: 1;
-  border: 1px solid #666;
+  border: 1px solid #aaa;
   background: #080808;
   font-family: ${monospace};
   font-size: 15px;
