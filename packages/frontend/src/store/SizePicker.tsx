@@ -29,15 +29,20 @@ const SizePicker = React.memo(
     const field = useRef<HTMLDivElement>(null);
     const trigger = useRef<HTMLButtonElement>(null);
     const [open, setOpen] = useState(false);
-    const [active, setActive] = useState(0);
+    // Tracked by id: an inventory refresh can remove or reorder choices
+    // while the list is open.
+    const [activeId, setActiveId] = useState('');
     const selectedIndex = Math.max(
       0,
       choices.findIndex(choice => choice.id === value)
     );
+    const activeIndex = choices.findIndex(choice => choice.id === activeId);
+    const active = activeIndex === -1 ? selectedIndex : activeIndex;
+    const expanded = open && choices.length > 0;
     const optionId = (index: number) => `${listId}-${index}`;
 
     useEffect(() => {
-      if (!open) return;
+      if (!expanded) return;
       // Touch browsers do not always blur the trigger on a tap elsewhere.
       const dismiss = (event: PointerEvent) => {
         const target = event.target;
@@ -47,18 +52,20 @@ const SizePicker = React.memo(
       };
       document.addEventListener('pointerdown', dismiss);
       return () => document.removeEventListener('pointerdown', dismiss);
-    }, [open]);
+    }, [expanded]);
 
     useEffect(() => {
-      if (open) {
+      if (expanded) {
         document
           .getElementById(`${listId}-${active}`)
           ?.scrollIntoView({block: 'nearest'});
       }
-    }, [open, active, listId]);
+    }, [expanded, active, listId]);
+
+    const activate = (index: number) => setActiveId(choices[index]?.id ?? '');
 
     const show = (index: number) => {
-      setActive(index);
+      activate(index);
       setOpen(true);
       // Safari does not focus a clicked button, and the list takes its
       // keyboard input through the trigger.
@@ -73,7 +80,7 @@ const SizePicker = React.memo(
 
     const onKeyDown = (event: React.KeyboardEvent) => {
       const last = choices.length - 1;
-      if (!open) {
+      if (!expanded) {
         if (['ArrowDown', 'ArrowUp', 'Enter', ' '].includes(event.key)) {
           show(selectedIndex);
         } else if (event.key === 'Home') {
@@ -84,13 +91,13 @@ const SizePicker = React.memo(
           return;
         }
       } else if (event.key === 'ArrowDown') {
-        setActive(Math.min(active + 1, last));
+        activate(Math.min(active + 1, last));
       } else if (event.key === 'ArrowUp') {
-        setActive(Math.max(active - 1, 0));
+        activate(Math.max(active - 1, 0));
       } else if (event.key === 'Home') {
-        setActive(0);
+        activate(0);
       } else if (event.key === 'End') {
-        setActive(last);
+        activate(last);
       } else if (event.key === 'Enter' || event.key === ' ') {
         choose(active);
       } else if (event.key === 'Escape') {
@@ -110,11 +117,11 @@ const SizePicker = React.memo(
           role="combobox"
           aria-label={label}
           aria-controls={listId}
-          aria-expanded={open}
+          aria-expanded={expanded}
           aria-haspopup="listbox"
-          aria-activedescendant={open ? optionId(active) : undefined}
+          aria-activedescendant={expanded ? optionId(active) : undefined}
           disabled={choices.length === 0}
-          onClick={() => (open ? setOpen(false) : show(selectedIndex))}
+          onClick={() => (expanded ? setOpen(false) : show(selectedIndex))}
           onKeyDown={onKeyDown}
           onBlur={() => setOpen(false)}
         >
@@ -125,7 +132,7 @@ const SizePicker = React.memo(
           id={listId}
           role="listbox"
           aria-label={label}
-          hidden={!open}
+          hidden={!expanded}
           // Keeps focus on the trigger so choosing an option does not blur it.
           onMouseDown={event => event.preventDefault()}
         >
@@ -137,7 +144,7 @@ const SizePicker = React.memo(
               aria-selected={index === selectedIndex}
               $active={index === active}
               onClick={() => choose(index)}
-              onMouseEnter={() => setActive(index)}
+              onMouseEnter={() => activate(index)}
             >
               {choice.label}
             </SizeOption>
