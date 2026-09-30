@@ -10,7 +10,6 @@ import {
   CartPanel,
   CartRow,
   Eyebrow,
-  Field,
   InventoryStatus,
   Price,
   ProductArt,
@@ -18,6 +17,7 @@ import {
   ProductDetails,
   ProductGrid,
   Select,
+  SizePicker,
   Status,
   StorePage,
 } from './StoreStyles';
@@ -125,8 +125,7 @@ const Store = React.memo(() => {
                   {formatMoney(priceVariant.unitAmount, priceVariant.currency)}
                 </Price>
               ) : null}
-              <Field>
-                Size
+              <SizePicker>
                 <Select
                   aria-label={`${product.name} size`}
                   disabled={available.length === 0}
@@ -150,7 +149,7 @@ const Store = React.memo(() => {
                     </option>
                   ))}
                 </Select>
-              </Field>
+              </SizePicker>
               <Button
                 type="button"
                 disabled={!inventoryReady || !variant}
