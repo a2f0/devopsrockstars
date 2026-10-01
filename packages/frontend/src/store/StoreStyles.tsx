@@ -99,6 +99,23 @@ const controlStyles = `
     border-color: white;
     outline: none;
   }
+
+  /* Chromium and Safari paint autofilled fields light with an !important
+     background, so an inset shadow covers it and the text stays white.
+     Firefox tints them with a filter instead. Separate rules, because a
+     browser drops a whole selector list it does not fully support. */
+  &:-webkit-autofill {
+    box-shadow: 0 0 0 1000px #080808 inset;
+    -webkit-text-fill-color: white;
+    caret-color: white;
+  }
+
+  &:autofill {
+    box-shadow: 0 0 0 1000px #080808 inset;
+    -webkit-text-fill-color: white;
+    caret-color: white;
+    filter: none;
+  }
 `;
 
 export const Input = styled.input`
