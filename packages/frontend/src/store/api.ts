@@ -24,6 +24,27 @@ function apiUrl(path: string) {
   return storeApiOrigin ? new URL(path, storeApiOrigin).href : path;
 }
 
+// Chromium silently retries a GET over a dropped or stale connection but not a
+// POST, so a checkout can fail once with a bare "Failed to fetch". Retry a
+// network failure once. That is safe for checkout too: the store allows one
+// active checkout per browser, so a repeated request cannot reserve twice.
+async function send(path: string, init: RequestInit = {}) {
+  try {
+    return await fetch(apiUrl(path), init);
+  } catch (error) {
+    if (init.signal?.aborted) throw error;
+  }
+  try {
+    return await fetch(apiUrl(path), init);
+  } catch (error) {
+    if (init.signal?.aborted) throw error;
+    throw new StoreApiError(
+      'network_error',
+      'The store could not be reached. Check your connection and try again.'
+    );
+  }
+}
+
 async function readResponse<T>(response: Response): Promise<T> {
   let body: unknown;
   try {
@@ -51,10 +72,7 @@ async function readResponse<T>(response: Response): Promise<T> {
 }
 
 export async function loadStorefront(signal?: AbortSignal) {
-  const response = await fetch(
-    apiUrl('/api/storefront'),
-    signal ? {signal} : {}
-  );
+  const response = await send('/api/storefront', signal ? {signal} : {});
   return readResponse<StorefrontResponse>(response);
 }
 
@@ -62,7 +80,7 @@ export async function createCheckout(
   request: CreateCheckoutRequest,
   checkoutClientToken: string
 ) {
-  const response = await fetch(apiUrl('/api/checkouts'), {
+  const response = await send('/api/checkouts', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -78,19 +96,16 @@ export async function loadOrder(
   orderToken: string,
   signal?: AbortSignal
 ) {
-  const response = await fetch(
-    apiUrl(`/api/orders/${encodeURIComponent(orderId)}`),
-    {
-      headers: {'X-Order-Token': orderToken},
-      ...(signal ? {signal} : {}),
-    }
-  );
+  const response = await send(`/api/orders/${encodeURIComponent(orderId)}`, {
+    headers: {'X-Order-Token': orderToken},
+    ...(signal ? {signal} : {}),
+  });
   return readResponse<StoreOrderResponse>(response);
 }
 
 export async function cancelCheckout(orderId: string, orderToken: string) {
-  const response = await fetch(
-    apiUrl(`/api/orders/${encodeURIComponent(orderId)}/cancel`),
+  const response = await send(
+    `/api/orders/${encodeURIComponent(orderId)}/cancel`,
     {
       method: 'POST',
       headers: {'X-Order-Token': orderToken},
