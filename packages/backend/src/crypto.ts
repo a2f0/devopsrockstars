@@ -5,10 +5,25 @@ export async function sha256(value: string) {
   return toHex(new Uint8Array(digest));
 }
 
-export function randomToken() {
-  const bytes = crypto.getRandomValues(new Uint8Array(32));
+// The same secret and message always give the same token, and no one without
+// the secret can produce it.
+export async function hmacToken(secret: string, message: string) {
+  const key = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(secret),
+    {name: 'HMAC', hash: 'SHA-256'},
+    false,
+    ['sign']
+  );
+  const signature = await crypto.subtle.sign(
+    'HMAC',
+    key,
+    encoder.encode(message)
+  );
   let binary = '';
-  for (const byte of bytes) binary += String.fromCharCode(byte);
+  for (const byte of new Uint8Array(signature)) {
+    binary += String.fromCharCode(byte);
+  }
   return btoa(binary)
     .replaceAll('+', '-')
     .replaceAll('/', '_')

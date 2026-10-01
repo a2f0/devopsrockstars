@@ -6,7 +6,11 @@ import path from 'node:path';
 import {test} from 'node:test';
 import {fileURLToPath} from 'node:url';
 
-import {reservationStatements} from './checkout';
+import {
+  ACTIVE_CHECKOUT_SQL,
+  CHECKOUT_LINES_SQL,
+  reservationStatements,
+} from './checkout';
 import type {D1Database, D1PreparedStatement, D1Result, Env} from './types';
 
 const repository = path.resolve(
@@ -29,6 +33,11 @@ function literal(value: unknown) {
   if (value === null || value === undefined) return 'NULL';
   if (typeof value === 'number') return String(value);
   return `'${String(value).replace(/'/gu, "''")}'`;
+}
+
+function bound(query: string, values: readonly unknown[]) {
+  let index = 0;
+  return query.replace(/\?/gu, () => literal(values[index++]));
 }
 
 class RecordingStatement implements D1PreparedStatement {
@@ -115,12 +124,9 @@ function reservationSql(id: string, clientHash: string, networkHash: string) {
     totalAmount: 2000,
     env: {DB: database} as Env,
   });
-  return database.recorded.map(statement => {
-    let index = 0;
-    return statement.query.replace(/\?/gu, () =>
-      literal(statement.values[index++])
-    );
-  });
+  return database.recorded.map(statement =>
+    bound(statement.query, statement.values)
+  );
 }
 
 function orderSql(id: string, clientHash: string, networkHash: string) {
@@ -161,6 +167,30 @@ test('D1 migrations enforce reservation, restock, and cap invariants', () => {
       ${reservation};
     `);
     assert.equal(reserved.status, 0, reserved.stderr || reserved.stdout);
+
+    // A repeated checkout finds the browser's active order and its lines.
+    const active = execute(
+      `${bound(ACTIVE_CHECKOUT_SQL, ['client-1', '2026-09-03T18:05:00.000Z'])};
+      ${bound(CHECKOUT_LINES_SQL, ['10000000-0000-4000-8000-000000000001'])}`
+    );
+    assert.equal(active.status, 0, active.stderr || active.stdout);
+    const activeResult = JSON.parse(active.stdout) as Array<{
+      results: Array<Record<string, unknown>>;
+    }>;
+    assert.equal(
+      activeResult[0]?.results[0]?.['id'],
+      '10000000-0000-4000-8000-000000000001'
+    );
+    assert.equal(activeResult[0]?.results[0]?.['status'], 'creating_payment');
+    assert.deepEqual(activeResult[1]?.results, [
+      {
+        product_name: 'DevOps Rockstars 59FIFTY',
+        quantity: 1,
+        unit_amount: 2000,
+        variant_id: 'hat-5950-7-1-4',
+        variant_label: '7 1/4',
+      },
+    ]);
 
     const belowZero = execute(`
       UPDATE product_variants

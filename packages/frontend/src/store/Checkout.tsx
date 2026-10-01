@@ -8,6 +8,7 @@ import type {
   StorefrontResponse,
 } from '@devopsrockstars/shared-types';
 import {formatMoney} from './format';
+import {stateCode} from './stateCode';
 import {
   ActionLink,
   Button,
@@ -210,7 +211,8 @@ const Checkout = React.memo(() => {
                 Name
                 <Input
                   required
-                  autoComplete="name"
+                  name="name"
+                  autoComplete="shipping name"
                   disabled={Boolean(checkout)}
                   maxLength={100}
                   value={shipping.name}
@@ -221,7 +223,8 @@ const Checkout = React.memo(() => {
                 Email
                 <Input
                   required
-                  autoComplete="email"
+                  name="email"
+                  autoComplete="shipping email"
                   disabled={Boolean(checkout)}
                   maxLength={254}
                   type="email"
@@ -233,6 +236,7 @@ const Checkout = React.memo(() => {
                 Address 1
                 <Input
                   required
+                  name="address-line1"
                   autoComplete="shipping address-line1"
                   disabled={Boolean(checkout)}
                   maxLength={100}
@@ -245,6 +249,7 @@ const Checkout = React.memo(() => {
               <FullField>
                 Address 2
                 <Input
+                  name="address-line2"
                   autoComplete="shipping address-line2"
                   disabled={Boolean(checkout)}
                   maxLength={100}
@@ -258,6 +263,7 @@ const Checkout = React.memo(() => {
                 City
                 <Input
                   required
+                  name="city"
                   autoComplete="shipping address-level2"
                   disabled={Boolean(checkout)}
                   maxLength={100}
@@ -269,13 +275,15 @@ const Checkout = React.memo(() => {
                 State
                 <Input
                   required
+                  name="state"
                   autoComplete="shipping address-level1"
                   disabled={Boolean(checkout)}
-                  maxLength={2}
+                  // Room for a full state name, which autofill can enter.
+                  maxLength={32}
                   pattern="[A-Za-z]{2}"
                   value={shipping.state}
                   onChange={event =>
-                    update('state', event.currentTarget.value.toUpperCase())
+                    update('state', stateCode(event.currentTarget.value))
                   }
                 />
               </Field>
@@ -283,6 +291,7 @@ const Checkout = React.memo(() => {
                 ZIP code
                 <Input
                   required
+                  name="postal-code"
                   autoComplete="shipping postal-code"
                   disabled={Boolean(checkout)}
                   maxLength={10}

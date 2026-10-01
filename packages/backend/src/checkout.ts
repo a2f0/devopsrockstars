@@ -1,8 +1,9 @@
 import type {
   CreateCheckoutRequest,
   CreateCheckoutResponse,
+  ShippingInput,
 } from '@devopsrockstars/shared-types';
-import {randomToken, sha256} from './crypto';
+import {constantTimeEqual, hmacToken, sha256} from './crypto';
 import {
   cancelPaymentIntent,
   createPaymentIntent,
@@ -16,7 +17,11 @@ export interface CheckoutDependencies {
   readonly cancelPaymentIntent: typeof cancelPaymentIntent;
   readonly createPaymentIntent: typeof createPaymentIntent;
   readonly now: () => Date;
-  readonly randomToken: typeof randomToken;
+  readonly orderToken: (
+    secret: string,
+    orderId: string,
+    clientHash: string
+  ) => Promise<string>;
   readonly randomUUID: () => string;
   readonly sha256: typeof sha256;
 }
@@ -25,7 +30,10 @@ const defaultDependencies: CheckoutDependencies = {
   cancelPaymentIntent,
   createPaymentIntent,
   now: () => new Date(),
-  randomToken,
+  // Derived rather than random, so every response for a checkout, including
+  // a resumed one, carries the same token.
+  orderToken: (secret, orderId, clientHash) =>
+    hmacToken(secret, `order-token:${orderId}:${clientHash}`),
   randomUUID: () => crypto.randomUUID(),
   sha256,
 };
@@ -232,6 +240,164 @@ export function reservationStatements(input: {
   return statements;
 }
 
+// Both queries also run against the migrated schema in the D1 integration test.
+export const ACTIVE_CHECKOUT_SQL = `SELECT
+     id, access_token_hash, status, currency, total_amount, email, shipping_name,
+     shipping_address_line1, shipping_address_line2, shipping_city,
+     shipping_state, shipping_postal_code, shipping_country,
+     stripe_payment_intent_id, reservation_expires_at
+   FROM orders
+   WHERE checkout_client_hash = ?
+     AND status IN ('creating_payment', 'awaiting_payment')
+     AND reservation_expires_at > ?
+   ORDER BY created_at DESC
+   LIMIT 1`;
+
+export const CHECKOUT_LINES_SQL = `SELECT
+     variant_id, product_name, variant_label, unit_amount, quantity
+   FROM order_items
+   WHERE order_id = ?
+   ORDER BY rowid`;
+
+interface ActiveCheckoutRow {
+  readonly access_token_hash: string;
+  readonly currency: string;
+  readonly email: string;
+  readonly id: string;
+  readonly reservation_expires_at: string;
+  readonly shipping_address_line1: string;
+  readonly shipping_address_line2: string;
+  readonly shipping_city: string;
+  readonly shipping_country: string;
+  readonly shipping_name: string;
+  readonly shipping_postal_code: string;
+  readonly shipping_state: string;
+  readonly status: string;
+  readonly stripe_payment_intent_id: string | null;
+  readonly total_amount: number;
+}
+
+interface CheckoutLineRow {
+  readonly product_name: string;
+  readonly quantity: number;
+  readonly unit_amount: number;
+  readonly variant_id: string;
+  readonly variant_label: string;
+}
+
+const ACTIVE_CHECKOUT_MESSAGE = 'A checkout is already active in this browser.';
+
+function sameShipping(order: ActiveCheckoutRow, shipping: ShippingInput) {
+  return (
+    order.email === shipping.email &&
+    order.shipping_name === shipping.name &&
+    order.shipping_address_line1 === shipping.addressLine1 &&
+    order.shipping_address_line2 === shipping.addressLine2 &&
+    order.shipping_city === shipping.city &&
+    order.shipping_state === shipping.state &&
+    order.shipping_postal_code === shipping.postalCode &&
+    order.shipping_country === shipping.country
+  );
+}
+
+// A checkout can succeed while its response is lost, which leaves the browser
+// without the order token and blocked by the one-active-checkout rule. The
+// same request from the same browser resumes that checkout instead. It returns
+// the same derived order token and the original PaymentIntent: creating that is
+// idempotent per order, so asking again returns the same client secret. Nothing
+// is written, so overlapping resumes all return the same credentials. This runs
+// before the stock check, because the lost request may have taken the last unit.
+async function resumeActiveCheckout(
+  env: Env,
+  request: CreateCheckoutRequest,
+  clientHash: string,
+  secretKey: string,
+  tokenSecret: string,
+  dependencies: CheckoutDependencies
+): Promise<CreateCheckoutResponse | null> {
+  const now = dependencies.now().toISOString();
+  const order = await env.DB.prepare(ACTIVE_CHECKOUT_SQL)
+    .bind(clientHash, now)
+    .first<ActiveCheckoutRow>();
+  if (!order) return null;
+  if (order.status !== 'awaiting_payment' || !order.stripe_payment_intent_id) {
+    throw new CheckoutCreationError(
+      'checkout_in_progress',
+      'Your checkout is still being prepared. Try again in a moment.',
+      409
+    );
+  }
+  const lines = (
+    await env.DB.prepare(CHECKOUT_LINES_SQL)
+      .bind(order.id)
+      .all<CheckoutLineRow>()
+  ).results;
+  const requested = new Map(
+    request.items.map(item => [item.variantId, item.quantity])
+  );
+  const orderToken = await dependencies.orderToken(
+    tokenSecret,
+    order.id,
+    clientHash
+  );
+  if (
+    !sameShipping(order, request.shipping) ||
+    lines.length !== requested.size ||
+    lines.some(line => requested.get(line.variant_id) !== line.quantity) ||
+    // An order whose token was not derived this way cannot be resumed.
+    !constantTimeEqual(
+      await dependencies.sha256(orderToken),
+      order.access_token_hash
+    )
+  ) {
+    throw new CheckoutCreationError(
+      'checkout_already_active',
+      ACTIVE_CHECKOUT_MESSAGE,
+      409
+    );
+  }
+
+  let paymentIntent: Awaited<ReturnType<typeof createPaymentIntent>>;
+  try {
+    paymentIntent = await dependencies.createPaymentIntent({
+      amount: order.total_amount,
+      currency: order.currency,
+      orderId: order.id,
+      secretKey,
+      shipping: request.shipping,
+    });
+  } catch (error) {
+    if (error instanceof StripeRequestError) {
+      throw new CheckoutCreationError(
+        'payment_provider_unavailable',
+        'The payment provider is temporarily unavailable.',
+        502
+      );
+    }
+    throw error;
+  }
+  if (paymentIntent.id !== order.stripe_payment_intent_id) {
+    throw new Error('A resumed checkout returned a different PaymentIntent.');
+  }
+
+  return {
+    clientSecret: paymentIntent.clientSecret,
+    currency: order.currency,
+    expiresAt: order.reservation_expires_at,
+    lines: lines.map(line => ({
+      currency: order.currency,
+      productName: line.product_name,
+      quantity: line.quantity,
+      unitAmount: line.unit_amount,
+      variantId: line.variant_id,
+      variantLabel: line.variant_label,
+    })),
+    orderId: order.id,
+    orderToken,
+    totalAmount: order.total_amount,
+  };
+}
+
 export async function startCheckout(
   env: Env,
   request: CreateCheckoutRequest,
@@ -241,20 +407,35 @@ export async function startCheckout(
 ): Promise<CreateCheckoutResponse> {
   const secretKey = env.STRIPE_SECRET_KEY?.trim();
   const publishableKey = env.STRIPE_PUBLISHABLE_KEY?.trim();
-  if (!secretKey || !publishableKey) {
+  const tokenSecret = env.CHECKOUT_HASH_SECRET?.trim();
+  if (!secretKey || !publishableKey || !tokenSecret) {
     throw new CheckoutCreationError(
       'checkout_unavailable',
       'Checkout is not configured yet.',
       503
     );
   }
+  const resumed = await resumeActiveCheckout(
+    env,
+    request,
+    clientHash,
+    secretKey,
+    tokenSecret,
+    dependencies
+  );
+  if (resumed) return resumed;
+
   const variants = await loadVariants(
     env,
     request.items.map(item => item.variantId)
   );
   const order = calculateOrder(request, variants);
   const orderId = dependencies.randomUUID();
-  const orderToken = dependencies.randomToken();
+  const orderToken = await dependencies.orderToken(
+    tokenSecret,
+    orderId,
+    clientHash
+  );
   const accessTokenHash = await dependencies.sha256(orderToken);
   const now = dependencies.now();
   const expiresAt = new Date(
@@ -288,7 +469,7 @@ export async function startCheckout(
     if (String(error).includes('checkout_already_active')) {
       throw new CheckoutCreationError(
         'checkout_already_active',
-        'A checkout is already active in this browser.',
+        ACTIVE_CHECKOUT_MESSAGE,
         409
       );
     }
