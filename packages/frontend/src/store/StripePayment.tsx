@@ -101,6 +101,8 @@ const StripePayment = React.memo(
               },
             },
             layout: 'tabs',
+            // Link would offer Klarna alongside card; keep checkout card-only.
+            wallets: {link: 'never'},
           });
           payment.on('ready', () => active && setReady(true));
           payment.mount(hostRef.current);
