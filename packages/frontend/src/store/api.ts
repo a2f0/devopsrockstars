@@ -26,8 +26,8 @@ function apiUrl(path: string) {
 
 // Chromium silently retries a GET over a dropped or stale connection but not a
 // POST, so a checkout can fail once with a bare "Failed to fetch". Retry a
-// network failure once. That is safe for checkout too: the store allows one
-// active checkout per browser, so a repeated request cannot reserve twice.
+// network failure once. That is safe for checkout too: the store keeps one
+// active checkout per browser, and an identical request resumes it.
 async function send(path: string, init: RequestInit = {}) {
   try {
     return await fetch(apiUrl(path), init);

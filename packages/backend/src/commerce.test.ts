@@ -39,11 +39,15 @@ class FakeStatement implements D1PreparedStatement {
   }
 
   async first<T>(): Promise<T | null> {
-    return this.database.firstValue as T | null;
+    return (this.database.firstFor(this.query) ??
+      this.database.firstValue) as T | null;
   }
 
   async all<T>(): Promise<D1Result<T>> {
-    return result(this.database.allValues as readonly T[]);
+    return result(
+      (this.database.allFor(this.query) ??
+        this.database.allValues) as readonly T[]
+    );
   }
 
   async run<T>(): Promise<D1Result<T>> {
@@ -57,7 +61,10 @@ class FakeDatabase implements D1Database {
   readonly statements: FakeStatement[] = [];
   readonly runs: FakeStatement[] = [];
   allValues: readonly unknown[] = [];
+  // Per-query answers, for tests that read more than one kind of row.
+  allFor: (query: string) => readonly unknown[] | undefined = () => undefined;
   batchFailure: Error | null = null;
+  firstFor: (query: string) => unknown = () => undefined;
   firstValue: unknown = null;
   runChanges: (statement: FakeStatement) => number = () => 1;
 
@@ -215,6 +222,162 @@ test('checkout maps the active-reservation trigger to an active order', async ()
       error.code === 'checkout_already_active' &&
       error.status === 409
   );
+});
+
+function activeCheckout(overrides: Record<string, unknown> = {}) {
+  return {
+    currency: 'usd',
+    email: 'grace@example.com',
+    id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+    reservation_expires_at: '2026-09-03T12:08:00.000Z',
+    shipping_address_line1: '1 Navy Way',
+    shipping_address_line2: '',
+    shipping_city: 'New York',
+    shipping_country: 'US',
+    shipping_name: 'Grace Hopper',
+    shipping_postal_code: '10001',
+    shipping_state: 'NY',
+    status: 'awaiting_payment',
+    stripe_payment_intent_id: 'pi_store',
+    total_amount: 4000,
+    ...overrides,
+  };
+}
+
+function databaseWithActiveCheckout(order: unknown, quantity = 2) {
+  const database = new FakeDatabase();
+  database.firstFor = query =>
+    query.includes('WHERE checkout_client_hash = ?') ? order : undefined;
+  database.allFor = query =>
+    query.includes('FROM order_items')
+      ? [
+          {
+            product_name: 'DevOps Rockstars 59FIFTY',
+            quantity,
+            unit_amount: 2000,
+            variant_id: 'hat-5950-7-1-4',
+            variant_label: '7 1/4',
+          },
+        ]
+      : undefined;
+  return database;
+}
+
+test('checkout resumes an identical active checkout whose response was lost', async () => {
+  const database = databaseWithActiveCheckout(activeCheckout());
+  const paymentInputs: unknown[] = [];
+
+  const checkout = await startCheckout(
+    checkoutEnv(database),
+    checkoutRequest(),
+    'client-hash',
+    'network-hash',
+    dependencies({
+      createPaymentIntent: async input => {
+        paymentInputs.push(input);
+        return {clientSecret: 'pi_store_secret_test', id: 'pi_store'};
+      },
+      randomToken: () => 'resumed-order-token',
+      sha256: async value => `hash:${value}`,
+    })
+  );
+
+  assert.deepEqual(checkout, {
+    clientSecret: 'pi_store_secret_test',
+    currency: 'usd',
+    expiresAt: '2026-09-03T12:08:00.000Z',
+    lines: [
+      {
+        currency: 'usd',
+        productName: 'DevOps Rockstars 59FIFTY',
+        quantity: 2,
+        unitAmount: 2000,
+        variantId: 'hat-5950-7-1-4',
+        variantLabel: '7 1/4',
+      },
+    ],
+    orderId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+    orderToken: 'resumed-order-token',
+    totalAmount: 4000,
+  });
+  // Nothing is reserved again, and stock is never checked: the lost request
+  // may have taken the last unit.
+  assert.equal(database.batches.length, 0);
+  assert.ok(
+    !database.statements.some(statement =>
+      statement.query.includes('FROM product_variants')
+    )
+  );
+  // The original PaymentIntent is requested again under the same order.
+  assert.deepEqual(paymentInputs, [
+    {
+      amount: 4000,
+      currency: 'usd',
+      orderId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+      secretKey: 'sk_test_store',
+      shipping: checkoutRequest().shipping,
+    },
+  ]);
+  const rotation = database.runs.find(statement =>
+    statement.query.includes('SET access_token_hash = ?')
+  );
+  assert.deepEqual(rotation?.values, [
+    'hash:resumed-order-token',
+    '2026-09-03T12:00:00.000Z',
+    'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+  ]);
+});
+
+test('checkout keeps an active checkout for a different cart or address', async () => {
+  for (const database of [
+    databaseWithActiveCheckout(
+      activeCheckout({shipping_address_line1: '2 Navy Way'})
+    ),
+    databaseWithActiveCheckout(activeCheckout(), 1),
+  ]) {
+    let createPaymentCalls = 0;
+    await assert.rejects(
+      startCheckout(
+        checkoutEnv(database),
+        checkoutRequest(),
+        'client-hash',
+        'network-hash',
+        dependencies({
+          createPaymentIntent: async () => {
+            createPaymentCalls += 1;
+            return {clientSecret: 'unused', id: 'pi_store'};
+          },
+        })
+      ),
+      (error: unknown) =>
+        error instanceof CheckoutCreationError &&
+        error.code === 'checkout_already_active' &&
+        error.status === 409
+    );
+    assert.equal(createPaymentCalls, 0);
+    assert.equal(database.runs.length, 0);
+  }
+});
+
+test('checkout reports an active checkout that is still being created', async () => {
+  const database = databaseWithActiveCheckout(
+    activeCheckout({status: 'creating_payment', stripe_payment_intent_id: null})
+  );
+
+  await assert.rejects(
+    startCheckout(
+      checkoutEnv(database),
+      checkoutRequest(),
+      'client-hash',
+      'network-hash',
+      dependencies()
+    ),
+    (error: unknown) =>
+      error instanceof CheckoutCreationError &&
+      error.code === 'checkout_in_progress' &&
+      error.status === 409
+  );
+  assert.equal(database.batches.length, 0);
 });
 
 test('checkout maps network and global reservation caps', async () => {
