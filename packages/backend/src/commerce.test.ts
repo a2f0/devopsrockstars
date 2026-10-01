@@ -103,6 +103,7 @@ function checkoutRequest(): CreateCheckoutRequest {
 
 function checkoutEnv(database: FakeDatabase): Env {
   return {
+    CHECKOUT_HASH_SECRET: 'hash-secret',
     DB: database,
     STRIPE_PUBLISHABLE_KEY: 'pk_test_store',
     STRIPE_SECRET_KEY: 'sk_test_store',
@@ -119,7 +120,7 @@ function dependencies(
       id: 'pi_store',
     }),
     now: () => new Date('2026-09-03T12:00:00.000Z'),
-    randomToken: () => 'order-token',
+    orderToken: async () => 'order-token',
     randomUUID: () => '12345678-1234-1234-1234-123456789abc',
     sha256: async () => 'access-token-hash',
     ...overrides,
@@ -226,6 +227,7 @@ test('checkout maps the active-reservation trigger to an active order', async ()
 
 function activeCheckout(overrides: Record<string, unknown> = {}) {
   return {
+    access_token_hash: 'hash:order-token',
     currency: 'usd',
     email: 'grace@example.com',
     id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
@@ -266,22 +268,29 @@ function databaseWithActiveCheckout(order: unknown, quantity = 2) {
 test('checkout resumes an identical active checkout whose response was lost', async () => {
   const database = databaseWithActiveCheckout(activeCheckout());
   const paymentInputs: unknown[] = [];
+  const tokenInputs: unknown[] = [];
+  const resume = () =>
+    startCheckout(
+      checkoutEnv(database),
+      checkoutRequest(),
+      'client-hash',
+      'network-hash',
+      dependencies({
+        createPaymentIntent: async input => {
+          paymentInputs.push(input);
+          return {clientSecret: 'pi_store_secret_test', id: 'pi_store'};
+        },
+        orderToken: async (...input) => {
+          tokenInputs.push(input);
+          return 'order-token';
+        },
+        sha256: async value => `hash:${value}`,
+      })
+    );
 
-  const checkout = await startCheckout(
-    checkoutEnv(database),
-    checkoutRequest(),
-    'client-hash',
-    'network-hash',
-    dependencies({
-      createPaymentIntent: async input => {
-        paymentInputs.push(input);
-        return {clientSecret: 'pi_store_secret_test', id: 'pi_store'};
-      },
-      randomToken: () => 'resumed-order-token',
-      sha256: async value => `hash:${value}`,
-    })
-  );
-
+  // Overlapping retries get the same credentials.
+  const [checkout, overlapping] = await Promise.all([resume(), resume()]);
+  assert.deepEqual(overlapping, checkout);
   assert.deepEqual(checkout, {
     clientSecret: 'pi_store_secret_test',
     currency: 'usd',
@@ -297,43 +306,46 @@ test('checkout resumes an identical active checkout whose response was lost', as
       },
     ],
     orderId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
-    orderToken: 'resumed-order-token',
+    orderToken: 'order-token',
     totalAmount: 4000,
   });
-  // Nothing is reserved again, and stock is never checked: the lost request
-  // may have taken the last unit.
+  // Nothing is reserved or written, and stock is never checked: the lost
+  // request may have taken the last unit.
   assert.equal(database.batches.length, 0);
+  assert.equal(database.runs.length, 0);
   assert.ok(
     !database.statements.some(statement =>
       statement.query.includes('FROM product_variants')
     )
   );
-  // The original PaymentIntent is requested again under the same order.
-  assert.deepEqual(paymentInputs, [
-    {
-      amount: 4000,
-      currency: 'usd',
-      orderId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
-      secretKey: 'sk_test_store',
-      shipping: checkoutRequest().shipping,
-    },
-  ]);
-  const rotation = database.runs.find(statement =>
-    statement.query.includes('SET access_token_hash = ?')
-  );
-  assert.deepEqual(rotation?.values, [
-    'hash:resumed-order-token',
-    '2026-09-03T12:00:00.000Z',
+  // The token is derived again for the same order and browser, and the
+  // original PaymentIntent is requested again under the same order.
+  assert.deepEqual(tokenInputs[0], [
+    'hash-secret',
     'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+    'client-hash',
   ]);
+  assert.deepEqual(paymentInputs[0], {
+    amount: 4000,
+    currency: 'usd',
+    orderId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+    secretKey: 'sk_test_store',
+    shipping: checkoutRequest().shipping,
+  });
 });
 
-test('checkout keeps an active checkout for a different cart or address', async () => {
+test('checkout keeps an active checkout it cannot resume', async () => {
   for (const database of [
+    // A different address or cart.
     databaseWithActiveCheckout(
       activeCheckout({shipping_address_line1: '2 Navy Way'})
     ),
     databaseWithActiveCheckout(activeCheckout(), 1),
+    // An order whose token was not derived, such as one created before
+    // checkouts could be resumed.
+    databaseWithActiveCheckout(
+      activeCheckout({access_token_hash: 'hash:random-token'})
+    ),
   ]) {
     let createPaymentCalls = 0;
     await assert.rejects(
@@ -347,6 +359,7 @@ test('checkout keeps an active checkout for a different cart or address', async 
             createPaymentCalls += 1;
             return {clientSecret: 'unused', id: 'pi_store'};
           },
+          sha256: async value => `hash:${value}`,
         })
       ),
       (error: unknown) =>

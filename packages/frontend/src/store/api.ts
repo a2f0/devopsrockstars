@@ -24,32 +24,13 @@ function apiUrl(path: string) {
   return storeApiOrigin ? new URL(path, storeApiOrigin).href : path;
 }
 
-// Chromium silently retries a GET over a dropped or stale connection but not a
-// POST, so a checkout can fail once with a bare "Failed to fetch". Retry a
-// network failure once. That is safe for checkout too: the store keeps one
-// active checkout per browser, and an identical request resumes it.
-async function send(path: string, init: RequestInit = {}) {
-  try {
-    return await fetch(apiUrl(path), init);
-  } catch (error) {
-    if (init.signal?.aborted) throw error;
-  }
-  try {
-    return await fetch(apiUrl(path), init);
-  } catch (error) {
-    if (init.signal?.aborted) throw error;
-    throw new StoreApiError(
-      'network_error',
-      'The store could not be reached. Check your connection and try again.'
-    );
-  }
-}
-
 async function readResponse<T>(response: Response): Promise<T> {
   let body: unknown;
   try {
     body = await response.json();
-  } catch {
+  } catch (error) {
+    // A connection that drops mid-body fails the read like a failed fetch.
+    if (error instanceof TypeError) throw error;
     if (!response.ok) {
       throw new StoreApiError('request_failed', 'The store request failed.');
     }
@@ -71,24 +52,44 @@ async function readResponse<T>(response: Response): Promise<T> {
   return body as T;
 }
 
+// Chromium silently retries a GET over a dropped or stale connection but not a
+// POST, so a checkout can fail once with a bare "Failed to fetch". Retry a
+// network failure once, including one while the body is read. That is safe
+// for checkout too: the store keeps one active checkout per browser, and an
+// identical request resumes it with the same credentials.
+async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  try {
+    return await readResponse<T>(await fetch(apiUrl(path), init));
+  } catch (error) {
+    if (!(error instanceof TypeError) || init.signal?.aborted) throw error;
+  }
+  try {
+    return await readResponse<T>(await fetch(apiUrl(path), init));
+  } catch (error) {
+    if (!(error instanceof TypeError) || init.signal?.aborted) throw error;
+    throw new StoreApiError(
+      'network_error',
+      'The store could not be reached. Check your connection and try again.'
+    );
+  }
+}
+
 export async function loadStorefront(signal?: AbortSignal) {
-  const response = await send('/api/storefront', signal ? {signal} : {});
-  return readResponse<StorefrontResponse>(response);
+  return request<StorefrontResponse>('/api/storefront', signal ? {signal} : {});
 }
 
 export async function createCheckout(
-  request: CreateCheckoutRequest,
+  checkout: CreateCheckoutRequest,
   checkoutClientToken: string
 ) {
-  const response = await send('/api/checkouts', {
+  return request<CreateCheckoutResponse>('/api/checkouts', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'X-Checkout-Client': checkoutClientToken,
     },
-    body: JSON.stringify(request),
+    body: JSON.stringify(checkout),
   });
-  return readResponse<CreateCheckoutResponse>(response);
 }
 
 export async function loadOrder(
@@ -96,20 +97,21 @@ export async function loadOrder(
   orderToken: string,
   signal?: AbortSignal
 ) {
-  const response = await send(`/api/orders/${encodeURIComponent(orderId)}`, {
-    headers: {'X-Order-Token': orderToken},
-    ...(signal ? {signal} : {}),
-  });
-  return readResponse<StoreOrderResponse>(response);
+  return request<StoreOrderResponse>(
+    `/api/orders/${encodeURIComponent(orderId)}`,
+    {
+      headers: {'X-Order-Token': orderToken},
+      ...(signal ? {signal} : {}),
+    }
+  );
 }
 
 export async function cancelCheckout(orderId: string, orderToken: string) {
-  const response = await send(
+  return request<StoreOrderResponse>(
     `/api/orders/${encodeURIComponent(orderId)}/cancel`,
     {
       method: 'POST',
       headers: {'X-Order-Token': orderToken},
     }
   );
-  return readResponse<StoreOrderResponse>(response);
 }

@@ -3,7 +3,7 @@ import type {
   CreateCheckoutResponse,
   ShippingInput,
 } from '@devopsrockstars/shared-types';
-import {randomToken, sha256} from './crypto';
+import {constantTimeEqual, hmacToken, sha256} from './crypto';
 import {
   cancelPaymentIntent,
   createPaymentIntent,
@@ -17,7 +17,11 @@ export interface CheckoutDependencies {
   readonly cancelPaymentIntent: typeof cancelPaymentIntent;
   readonly createPaymentIntent: typeof createPaymentIntent;
   readonly now: () => Date;
-  readonly randomToken: typeof randomToken;
+  readonly orderToken: (
+    secret: string,
+    orderId: string,
+    clientHash: string
+  ) => Promise<string>;
   readonly randomUUID: () => string;
   readonly sha256: typeof sha256;
 }
@@ -26,7 +30,10 @@ const defaultDependencies: CheckoutDependencies = {
   cancelPaymentIntent,
   createPaymentIntent,
   now: () => new Date(),
-  randomToken,
+  // Derived rather than random, so every response for a checkout, including
+  // a resumed one, carries the same token.
+  orderToken: (secret, orderId, clientHash) =>
+    hmacToken(secret, `order-token:${orderId}:${clientHash}`),
   randomUUID: () => crypto.randomUUID(),
   sha256,
 };
@@ -235,7 +242,7 @@ export function reservationStatements(input: {
 
 // Both queries also run against the migrated schema in the D1 integration test.
 export const ACTIVE_CHECKOUT_SQL = `SELECT
-     id, status, currency, total_amount, email, shipping_name,
+     id, access_token_hash, status, currency, total_amount, email, shipping_name,
      shipping_address_line1, shipping_address_line2, shipping_city,
      shipping_state, shipping_postal_code, shipping_country,
      stripe_payment_intent_id, reservation_expires_at
@@ -253,6 +260,7 @@ export const CHECKOUT_LINES_SQL = `SELECT
    ORDER BY rowid`;
 
 interface ActiveCheckoutRow {
+  readonly access_token_hash: string;
   readonly currency: string;
   readonly email: string;
   readonly id: string;
@@ -294,16 +302,17 @@ function sameShipping(order: ActiveCheckoutRow, shipping: ShippingInput) {
 
 // A checkout can succeed while its response is lost, which leaves the browser
 // without the order token and blocked by the one-active-checkout rule. The
-// same request from the same browser resumes that checkout instead, with a
-// fresh order token and the original PaymentIntent: creating it is idempotent
-// per order, so asking again returns the same intent and client secret. This
-// runs before the stock check, because the lost request may have taken the
-// last unit.
+// same request from the same browser resumes that checkout instead. It returns
+// the same derived order token and the original PaymentIntent: creating that is
+// idempotent per order, so asking again returns the same client secret. Nothing
+// is written, so overlapping resumes all return the same credentials. This runs
+// before the stock check, because the lost request may have taken the last unit.
 async function resumeActiveCheckout(
   env: Env,
   request: CreateCheckoutRequest,
   clientHash: string,
   secretKey: string,
+  tokenSecret: string,
   dependencies: CheckoutDependencies
 ): Promise<CreateCheckoutResponse | null> {
   const now = dependencies.now().toISOString();
@@ -326,10 +335,20 @@ async function resumeActiveCheckout(
   const requested = new Map(
     request.items.map(item => [item.variantId, item.quantity])
   );
+  const orderToken = await dependencies.orderToken(
+    tokenSecret,
+    order.id,
+    clientHash
+  );
   if (
     !sameShipping(order, request.shipping) ||
     lines.length !== requested.size ||
-    lines.some(line => requested.get(line.variant_id) !== line.quantity)
+    lines.some(line => requested.get(line.variant_id) !== line.quantity) ||
+    // An order whose token was not derived this way cannot be resumed.
+    !constantTimeEqual(
+      await dependencies.sha256(orderToken),
+      order.access_token_hash
+    )
   ) {
     throw new CheckoutCreationError(
       'checkout_already_active',
@@ -361,22 +380,6 @@ async function resumeActiveCheckout(
     throw new Error('A resumed checkout returned a different PaymentIntent.');
   }
 
-  const orderToken = dependencies.randomToken();
-  const updated = await env.DB.prepare(
-    `UPDATE orders
-     SET access_token_hash = ?, updated_at = ?
-     WHERE id = ? AND status = 'awaiting_payment'`
-  )
-    .bind(await dependencies.sha256(orderToken), now, order.id)
-    .run();
-  if (updated.meta.changes !== 1) {
-    throw new CheckoutCreationError(
-      'checkout_already_active',
-      ACTIVE_CHECKOUT_MESSAGE,
-      409
-    );
-  }
-
   return {
     clientSecret: paymentIntent.clientSecret,
     currency: order.currency,
@@ -404,7 +407,8 @@ export async function startCheckout(
 ): Promise<CreateCheckoutResponse> {
   const secretKey = env.STRIPE_SECRET_KEY?.trim();
   const publishableKey = env.STRIPE_PUBLISHABLE_KEY?.trim();
-  if (!secretKey || !publishableKey) {
+  const tokenSecret = env.CHECKOUT_HASH_SECRET?.trim();
+  if (!secretKey || !publishableKey || !tokenSecret) {
     throw new CheckoutCreationError(
       'checkout_unavailable',
       'Checkout is not configured yet.',
@@ -416,6 +420,7 @@ export async function startCheckout(
     request,
     clientHash,
     secretKey,
+    tokenSecret,
     dependencies
   );
   if (resumed) return resumed;
@@ -426,7 +431,11 @@ export async function startCheckout(
   );
   const order = calculateOrder(request, variants);
   const orderId = dependencies.randomUUID();
-  const orderToken = dependencies.randomToken();
+  const orderToken = await dependencies.orderToken(
+    tokenSecret,
+    orderId,
+    clientHash
+  );
   const accessTokenHash = await dependencies.sha256(orderToken);
   const now = dependencies.now();
   const expiresAt = new Date(

@@ -8,15 +8,16 @@ afterEach(() => {
   globalThis.fetch = originalFetch;
 });
 
-// Answers each request with the next outcome: a status code, or an error that
-// fetch throws the way a dropped connection does.
-function stubFetch(outcomes: readonly (number | Error)[]) {
+// Answers each request with the next outcome: a status code, a prepared
+// response, or an error that fetch throws the way a dropped connection does.
+function stubFetch(outcomes: readonly (number | Error | Response)[]) {
   const requests: RequestInit[] = [];
   globalThis.fetch = async (_input, init) => {
     requests.push(init ?? {});
     const outcome = outcomes[requests.length - 1];
     if (outcome === undefined) throw new Error('Unexpected request.');
     if (outcome instanceof Error) throw outcome;
+    if (outcome instanceof Response) return outcome;
     return Response.json({}, {status: outcome});
   };
   return requests;
@@ -42,6 +43,20 @@ test('retries a checkout once after a dropped connection', async () => {
   assert.equal(requests.length, 2);
   assert.equal(requests[1]?.method, 'POST');
   assert.equal(requests[1]?.body, requests[0]?.body);
+});
+
+test('retries a checkout whose connection drops while the body is read', async () => {
+  const droppedBody = new Response(
+    new ReadableStream({
+      start(controller) {
+        controller.error(new TypeError('terminated'));
+      },
+    }),
+    {status: 201}
+  );
+  const requests = stubFetch([droppedBody, 201]);
+  await createCheckout(checkout, 'client-token');
+  assert.equal(requests.length, 2);
 });
 
 test('reports a network failure that persists without the raw fetch error', async () => {
