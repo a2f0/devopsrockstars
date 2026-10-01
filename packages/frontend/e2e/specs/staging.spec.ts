@@ -337,6 +337,17 @@ describe('store page', () => {
           value
         );
       }
+      // Autofilled fields keep the store's dark look rather than the browser's
+      // light autofill colors.
+      assert.deepEqual(
+        await browser.execute(() => {
+          const input = document.querySelector('input[name="name"]');
+          if (!input) return null;
+          const style = getComputedStyle(input);
+          return [style.webkitTextFillColor, style.boxShadow];
+        }),
+        ['rgb(255, 255, 255)', 'rgb(8, 8, 8) 0px 0px 0px 1000px inset']
+      );
     } finally {
       await browser.execute(() => sessionStorage.clear());
       await storefront.remove();
