@@ -9,6 +9,7 @@ import type {
   CreateCheckoutResponse,
   ShippingInput,
 } from '@devopsrockstars/shared-types';
+import {PAYMENT_ELEMENT_OPTIONS} from './paymentElementOptions';
 import {Button, FormActions, PaymentHost, Status} from './StoreStyles';
 
 let stripeKey: string | null = null;
@@ -92,18 +93,7 @@ const StripePayment = React.memo(
               },
             },
           });
-          payment = elements.create('payment', {
-            fields: {
-              billingDetails: {
-                address: 'never',
-                email: 'never',
-                name: 'never',
-              },
-            },
-            layout: 'tabs',
-            // Link would offer Klarna alongside card; keep checkout card-only.
-            wallets: {link: 'never'},
-          });
+          payment = elements.create('payment', PAYMENT_ELEMENT_OPTIONS);
           payment.on('ready', () => active && setReady(true));
           payment.mount(hostRef.current);
           mountedRef.current = {stripe, elements, payment};
