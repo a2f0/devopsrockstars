@@ -12,8 +12,8 @@ const CheckoutHeading = React.memo(() => (
   <StoreHeading>
     <Wordmark
       src="/static/image/store/checkout.svg"
-      width={720}
-      height={188}
+      width={1300}
+      height={440}
       alt="checkout"
     />
   </StoreHeading>
