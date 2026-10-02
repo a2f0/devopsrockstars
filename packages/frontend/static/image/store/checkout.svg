@@ -1,106 +1,244 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="720" height="188" viewBox="20 8 720 188" fill="none" role="img" aria-labelledby="checkout-title checkout-description">
+<svg xmlns="http://www.w3.org/2000/svg" width="1300" height="440" viewBox="0 25 1300 440" fill="none" role="img" aria-labelledby="checkout-title checkout-description">
   <title id="checkout-title">Checkout</title>
-  <desc id="checkout-description">Grayscale CHECKOUT block lettering with deep graphite extrusion, chamfered chrome faces, polished bevels, and engraved metal details.</desc>
+  <desc id="checkout-description">Hand-drawn grayscale CHECKOUT graffiti: eight individual interlocking block letters with bent stems, flared terminals, carved ink ribbons, shaded 3D sides, spray dots, and loose paint strokes.</desc>
   <defs>
-    <linearGradient id="chrome" x1="0" y1="0" x2="8" y2="104" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#fff"/>
-      <stop offset=".18" stop-color="#cfcfcf"/>
-      <stop offset=".42" stop-color="#8a8a8a"/>
-      <stop offset=".47" stop-color="#454545"/>
-      <stop offset=".49" stop-color="#f5f5f5"/>
-      <stop offset=".65" stop-color="#c4c4c4"/>
-      <stop offset="1" stop-color="#777"/>
+    <linearGradient id="paint" x1="650" y1="120" x2="690" y2="363" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#eee"/><stop offset=".35" stop-color="#c5c5c5"/><stop offset=".72" stop-color="#888"/><stop offset="1" stop-color="#555"/>
     </linearGradient>
-    <linearGradient id="depth" x1="0" y1="0" x2="0" y2="126" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#9b9b9b"/>
-      <stop offset=".3" stop-color="#454545"/>
-      <stop offset=".6" stop-color="#242424"/>
-      <stop offset="1" stop-color="#555"/>
+    <linearGradient id="depth" x1="400" y1="170" x2="530" y2="402" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#555"/><stop offset=".6" stop-color="#292929"/><stop offset="1" stop-color="#111"/>
     </linearGradient>
-    <linearGradient id="rail" x1="0" y1="130" x2="670" y2="130" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#555"/>
-      <stop offset=".3" stop-color="#eee"/>
-      <stop offset=".65" stop-color="#888"/>
-      <stop offset="1" stop-color="#333"/>
+    <linearGradient id="ribbon" x1="490" y1="270" x2="530" y2="387" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ddd"/><stop offset=".5" stop-color="#777"/><stop offset="1" stop-color="#333"/>
     </linearGradient>
-    <pattern id="brushed" width="8" height="5" patternUnits="userSpaceOnUse">
-      <path d="M0 .5H8M2 3H6" stroke="#fff" stroke-opacity=".12" stroke-width=".5"/>
+    <pattern id="halftone" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(-14)">
+      <circle cx="2" cy="2" r="1" fill="#171717"/>
     </pattern>
-    <path id="letter-c" fill-rule="evenodd" d="M14 0H68L76 8V26H26V78H76V96L68 104H14L0 90V14Z"/>
-    <path id="letter-h" fill-rule="evenodd" d="M0 0H24V39H50V0H74V104H50V65H24V104H0Z"/>
-    <path id="letter-e" fill-rule="evenodd" d="M0 0H72V24H24V40H64V64H24V80H72V104H0Z"/>
-    <path id="letter-k" fill-rule="evenodd" d="M0 0H24V40L48 0H76L43 51L78 104H49L24 65V104H0Z"/>
-    <path id="letter-o" fill-rule="evenodd" d="M14 0H62L76 14V90L62 104H14L0 90V14Z M26 25V79H50V25Z"/>
-    <path id="letter-u" fill-rule="evenodd" d="M0 0H24V78H50V0H74V90L60 104H14L0 90Z"/>
-    <path id="letter-t" fill-rule="evenodd" d="M0 0H76V25H50V104H26V25H0Z"/>
+    <pattern id="hatching" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(-35)">
+      <path d="M2 0V7" stroke="#b5b5b5" stroke-opacity=".45" stroke-width=".8"/>
+    </pattern>
+    <path id="c-first" fill-rule="evenodd" clip-rule="evenodd" d="M108 146 207 116 244 146 224 185 158 184 131 230 136 278 178 291 228 258 248 306 191 342 102 324 62 276 69 199Z"/>
+    <path id="h" fill-rule="evenodd" clip-rule="evenodd" d="M247 133 292 125 281 214 319 202 340 111 394 98 368 291 383 334 329 356 314 303 324 247 276 262 267 334 217 351 213 321Z"/>
+    <path id="e" fill-rule="evenodd" clip-rule="evenodd" d="M389 144 489 113 532 138 512 174 442 186 433 222 485 201 489 238 426 262 421 302 497 281 528 319 451 359 358 341 368 278Z"/>
+    <path id="c-second" fill-rule="evenodd" clip-rule="evenodd" d="M544 141 632 121 679 145 655 186 594 173Q565 193 559 222L554 265 590 288 644 261 665 302 606 341 522 330 483 290 494 211Z"/>
+    <path id="k" fill-rule="evenodd" clip-rule="evenodd" d="M668 120 715 100 702 210 756 124 805 137 742 230 789 303 825 318 773 354 724 282 690 247 676 346 621 363 632 318Z"/>
+    <path id="o" fill-rule="evenodd" clip-rule="evenodd" d="M817 147 896 125 938 155 954 229 920 308 852 344 781 322 752 276 766 202Z M832 198 812 246 828 284 876 275 896 226 882 183Z"/>
+    <path id="u" fill-rule="evenodd" clip-rule="evenodd" d="M949 141 995 123 969 239 977 285 1012 265 1041 130 1095 111 1071 293 1042 345 975 367 919 336 914 291Z"/>
+    <path id="t" fill-rule="evenodd" clip-rule="evenodd" d="M1070 115 1216 68 1240 96 1226 137 1160 151 1111 337 1066 370 1038 350 1077 162 1047 171Z"/>
     <g id="word">
-      <use href="#letter-c" x="0"/>
-      <use href="#letter-h" x="86"/>
-      <use href="#letter-e" x="172"/>
-      <use href="#letter-c" x="258"/>
-      <use href="#letter-k" x="344"/>
-      <use href="#letter-o" x="430"/>
-      <use href="#letter-u" x="516"/>
-      <use href="#letter-t" x="602"/>
+      <use href="#c-first"/>
+      <use href="#h"/>
+      <use href="#e"/>
+      <use href="#c-second"/>
+      <use href="#k"/>
+      <use href="#o"/>
+      <use href="#u"/>
+      <use href="#t"/>
     </g>
-    <clipPath id="faces" clip-rule="evenodd">
-      <use href="#letter-c"/>
-      <use href="#letter-h" x="86"/>
-      <use href="#letter-e" x="172"/>
-      <use href="#letter-c" x="258"/>
-      <use href="#letter-k" x="344"/>
-      <use href="#letter-o" x="430"/>
-      <use href="#letter-u" x="516"/>
-      <use href="#letter-t" x="602"/>
+    <clipPath id="faces">
+      <use href="#c-first"/>
+      <use href="#h"/>
+      <use href="#e"/>
+      <use href="#c-second"/>
+      <use href="#k"/>
+      <use href="#o"/>
+      <use href="#u"/>
+      <use href="#t"/>
+    </clipPath>
+    <clipPath id="sides">
+      <use href="#c-first" transform="translate(25 30)"/>
+      <use href="#h" transform="translate(25 30)"/>
+      <use href="#e" transform="translate(25 30)"/>
+      <use href="#c-second" transform="translate(25 30)"/>
+      <use href="#k" transform="translate(25 30)"/>
+      <use href="#o" transform="translate(25 30)"/>
+      <use href="#u" transform="translate(25 30)"/>
+      <use href="#t" transform="translate(25 30)"/>
     </clipPath>
   </defs>
-  <g transform="translate(42 32) skewX(-8) rotate(-3 339 52)" stroke-linejoin="bevel">
-    <!-- Offset silhouettes join into a solid extrusion; the thin seams catch light. -->
-    <use href="#word" transform="translate(14 20)" fill="#111" stroke="#111" stroke-width="5"/>
-    <g fill="url(#depth)" stroke="url(#depth)" stroke-width="2">
-      <use href="#word" transform="translate(13 18)"/>
-      <use href="#word" transform="translate(11 15)"/>
-      <use href="#word" transform="translate(9 12)"/>
-      <use href="#word" transform="translate(7 9)"/>
-      <use href="#word" transform="translate(5 6)"/>
-      <use href="#word" transform="translate(3 3)"/>
+  <!-- Loose brush cuts and angular overspray frame the letter silhouettes. -->
+  <g fill="#444" stroke="#0b0b0b" stroke-width="4" stroke-linejoin="round">
+    <path d="M90 233C46 215 28 174 32 126 45 169 58 184 98 185L78 165 66 114 106 173 128 183Z"/>
+    <path d="M106 311C61 296 33 304 17 334 38 318 65 325 80 344L43 362 107 358 136 332Z"/>
+    <path d="M311 113C433 46 498 71 535 105 486 80 424 91 352 125L363 105 334 125Z"/>
+    <path d="M799 132 818 75 868 58 897 78 843 90 847 113Z"/>
+    <path d="M1124 283C1195 278 1239 244 1266 195 1265 250 1227 292 1177 307L1230 297 1259 272 1236 318 1177 332 1148 321Z"/>
+    <path d="M755 414 856 387 936 412 883 413 898 436 833 417 771 444Z"/>
+  </g>
+  <g stroke="#999" stroke-linecap="round" stroke-width="1.2" opacity=".7">
+    <path d="M38 151Q48 185 73 204M28 330Q45 318 66 331M367 105Q458 56 510 91M1194 300Q1234 281 1253 248"/>
+    <path d="M45 117 50 136M17 285 31 302M1238 194 1233 215M836 435 850 440"/>
+  </g>
+  <g fill="#aaa">
+    <circle cx="432.7" cy="422.8" r="0.9" opacity="0.26"/>
+    <circle cx="221.5" cy="93.9" r="1.2" opacity="0.26"/>
+    <circle cx="277.4" cy="388.3" r="1.2" opacity="0.34"/>
+    <circle cx="1043.7" cy="80.6" r="2.4" opacity="0.42"/>
+    <circle cx="464.7" cy="395.2" r="1.7" opacity="0.37"/>
+    <circle cx="513.6" cy="83.8" r="1.2" opacity="0.28"/>
+    <circle cx="1067.7" cy="412.2" r="0.9" opacity="0.49"/>
+    <circle cx="858.0" cy="64.5" r="1.2" opacity="0.22"/>
+    <circle cx="1037.7" cy="438.2" r="1.7" opacity="0.27"/>
+    <circle cx="49.8" cy="70.4" r="2.4" opacity="0.18"/>
+    <circle cx="150.0" cy="391.0" r="1.2" opacity="0.31"/>
+    <circle cx="645.4" cy="82.8" r="1.7" opacity="0.27"/>
+    <circle cx="146.6" cy="403.5" r="1.2" opacity="0.22"/>
+    <circle cx="579.7" cy="81.7" r="1.7" opacity="0.20"/>
+    <circle cx="966.8" cy="423.1" r="3" opacity="0.26"/>
+    <circle cx="961.0" cy="51.4" r="1.2" opacity="0.24"/>
+    <circle cx="435.5" cy="436.3" r="3" opacity="0.46"/>
+    <circle cx="1217.8" cy="65.7" r="1.2" opacity="0.49"/>
+    <circle cx="652.6" cy="413.5" r="1.2" opacity="0.47"/>
+    <circle cx="142.4" cy="107.7" r="2.4" opacity="0.26"/>
+    <circle cx="612.1" cy="437.8" r="1.7" opacity="0.29"/>
+    <circle cx="927.7" cy="86.2" r="3" opacity="0.46"/>
+    <circle cx="643.5" cy="443.8" r="2.4" opacity="0.24"/>
+    <circle cx="406.7" cy="82.9" r="1.7" opacity="0.40"/>
+    <circle cx="90.8" cy="410.9" r="1.7" opacity="0.25"/>
+    <circle cx="775.4" cy="90.0" r="2.4" opacity="0.39"/>
+    <circle cx="722.1" cy="406.0" r="2.4" opacity="0.19"/>
+    <circle cx="504.3" cy="82.9" r="1.7" opacity="0.27"/>
+    <circle cx="952.6" cy="417.3" r="1.7" opacity="0.41"/>
+    <circle cx="835.8" cy="98.1" r="2.4" opacity="0.28"/>
+    <circle cx="869.0" cy="400.4" r="3" opacity="0.20"/>
+    <circle cx="590.5" cy="77.2" r="1.7" opacity="0.33"/>
+    <circle cx="630.1" cy="440.5" r="3" opacity="0.43"/>
+    <circle cx="574.2" cy="60.6" r="2.4" opacity="0.32"/>
+    <circle cx="796.8" cy="392.8" r="3" opacity="0.20"/>
+    <circle cx="1166.0" cy="76.2" r="1.2" opacity="0.38"/>
+    <circle cx="240.3" cy="444.8" r="0.9" opacity="0.29"/>
+    <circle cx="41.7" cy="102.1" r="1.2" opacity="0.21"/>
+    <circle cx="980.0" cy="424.3" r="0.9" opacity="0.49"/>
+    <circle cx="628.5" cy="50.3" r="0.9" opacity="0.29"/>
+    <circle cx="526.4" cy="423.4" r="1.7" opacity="0.35"/>
+    <circle cx="436.5" cy="102.3" r="0.9" opacity="0.40"/>
+    <circle cx="481.2" cy="402.0" r="3" opacity="0.42"/>
+    <circle cx="1115.7" cy="81.0" r="1.7" opacity="0.45"/>
+    <circle cx="102.4" cy="402.4" r="3" opacity="0.41"/>
+    <circle cx="830.0" cy="90.0" r="1.7" opacity="0.42"/>
+    <circle cx="95.4" cy="400.8" r="1.2" opacity="0.28"/>
+    <circle cx="567.7" cy="67.8" r="1.7" opacity="0.41"/>
+    <circle cx="642.1" cy="389.1" r="1.2" opacity="0.34"/>
+    <circle cx="1057.0" cy="93.2" r="2.4" opacity="0.35"/>
+    <circle cx="166.8" cy="402.8" r="2.4" opacity="0.43"/>
+    <circle cx="1224.6" cy="83.2" r="3" opacity="0.38"/>
+    <circle cx="634.0" cy="416.5" r="2.4" opacity="0.47"/>
+    <circle cx="344.4" cy="87.5" r="0.9" opacity="0.22"/>
+    <circle cx="516.9" cy="390.3" r="1.2" opacity="0.35"/>
+    <circle cx="326.8" cy="74.5" r="0.9" opacity="0.48"/>
+    <circle cx="196.1" cy="395.1" r="1.2" opacity="0.23"/>
+    <circle cx="781.6" cy="85.6" r="1.2" opacity="0.45"/>
+  </g>
+  <!-- One continuous, shallow extrusion supports the irregular front contours. -->
+  <use href="#word" transform="translate(25 30)" fill="url(#depth)" stroke="#111" stroke-width="12" stroke-linejoin="round"/>
+  <g fill="url(#depth)" stroke="url(#depth)" stroke-width="3" stroke-linejoin="round">
+    <use href="#word" transform="translate(23 27)"/>
+    <use href="#word" transform="translate(20 24)"/>
+    <use href="#word" transform="translate(17 21)"/>
+    <use href="#word" transform="translate(14 18)"/>
+    <use href="#word" transform="translate(11 15)"/>
+    <use href="#word" transform="translate(8 12)"/>
+    <use href="#word" transform="translate(5 9)"/>
+    <use href="#word" transform="translate(2 6)"/>
+  </g>
+  <path d="M40 90H1280V420H40Z" fill="url(#hatching)" clip-path="url(#sides)"/>
+  <use href="#word" transform="translate(25 30)" stroke="#7e7e7e" stroke-width="1.5"/>
+  <!-- Each letter has its own silhouette; the two Cs deliberately have different cuts. -->
+  <g fill="url(#paint)" stroke="#080808" stroke-width="13" stroke-linejoin="round">
+    <use href="#c-first"/>
+    <use href="#h"/>
+    <use href="#e"/>
+    <use href="#c-second"/>
+    <use href="#k"/>
+    <use href="#o"/>
+    <use href="#u"/>
+    <use href="#t"/>
+  </g>
+  <g clip-path="url(#faces)">
+    <!-- Facets follow the handwriting, rather than a horizontal chrome reflection. -->
+    <g fill="#f5f5f5" opacity=".47">
+      <path d="M70 196 110 148 211 122 234 144 160 167 113 218 91 279 70 273Z"/>
+      <path d="M248 138 281 132 266 215 238 285ZM344 117 385 106 357 282 333 316Z"/>
+      <path d="M390 148 489 119 519 139 433 169 405 219 380 281Z"/>
+      <path d="M501 211 546 147 631 129 667 145 590 158 548 210 518 282Z"/>
+      <path d="M669 127 707 107 692 211 653 290ZM756 132 791 139 726 223 705 225Z"/>
+      <path d="M774 201 820 152 894 133 924 154 835 175 800 220 772 267Z"/>
+      <path d="M950 147 987 130 960 241 957 302 935 325ZM1045 135 1086 119 1060 287 1026 318Z"/>
+      <path d="M1073 119 1215 76 1230 96 1112 130ZM1118 168 1150 156 1101 330 1071 353Z"/>
     </g>
-    <use href="#word" transform="translate(10 14)" stroke="#c1c1c1" stroke-opacity=".22" stroke-width=".8"/>
-    <use href="#word" fill="url(#chrome)" stroke="#181818" stroke-width="4"/>
-    <g clip-path="url(#faces)">
-      <path d="M-12 3H706V12H-12Z" fill="#fff" opacity=".28"/>
-      <path d="M-12 79 706 61V104H-12Z" fill="#141414" opacity=".13"/>
-      <path d="M-12 47H706M-12 50H706" stroke="#fff" stroke-opacity=".32" stroke-width=".8"/>
-      <path d="M-12 94H706" stroke="#222" stroke-opacity=".5" stroke-width="1"/>
-      <path d="M-12 0H706V104H-12Z" fill="url(#brushed)"/>
-      <!-- Opposing inset edges give every contour, including the O counter, a bevel. -->
-      <use href="#word" transform="translate(3 3)" stroke="#fff" stroke-opacity=".8" stroke-width="3"/>
-      <use href="#word" transform="translate(-3 -3)" stroke="#202020" stroke-opacity=".8" stroke-width="3"/>
-
-      <path d="M7 18V36M8 70V86M32 7H57" stroke="#333" stroke-opacity=".65" stroke-width="1.2"/>
-      <path d="M9 18V35M10 70V84M32 9H55" stroke="#fff" stroke-opacity=".55" stroke-width=".8"/>
-      <path d="M93 18V36M94 70V86M118 7H143" stroke="#333" stroke-opacity=".65" stroke-width="1.2"/>
-      <path d="M95 18V35M96 70V84M118 9H141" stroke="#fff" stroke-opacity=".55" stroke-width=".8"/>
-      <path d="M179 18V36M180 70V86M204 7H229" stroke="#333" stroke-opacity=".65" stroke-width="1.2"/>
-      <path d="M181 18V35M182 70V84M204 9H227" stroke="#fff" stroke-opacity=".55" stroke-width=".8"/>
-      <path d="M265 18V36M266 70V86M290 7H315" stroke="#333" stroke-opacity=".65" stroke-width="1.2"/>
-      <path d="M267 18V35M268 70V84M290 9H313" stroke="#fff" stroke-opacity=".55" stroke-width=".8"/>
-      <path d="M351 18V36M352 70V86M376 7H401" stroke="#333" stroke-opacity=".65" stroke-width="1.2"/>
-      <path d="M353 18V35M354 70V84M376 9H399" stroke="#fff" stroke-opacity=".55" stroke-width=".8"/>
-      <path d="M437 18V36M438 70V86M462 7H487" stroke="#333" stroke-opacity=".65" stroke-width="1.2"/>
-      <path d="M439 18V35M440 70V84M462 9H485" stroke="#fff" stroke-opacity=".55" stroke-width=".8"/>
-      <path d="M523 18V36M524 70V86M548 7H573" stroke="#333" stroke-opacity=".65" stroke-width="1.2"/>
-      <path d="M525 18V35M526 70V84M548 9H571" stroke="#fff" stroke-opacity=".55" stroke-width=".8"/>
-      <path d="M609 18V36M610 70V86M634 7H659" stroke="#333" stroke-opacity=".65" stroke-width="1.2"/>
-      <path d="M611 18V35M612 70V84M634 9H657" stroke="#fff" stroke-opacity=".55" stroke-width=".8"/>
+    <g fill="#252525" opacity=".44">
+      <path d="M88 281 139 294 178 311 236 282 246 316 183 350 102 329Z"/>
+      <path d="M216 320 265 299 266 339 213 362ZM318 299 359 276 383 334 328 366Z"/>
+      <path d="M368 311 428 329 503 303 530 323 450 370 352 347Z"/>
+      <path d="M498 285 545 293 591 311 651 283 669 310 606 352 523 341Z"/>
+      <path d="M646 322 685 301 677 351 617 375ZM707 265 747 274 792 308 826 319 771 365Z"/>
+      <path d="M770 275 813 296 856 317 928 284 923 316 850 355 781 334Z"/>
+      <path d="M919 321 971 337 1042 305 1048 351 974 377 918 346Z"/>
+      <path d="M1041 336 1094 306 1115 340 1065 380 1031 354Z"/>
     </g>
-    <use href="#word" stroke="#e1e1e1" stroke-width="1"/>
-    <!-- A broken, tapered metal rule grounds the lettering without a background plate. -->
-    <path d="M0 132 255 128 248 133 14 138Z M268 128H491L483 132H261Z M504 128 686 123 673 130 497 133Z" fill="url(#rail)"/>
-    <path d="M23 141 171 138M560 136 651 133" stroke="#626262" stroke-width="1"/>
-    <g stroke="#f5f5f5" stroke-width="1.2" stroke-linecap="square">
-      <path d="M69 0V12M63 6H75"/>
-      <path d="M493 101V113M487 107H499"/>
+    <use href="#word" transform="translate(4 5)" stroke="#f3f3f3" stroke-opacity=".66" stroke-width="8" stroke-linejoin="round"/>
+    <use href="#word" transform="translate(-4 -5)" stroke="#222" stroke-opacity=".65" stroke-width="9" stroke-linejoin="round"/>
+    <g fill="url(#halftone)" opacity=".38">
+      <path d="M65 225 125 197 111 289 163 322 102 324 62 276Z"/>
+      <path d="M250 228 270 215 267 334 217 351ZM391 263 436 242 423 319 376 329Z"/>
+      <path d="M494 223 554 202 527 286 586 329 522 330 483 290Z"/>
+      <path d="M657 255 687 240 676 346 621 363ZM758 231 818 211 801 283 852 328 781 322Z"/>
+      <path d="M919 269 954 246 963 312 1021 332 975 367 919 336Z"/>
+      <path d="M1066 230 1112 212 1085 348 1038 350Z"/>
     </g>
+    <!-- Carved ink folds bend around individual stems and bowls. -->
+    <g fill="#202020">
+      <path d="M80 234Q102 171 167 147L212 142Q135 167 108 228L100 278 90 292Z"/>
+      <path d="M263 134 278 132 257 221 272 243 253 278 250 245 239 234Z"/>
+      <path d="M385 310 434 295 483 293 427 313 458 329 425 327Z"/>
+      <path d="M511 229Q527 177 579 156L628 151Q559 175 540 230L530 279 519 293Z"/>
+      <path d="M678 126 691 119 671 221 684 243 664 295 662 255 651 246Z"/>
+      <path d="M781 235Q799 174 851 158L899 147Q836 174 810 223L800 269 788 288Z"/>
+      <path d="M944 283 958 303 978 320 1016 301 1007 320 974 333 946 315Z"/>
+      <path d="M1101 144 1219 105 1213 122 1120 147 1103 195 1087 211Z"/>
+    </g>
+    <g stroke="#f2f2f2" stroke-width="1.7" opacity=".85" stroke-linecap="round">
+      <path d="M89 234Q112 180 168 155M258 143 245 230 258 245M394 314 427 306 441 317M520 235Q535 186 581 163M671 146 657 243 669 255M790 237Q809 184 851 166M951 297 975 326 1009 307M1105 153 1206 119"/>
+    </g>
+    <g stroke="#2c2c2c" stroke-width="1.4" stroke-linecap="round" opacity=".8">
+      <path d="M118 172Q165 139 202 152M123 179Q171 151 196 159M114 298Q141 320 168 319M113 303Q137 327 164 327"/>
+      <path d="M275 156 259 215M280 160 268 211M331 274 331 312 345 331M338 270 338 308 351 325"/>
+      <path d="M414 164 487 140M414 171 484 148M397 285 458 252M397 292 452 263M425 341 480 321"/>
+      <path d="M552 159Q607 135 638 158M548 168Q605 147 633 165M533 301 573 320 606 316M533 307 570 328 602 325"/>
+      <path d="M697 133 681 191M691 132 677 185M720 238 765 313M711 240 753 307"/>
+      <path d="M821 173Q877 142 912 179M820 183Q871 156 905 185M802 294Q847 335 901 292M801 302Q846 342 901 301"/>
+      <path d="M971 153 950 239M976 156 959 231M971 344 1018 326M978 349 1019 334"/>
+      <path d="M1133 117 1200 93M1141 123 1193 104M1087 257 1070 331M1092 260 1080 325"/>
+      <path d="M182 131 172 149 181 159 170 179M171 147 155 151M477 132 467 151 476 160 467 179M467 151 457 148M895 143 883 160 891 171 882 189M885 166 872 171"/>
+      <path d="M134 306 132 319M141 309 139 322M148 312 146 325M550 315 548 327M557 318 555 330M564 321 562 332M742 296 751 291M746 302 755 297M750 308 759 303"/>
+    </g>
+  </g>
+  <use href="#word" stroke="#d3d3d3" stroke-width="1.5" stroke-linejoin="round"/>
+  <g stroke="#fafafa" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M79 197 113 154 202 125 231 146M73 249 76 270 102 293M246 146 281 134M347 121 382 108 360 276M393 155 486 123 516 141M389 324 448 348 507 319"/>
+    <path d="M507 212 548 151 629 131 662 148M551 274 591 299 642 278M675 131 705 111M759 137 791 141 731 222M657 332 637 352M775 208 822 158 894 135 926 159M843 333 912 301"/>
+    <path d="M956 149 985 138M1049 141 1084 123M930 314 976 355 1035 336M1080 123 1214 79 1228 98M1118 202 1093 302M1070 357 1102 335"/>
+  </g>
+  <!-- Painted flourishes weave over the lower strokes, with tapered, asymmetric ends. -->
+  <path d="M153 360C254 297 354 342 430 316 489 296 517 260 554 266 576 270 579 291 560 301 549 307 538 302 540 293 537 310 559 320 578 305 598 289 584 259 558 256 513 251 487 284 425 302 332 329 248 289 153 360Z" fill="url(#ribbon)" stroke="#111" stroke-width="5"/>
+  <path d="M176 350C260 306 351 336 428 309 485 289 526 260 556 262" stroke="#ededed" stroke-width="1.8"/>
+  <path d="M361 361 477 329 502 337 462 355 414 357 433 379 388 369 340 382Z" fill="#a7a7a7" stroke="#111" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M359 373 397 363 478 336" stroke="#e8e8e8" stroke-width="1.8"/>
+  <path d="M728 323 808 292 835 306 803 316 784 339 773 327 716 346Z" fill="#b9b9b9" stroke="#111" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M733 332 807 299 823 306 798 310" stroke="#f1f1f1" stroke-width="1.8"/>
+  <path d="M913 352C950 317 1001 308 1026 280 1052 251 1038 233 1024 239 1017 242 1017 252 1022 255 1008 253 1010 237 1020 231 1042 217 1061 245 1043 275 1019 318 967 317 913 352Z" fill="url(#ribbon)" stroke="#111" stroke-width="4"/>
+  <path d="M928 342C968 317 1016 309 1035 281 1051 256 1046 238 1033 234" stroke="#ededed" stroke-width="1.5"/>
+  <!-- Uneven dry-brush underlines and drips finish the piece. -->
+  <g stroke-linecap="round">
+    <path d="M123 389C353 409 466 383 619 394 753 404 937 390 1104 383" stroke="#333" stroke-width="7"/>
+    <path d="M130 389C321 402 458 382 603 392M659 397Q868 400 1077 385" stroke="#888" stroke-width="1.4"/>
+    <path d="M238 381 241 418M244 386 245 407M541 388 544 425M980 398 984 422" stroke="#777" stroke-width="2"/>
+  </g>
+  <g fill="#aaa">
+    <ellipse cx="241" cy="420" rx="2.1" ry="3.4"/><ellipse cx="544" cy="428" rx="2" ry="3.2"/><ellipse cx="984" cy="425" rx="1.5" ry="2.8"/>
+    <path d="M47 244 66 229 58 253 42 262Z M1186 171 1216 157 1201 183 1181 189Z M698 74 721 53 748 58 729 70Z" stroke="#111" stroke-width="3"/>
+  </g>
+  <g stroke="#d4d4d4" stroke-width="1.5" stroke-linecap="round">
+    <path d="M217 87 215 111M204 102 228 96M1137 214 1132 235M1125 227 1146 220"/>
   </g>
 </svg>
