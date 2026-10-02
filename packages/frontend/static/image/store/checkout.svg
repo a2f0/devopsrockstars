@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="760" height="180" viewBox="0 0 760 180" fill="none" role="img" aria-labelledby="checkout-title checkout-description">
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="188" viewBox="20 8 720 188" fill="none" role="img" aria-labelledby="checkout-title checkout-description">
   <title id="checkout-title">Checkout</title>
   <desc id="checkout-description">Grayscale CHECKOUT block lettering with deep graphite extrusion, chamfered chrome faces, polished bevels, and engraved metal details.</desc>
   <defs>
@@ -43,7 +43,16 @@
       <use href="#letter-u" x="516"/>
       <use href="#letter-t" x="602"/>
     </g>
-    <clipPath id="faces"><use href="#word"/></clipPath>
+    <clipPath id="faces" clip-rule="evenodd">
+      <use href="#letter-c"/>
+      <use href="#letter-h" x="86"/>
+      <use href="#letter-e" x="172"/>
+      <use href="#letter-c" x="258"/>
+      <use href="#letter-k" x="344"/>
+      <use href="#letter-o" x="430"/>
+      <use href="#letter-u" x="516"/>
+      <use href="#letter-t" x="602"/>
+    </clipPath>
   </defs>
   <g transform="translate(42 32) skewX(-8) rotate(-3 339 52)" stroke-linejoin="bevel">
     <!-- Offset silhouettes join into a solid extrusion; the thin seams catch light. -->
