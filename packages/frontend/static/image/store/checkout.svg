@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="188" viewBox="20 8 720 188" fill="none" role="img" aria-labelledby="checkout-title checkout-description">
+  <title id="checkout-title">Checkout</title>
+  <desc id="checkout-description">Grayscale CHECKOUT block lettering with deep graphite extrusion, chamfered chrome faces, polished bevels, and engraved metal details.</desc>
+  <defs>
+    <linearGradient id="chrome" x1="0" y1="0" x2="8" y2="104" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#fff"/>
+      <stop offset=".18" stop-color="#cfcfcf"/>
+      <stop offset=".42" stop-color="#8a8a8a"/>
+      <stop offset=".47" stop-color="#454545"/>
+      <stop offset=".49" stop-color="#f5f5f5"/>
+      <stop offset=".65" stop-color="#c4c4c4"/>
+      <stop offset="1" stop-color="#777"/>
+    </linearGradient>
+    <linearGradient id="depth" x1="0" y1="0" x2="0" y2="126" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#9b9b9b"/>
+      <stop offset=".3" stop-color="#454545"/>
+      <stop offset=".6" stop-color="#242424"/>
+      <stop offset="1" stop-color="#555"/>
+    </linearGradient>
+    <linearGradient id="rail" x1="0" y1="130" x2="670" y2="130" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#555"/>
+      <stop offset=".3" stop-color="#eee"/>
+      <stop offset=".65" stop-color="#888"/>
+      <stop offset="1" stop-color="#333"/>
+    </linearGradient>
+    <pattern id="brushed" width="8" height="5" patternUnits="userSpaceOnUse">
+      <path d="M0 .5H8M2 3H6" stroke="#fff" stroke-opacity=".12" stroke-width=".5"/>
+    </pattern>
+    <path id="letter-c" fill-rule="evenodd" d="M14 0H68L76 8V26H26V78H76V96L68 104H14L0 90V14Z"/>
+    <path id="letter-h" fill-rule="evenodd" d="M0 0H24V39H50V0H74V104H50V65H24V104H0Z"/>
+    <path id="letter-e" fill-rule="evenodd" d="M0 0H72V24H24V40H64V64H24V80H72V104H0Z"/>
+    <path id="letter-k" fill-rule="evenodd" d="M0 0H24V40L48 0H76L43 51L78 104H49L24 65V104H0Z"/>
+    <path id="letter-o" fill-rule="evenodd" d="M14 0H62L76 14V90L62 104H14L0 90V14Z M26 25V79H50V25Z"/>
+    <path id="letter-u" fill-rule="evenodd" d="M0 0H24V78H50V0H74V90L60 104H14L0 90Z"/>
+    <path id="letter-t" fill-rule="evenodd" d="M0 0H76V25H50V104H26V25H0Z"/>
+    <g id="word">
+      <use href="#letter-c" x="0"/>
+      <use href="#letter-h" x="86"/>
+      <use href="#letter-e" x="172"/>
+      <use href="#letter-c" x="258"/>
+      <use href="#letter-k" x="344"/>
+      <use href="#letter-o" x="430"/>
+      <use href="#letter-u" x="516"/>
+      <use href="#letter-t" x="602"/>
+    </g>
+    <clipPath id="faces" clip-rule="evenodd">
+      <use href="#letter-c"/>
+      <use href="#letter-h" x="86"/>
+      <use href="#letter-e" x="172"/>
+      <use href="#letter-c" x="258"/>
+      <use href="#letter-k" x="344"/>
+      <use href="#letter-o" x="430"/>
+      <use href="#letter-u" x="516"/>
+      <use href="#letter-t" x="602"/>
+    </clipPath>
+  </defs>
+  <g transform="translate(42 32) skewX(-8) rotate(-3 339 52)" stroke-linejoin="bevel">
+    <!-- Offset silhouettes join into a solid extrusion; the thin seams catch light. -->
+    <use href="#word" transform="translate(14 20)" fill="#111" stroke="#111" stroke-width="5"/>
+    <g fill="url(#depth)" stroke="url(#depth)" stroke-width="2">
+      <use href="#word" transform="translate(13 18)"/>
+      <use href="#word" transform="translate(11 15)"/>
+      <use href="#word" transform="translate(9 12)"/>
+      <use href="#word" transform="translate(7 9)"/>
+      <use href="#word" transform="translate(5 6)"/>
+      <use href="#word" transform="translate(3 3)"/>
+    </g>
+    <use href="#word" transform="translate(10 14)" stroke="#c1c1c1" stroke-opacity=".22" stroke-width=".8"/>
+    <use href="#word" fill="url(#chrome)" stroke="#181818" stroke-width="4"/>
+    <g clip-path="url(#faces)">
+      <path d="M-12 3H706V12H-12Z" fill="#fff" opacity=".28"/>
+      <path d="M-12 79 706 61V104H-12Z" fill="#141414" opacity=".13"/>
+      <path d="M-12 47H706M-12 50H706" stroke="#fff" stroke-opacity=".32" stroke-width=".8"/>
+      <path d="M-12 94H706" stroke="#222" stroke-opacity=".5" stroke-width="1"/>
+      <path d="M-12 0H706V104H-12Z" fill="url(#brushed)"/>
+      <!-- Opposing inset edges give every contour, including the O counter, a bevel. -->
+      <use href="#word" transform="translate(3 3)" stroke="#fff" stroke-opacity=".8" stroke-width="3"/>
+      <use href="#word" transform="translate(-3 -3)" stroke="#202020" stroke-opacity=".8" stroke-width="3"/>
+
+      <path d="M7 18V36M8 70V86M32 7H57" stroke="#333" stroke-opacity=".65" stroke-width="1.2"/>
+      <path d="M9 18V35M10 70V84M32 9H55" stroke="#fff" stroke-opacity=".55" stroke-width=".8"/>
+      <path d="M93 18V36M94 70V86M118 7H143" stroke="#333" stroke-opacity=".65" stroke-width="1.2"/>
+      <path d="M95 18V35M96 70V84M118 9H141" stroke="#fff" stroke-opacity=".55" stroke-width=".8"/>
+      <path d="M179 18V36M180 70V86M204 7H229" stroke="#333" stroke-opacity=".65" stroke-width="1.2"/>
+      <path d="M181 18V35M182 70V84M204 9H227" stroke="#fff" stroke-opacity=".55" stroke-width=".8"/>
+      <path d="M265 18V36M266 70V86M290 7H315" stroke="#333" stroke-opacity=".65" stroke-width="1.2"/>
+      <path d="M267 18V35M268 70V84M290 9H313" stroke="#fff" stroke-opacity=".55" stroke-width=".8"/>
+      <path d="M351 18V36M352 70V86M376 7H401" stroke="#333" stroke-opacity=".65" stroke-width="1.2"/>
+      <path d="M353 18V35M354 70V84M376 9H399" stroke="#fff" stroke-opacity=".55" stroke-width=".8"/>
+      <path d="M437 18V36M438 70V86M462 7H487" stroke="#333" stroke-opacity=".65" stroke-width="1.2"/>
+      <path d="M439 18V35M440 70V84M462 9H485" stroke="#fff" stroke-opacity=".55" stroke-width=".8"/>
+      <path d="M523 18V36M524 70V86M548 7H573" stroke="#333" stroke-opacity=".65" stroke-width="1.2"/>
+      <path d="M525 18V35M526 70V84M548 9H571" stroke="#fff" stroke-opacity=".55" stroke-width=".8"/>
+      <path d="M609 18V36M610 70V86M634 7H659" stroke="#333" stroke-opacity=".65" stroke-width="1.2"/>
+      <path d="M611 18V35M612 70V84M634 9H657" stroke="#fff" stroke-opacity=".55" stroke-width=".8"/>
+    </g>
+    <use href="#word" stroke="#e1e1e1" stroke-width="1"/>
+    <!-- A broken, tapered metal rule grounds the lettering without a background plate. -->
+    <path d="M0 132 255 128 248 133 14 138Z M268 128H491L483 132H261Z M504 128 686 123 673 130 497 133Z" fill="url(#rail)"/>
+    <path d="M23 141 171 138M560 136 651 133" stroke="#626262" stroke-width="1"/>
+    <g stroke="#f5f5f5" stroke-width="1.2" stroke-linecap="square">
+      <path d="M69 0V12M63 6H75"/>
+      <path d="M493 101V113M487 107H499"/>
+    </g>
+  </g>
+</svg>

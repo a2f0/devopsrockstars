@@ -196,6 +196,17 @@ describe('store page', () => {
 
       const customerName = await browser.$('input[name="name"]');
       await customerName.waitForDisplayed();
+      await expect(await browser.$('h1 img[alt="checkout"]')).toBeDisplayed();
+      await browser.waitUntil(() =>
+        browser.execute(() => {
+          const image = document.querySelector('h1 img[alt="checkout"]');
+          return (
+            image instanceof HTMLImageElement &&
+            image.complete &&
+            image.naturalWidth > 0
+          );
+        })
+      );
       await customerName.setValue('Grace Hopper');
       await (await browser.$('input[name="email"]')).setValue(
         'grace@example.com'
