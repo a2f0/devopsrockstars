@@ -141,7 +141,7 @@
     <use href="#word" transform="translate(5 9)"/>
     <use href="#word" transform="translate(2 6)"/>
   </g>
-  <path d="M40 180H1280V420H40Z" fill="url(#hatching)" clip-path="url(#sides)"/>
+  <path d="M40 90H1280V420H40Z" fill="url(#hatching)" clip-path="url(#sides)"/>
   <use href="#word" transform="translate(25 30)" stroke="#7e7e7e" stroke-width="1.5"/>
   <!-- Each letter has its own silhouette; the two Cs deliberately have different cuts. -->
   <g fill="url(#paint)" stroke="#080808" stroke-width="13" stroke-linejoin="round">
