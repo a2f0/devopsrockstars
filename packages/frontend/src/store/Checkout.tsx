@@ -2,6 +2,7 @@ import React, {useEffect, useMemo, useState} from 'react';
 import {useNavigate} from 'react-router';
 import {cancelCheckout, createCheckout, loadStorefront} from './api';
 import {useStoreCart} from './cart';
+import CheckoutHeading from './CheckoutHeading';
 import type {
   CreateCheckoutResponse,
   ShippingInput,
@@ -22,7 +23,6 @@ import {
   Section,
   SectionTitle,
   Status,
-  StoreHeading,
   StoreShell,
   SummaryRow,
 } from './StoreStyles';
@@ -190,7 +190,7 @@ const Checkout = React.memo(() => {
   if (!checkout && cart.items.length === 0) {
     return (
       <StoreShell>
-        <StoreHeading>checkout</StoreHeading>
+        <CheckoutHeading />
         <Status>Your cart is empty.</Status>
         <FormActions>
           <ActionLink to="/store">Back to store</ActionLink>
@@ -201,7 +201,7 @@ const Checkout = React.memo(() => {
 
   return (
     <StoreShell>
-      <StoreHeading>checkout</StoreHeading>
+      <CheckoutHeading />
       <CheckoutGrid>
         <Section>
           <SectionTitle>Shipping</SectionTitle>
