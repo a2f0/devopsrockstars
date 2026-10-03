@@ -4,18 +4,19 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "NODE_OPTIONS='--import tsx' webpack --mode production",
-    "start": "NODE_OPTIONS='--import tsx' webpack serve --mode development",
-    "start:test": "NODE_OPTIONS='--import tsx' webpack serve --port 8081 --mode development",
-    "test": "NODE_OPTIONS='--experimental-specifier-resolution=node' wdio wdio.shared.conf.ts",
-    "test:headless": "NODE_OPTIONS='--experimental-specifier-resolution=node' wdio wdio.headless.conf.ts",
-    "deploy:staging": "wrangler deploy --env staging",
-    "deploy:prod": "wrangler deploy --env prod",
-    "start:staging": "PUBLIC_ENVIRONMENT=staging NODE_OPTIONS='--import tsx' webpack serve --port 8082 --mode development"
+    "build": "bun tooling/build.ts",
+    "start": "bun --watch tooling/server.ts",
+    "start:test": "bun tooling/server.ts --port 8081",
+    "start:staging": "PUBLIC_ENVIRONMENT=staging bun tooling/server.ts --port 8082",
+    "test": "bun test --timeout 120000 e2e/specs",
+    "test:headless": "HEADLESS=true bun test --timeout 120000 e2e/specs",
+    "deploy:staging": "bun run --bun wrangler deploy --env staging",
+    "deploy:prod": "bun run --bun wrangler deploy --env prod"
   },
   "devDependencies": {
-    "@svgr/webpack": "8.1.0",
-    "@types/three": "0.186.0"
+    "@types/three": "0.186.0",
+    "expect-webdriverio": "7.0.1",
+    "webdriverio": "9.32.0"
   },
   "dependencies": {
     "@devopsrockstars/shared-types": "workspace:*",

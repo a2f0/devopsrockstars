@@ -30,9 +30,9 @@ Always pass `-R "$REPO"` to `gh` commands.
    - If tooling reports actions but `git status` shows no unexpected changes, proceed without asking about generated files.
 
 3. Run validation for this repo before committing:
-   - `pnpm run compile`
-   - `pnpm run lint`
-   - `pnpm run test-headless` when UI behavior changed or test-sensitive code is touched
+   - `bun run compile`
+   - `bun run lint`
+   - `bun run test-headless` when UI behavior changed or test-sensitive code is touched
 
 4. Commit format:
    - Use a conventional commit message.

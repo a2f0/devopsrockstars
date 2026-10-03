@@ -4,9 +4,10 @@
     ".": {
       "entry": [
         "scripts/check-for-unpinned-dependencies.mjs",
-        "scripts/check-agent-skills-in-sync.mjs"
+        "scripts/check-agent-skills-in-sync.mjs",
+        "scripts/*.ts"
       ],
-      "project": ["scripts/**/*.mjs"]
+      "project": ["scripts/**/*.mjs", "scripts/**/*.ts"]
     },
     "packages/agent-tool": {
       "entry": ["test/**/*.test.ts"],
@@ -18,22 +19,17 @@
     },
     "packages/frontend": {
       "entry": [
+        "src/index.tsx",
         "src/**/*.test.ts",
         "*.test.ts",
-        "wdio.shared.conf.ts",
-        "wdio.headless.conf.ts",
+        "tooling/*.ts",
         "e2e/specs/**/*.spec.ts"
       ],
-      "project": ["src/**/*.{ts,tsx}", "e2e/**/*.ts", "*.ts"]
+      "project": ["src/**/*.{ts,tsx}", "e2e/**/*.ts", "*.ts", "tooling/**/*.ts"]
     },
     "packages/shared-types": {
       "project": ["src/**/*.ts"]
     }
   },
-  "ignoreDependencies": [
-    "@types/mocha",
-    "@wdio/dot-reporter",
-    "@wdio/local-runner",
-    "@wdio/spec-reporter"
-  ]
+  "ignoreDependencies": ["@biomejs/biome", "markdownlint-cli2", "wrangler"]
 }

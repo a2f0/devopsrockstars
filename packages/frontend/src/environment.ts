@@ -24,6 +24,6 @@ const siteEnvironment = parseSiteEnvironment(globalThis.__SITE_ENVIRONMENT__);
 
 export const features = siteFeatures(siteEnvironment);
 
-// An empty origin means same-origin, which is what the webpack dev server and
+// An empty origin means same-origin, which is what the Bun dev server and
 // the browser tests use.
 export const storeApiOrigin = globalThis.__STORE_API_ORIGIN__ ?? '';

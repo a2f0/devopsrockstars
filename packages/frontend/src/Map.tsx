@@ -3,7 +3,8 @@ import React from 'react';
 import {MapContainer, Marker, TileLayer} from 'react-leaflet';
 import {useLocation} from 'react-router';
 import styled, {css} from 'styled-components';
-import whiteStar from '/static/image/white-star-only.svg';
+
+const whiteStar = '/static/image/white-star-only.svg';
 
 interface IProps {
   hideMap: boolean;

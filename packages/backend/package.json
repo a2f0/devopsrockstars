@@ -4,12 +4,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "db:migrate:local": "wrangler d1 migrations apply devopsrockstars-store-staging --env staging --local",
-    "db:migrate:staging": "wrangler d1 migrations apply devopsrockstars-store-staging --env staging --remote",
-    "db:migrate:prod": "wrangler d1 migrations apply devopsrockstars-store --env prod --remote",
-    "deploy:staging": "wrangler deploy --env staging",
-    "deploy:prod": "wrangler deploy --env prod",
-    "dev": "wrangler dev --env staging --local"
+    "db:migrate:local": "bun run --bun wrangler d1 migrations apply devopsrockstars-store-staging --env staging --local",
+    "db:migrate:staging": "bun run --bun wrangler d1 migrations apply devopsrockstars-store-staging --env staging --remote",
+    "db:migrate:prod": "bun run --bun wrangler d1 migrations apply devopsrockstars-store --env prod --remote",
+    "deploy:staging": "bun run --bun wrangler deploy --env staging",
+    "deploy:prod": "bun run --bun wrangler deploy --env prod",
+    "dev": "bun run --bun wrangler dev --env staging --local --var STOREFRONT_ORIGINS:http://localhost:8080,http://127.0.0.1:8080,http://localhost:8081,http://127.0.0.1:8081,http://localhost:8082,http://127.0.0.1:8082"
   },
   "dependencies": {
     "@devopsrockstars/shared-types": "workspace:*"

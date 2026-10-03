@@ -63,9 +63,9 @@ Always pass `-R "$REPO"` to `gh` commands.
 
    - Required PR gate in this repo is the `code-quality` job from `.github/workflows/main.yml`.
    - If `code-quality` fails, inspect failed logs and fix locally with the closest checks:
-     - `pnpm run compile`
-     - `pnpm run lint`
-     - `pnpm run ci-headless`
+     - `bun run compile`
+     - `bun run lint`
+     - `bun run ci-headless`
    - Commit and push fixes, then continue the loop.
 
 6. Enable auto-merge once checks are green, branch is not behind, and Gemini threads are addressed:

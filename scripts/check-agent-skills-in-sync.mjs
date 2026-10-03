@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 /**
  * Claude Code and Codex each discover skills from their own directory, so the
  * repository keeps one copy per agent. The copies are deliberately written

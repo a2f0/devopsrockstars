@@ -1,8 +1,14 @@
 # DevOps Rockstars
 
+Use Bun **1.4.2** (see `.bun-version`) for all workspace commands. TypeScript
+**7.0.2** checks types; Bun transpiles and bundles the application. Install Bun
+from [bun.sh](https://bun.sh), then run `bun install`. Commit `bun.lock` with
+dependency changes. Development rebuilds on source edits; refresh the browser
+to load the updated bundle.
+
 ## Workspace layout
 
-- `packages/frontend` — React site, static assets, Webpack configuration, and
+- `packages/frontend` — React site, static assets, Bun build scripts, and
   browser tests
 - `packages/backend` — Cloudflare Worker, D1 migrations, and Wrangler
   configuration
@@ -17,26 +23,29 @@ deployment commands remain stable.
 ```shell
 pip install pre-commit
 pre-commit install
-pnpm install
-pnpm run start-server
+bun install
+bun run start-server
 ```
 
 The site and the store API are separate Workers, so local development runs
-them side by side. Start the store Worker on port 8787 and the webpack server
-proxies `/api` to it, keeping development same-origin:
+them side by side. Start the store Worker on port 8787 and the Bun server
+proxies `/api` to it, keeping development same-origin. The local Worker
+command allows the frontend origins on ports 8080, 8081, and 8082 for both
+`localhost` and `127.0.0.1`; deployed Workers retain their domain-only origin
+configuration:
 
 ```shell
 cp packages/backend/.dev.vars.example packages/backend/.dev.vars
-pnpm run db:migrate:local
-pnpm run dev:cloudflare   # store Worker on :8787
-pnpm run start-server     # site on :8080, proxying /api to :8787
+bun run db:migrate:local
+bun run dev:cloudflare   # store Worker on :8787
+bun run start-server     # site on :8080, proxying /api to :8787
 ```
 
 The local store is deliberately sold out after the first migration. Add local
 inventory before testing checkout:
 
 ```shell
-pnpm --filter @devopsrockstars/backend exec wrangler d1 execute \
+bun run --cwd packages/backend --bun wrangler d1 execute \
   devopsrockstars-store-staging --env staging --local \
   --command "UPDATE product_variants SET inventory_quantity = 5"
 ```
@@ -44,24 +53,24 @@ pnpm --filter @devopsrockstars/backend exec wrangler d1 execute \
 To see the site as staging renders it, with the store and search enabled:
 
 ```shell
-pnpm run start-staging-server   # :8082
+bun run start-staging-server   # :8082
 ```
 
 Testing
 
 ```shell
-pnpm run ci
-pnpm run ci-headless
+bun run ci
+bun run ci-headless
 ```
 
-Start the testing webpack server (on different port than normal development server) and run tests manually.
+Start the testing Bun server (on different port than normal development server) and run tests manually.
 
 ```shell
-pnpm run start-test-server      # :8081, production feature set
-pnpm run start-staging-server   # :8082, staging feature set
+bun run start-test-server      # :8081, production feature set
+bun run start-staging-server   # :8082, staging feature set
 # in a different console tab
-pnpm run test
-pnpm run test-headless
+bun run test
+bun run test-headless
 ```
 
 `e2e/specs/basic.spec.ts` runs against the production build on :8081 and
@@ -69,17 +78,17 @@ asserts the store and search are hidden; `e2e/specs/staging.spec.ts` runs
 against the staging build on :8082 and exercises them. One run covers both
 environments' feature flags.
 
-Run a specific spec
+Run tests whose names match a pattern
 
 ```shell
-pnpm --filter @devopsrockstars/frontend exec wdio wdio.shared.conf.ts \
-  --spec=./e2e/specs/basic.spec.ts
+bun run --cwd packages/frontend test \
+  --test-name-pattern="loads correctly"
 ```
 
 ## Deployment
 
 Both environments run entirely on Cloudflare. Each is a pair of Workers: a
-static-assets Worker serving the webpack output, and a store Worker serving
+static-assets Worker serving the Bun output, and a store Worker serving
 `/api/*` against its own D1 database. Wrangler owns the Worker and asset
 deployments; Terraform owns the custom domains.
 
@@ -110,9 +119,9 @@ GitHub Actions deploys `production` to production and `staging` to staging, and
 same way:
 
 ```shell
-pnpm run deploy:staging
-pnpm run deploy:prod
-scripts/deploy.sh staging --dry-run   # build and validate without publishing
+bun run deploy:staging
+bun run deploy:prod
+scripts/deploy.ts staging --dry-run   # build and validate without publishing
 ```
 
 Each deployment builds the site for the environment, applies pending D1
@@ -129,7 +138,7 @@ migrations, publishes the store Worker, then publishes the site Worker.
    `packages/backend/wrangler.jsonc`. A new environment would add one with:
 
    ```shell
-   pnpm --filter @devopsrockstars/backend exec wrangler d1 create \
+   bun run --cwd packages/backend --bun wrangler d1 create \
      devopsrockstars-store-<env> --location=enam
    ```
 
@@ -137,8 +146,8 @@ migrations, publishes the store Worker, then publishes the site Worker.
    seeds the historical $20 price and zero stock as safe placeholders.
 
    ```shell
-   pnpm run db:migrate:prod
-   pnpm --filter @devopsrockstars/backend exec wrangler d1 execute \
+   bun run db:migrate:prod
+   bun run --cwd packages/backend --bun wrangler d1 execute \
      devopsrockstars-store --env prod --remote \
      --command "UPDATE product_variants SET unit_amount = 2000, inventory_quantity = 1"
    ```
@@ -149,7 +158,7 @@ migrations, publishes the store Worker, then publishes the site Worker.
    ```shell
    for secret in STRIPE_PUBLISHABLE_KEY STRIPE_SECRET_KEY \
      STRIPE_WEBHOOK_SECRET CHECKOUT_HASH_SECRET; do
-     pnpm --filter @devopsrockstars/backend exec wrangler secret put \
+     bun run --cwd packages/backend --bun wrangler secret put \
        "$secret" --env prod
    done
    ```
@@ -164,8 +173,8 @@ migrations, publishes the store Worker, then publishes the site Worker.
    hostname at it.
 
    ```shell
-   pnpm run deploy:staging
-   pnpm run deploy:prod
+   bun run deploy:staging
+   bun run deploy:prod
    cd terraform && ./apply.sh
    ```
 
@@ -197,7 +206,7 @@ been deleted for exactly that reason. After any future rename, confirm the
 cutover, then retire the predecessor:
 
 ```shell
-pnpm --filter @devopsrockstars/backend exec wrangler delete --name <old-worker>
+bun run --cwd packages/backend --bun wrangler delete --name <old-worker>
 ```
 
 Check for stragglers with `wrangler deployments list --name <old-worker>`, and
@@ -236,7 +245,7 @@ ignored. Store events that cannot be applied safely are recorded in
 Check the open queue with:
 
 ```shell
-pnpm --filter @devopsrockstars/backend exec wrangler d1 execute \
+bun run --cwd packages/backend --bun wrangler d1 execute \
   devopsrockstars-store --env prod --remote \
   --command "SELECT * FROM stripe_event_alerts WHERE status = 'open' ORDER BY created_at"
 ```

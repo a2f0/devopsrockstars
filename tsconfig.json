@@ -1,8 +1,7 @@
 {
   "extends": "@tsconfig/strictest",
-
   "compilerOptions": {
-    "types": ["@wdio/globals/types", "@wdio/mocha-framework"],
+    "types": ["bun"],
     "outDir": ".ts-out",
     "rootDir": ".",
     "target": "esnext",
@@ -16,8 +15,9 @@
     "jsx": "react",
     "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true,
-    "sourceMap": true
+    "sourceMap": true,
+    "noEmit": true
   },
-  "include": ["packages/**/*.ts", "packages/**/*.tsx"],
+  "include": ["packages/**/*.ts", "packages/**/*.tsx", "scripts/**/*.ts"],
   "exclude": [".ts-out/**/*"]
 }

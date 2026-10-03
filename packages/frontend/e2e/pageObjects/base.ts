@@ -1,3 +1,5 @@
+import {$, browser} from '../browser';
+
 class Base {
   get mapDiv(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#mapdiv');
@@ -26,4 +28,5 @@ class Base {
 }
 
 const BasePage = new Base();
+
 export {Base, BasePage};

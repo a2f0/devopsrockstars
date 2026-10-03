@@ -1,8 +1,13 @@
+import {afterAll, beforeAll, describe, it} from 'bun:test';
 import assert from 'node:assert/strict';
 import {mkdir, writeFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
+import {browser, expect, startBrowser, stopBrowser} from '../browser';
 import {BasePage} from '../pageObjects/base';
+
+beforeAll(startBrowser, 60000);
+afterAll(stopBrowser, 60000);
 
 const canvasSelector = 'canvas[aria-label$="interactive 3D preview"]';
 const imageSelector = 'img[alt="DevOps Rockstars 59FIFTY"]';
@@ -57,16 +62,16 @@ async function saveFailureRenders(renders: Record<string, string>) {
   }
 }
 
-describe('3D hat preview', function () {
+describe('3D hat preview', () => {
   // Rotation and recoloring each construct several independent WebGL scenes.
   // Software shader compilation on CI needs more time than a single page test.
-  this.timeout(120_000);
   let fixtures: Awaited<ReturnType<typeof browser.addInitScript>>;
 
-  before(async () => {
+  beforeAll(async () => {
     fixtures = await browser.addInitScript(() => {
       const originalFetch = globalThis.fetch.bind(globalThis);
-      globalThis.fetch = async (input, init) => {
+      const browserWindow: Window = window;
+      browserWindow.fetch = async (input, init) => {
         if (String(input).endsWith('/api/storefront')) {
           const requests =
             Number(
@@ -120,7 +125,7 @@ describe('3D hat preview', function () {
     });
   });
 
-  after(async () => fixtures.remove());
+  afterAll(async () => fixtures.remove());
 
   it('shows the store while the preview builds and keeps the layout stable', async () => {
     const delayArtwork = await browser.addInitScript(() => {
@@ -130,7 +135,8 @@ describe('3D hat preview', function () {
         });
       });
       const originalFetch = globalThis.fetch.bind(globalThis);
-      globalThis.fetch = async (input, init) => {
+      const browserWindow: Window = window;
+      browserWindow.fetch = async (input, init) => {
         const response = await originalFetch(input, init);
         if (String(input).endsWith('/static/image/store/5950.svg')) {
           await artworkReady;
@@ -416,7 +422,8 @@ describe('3D hat preview', function () {
         });
       });
       const originalFetch = globalThis.fetch.bind(globalThis);
-      globalThis.fetch = async (input, init) => {
+      const browserWindow: Window = window;
+      browserWindow.fetch = async (input, init) => {
         const response = await originalFetch(input, init);
         if (String(input).endsWith('/static/image/store/5950.svg')) {
           await artworkReady;
@@ -462,7 +469,8 @@ describe('3D hat preview', function () {
         });
       });
       const originalFetch = globalThis.fetch.bind(globalThis);
-      globalThis.fetch = async (input, init) => {
+      const browserWindow: Window = window;
+      browserWindow.fetch = async (input, init) => {
         const response = await originalFetch(input, init);
         if (String(input).endsWith('/static/image/store/5950.svg')) {
           await artworkReady;
@@ -634,7 +642,8 @@ describe('3D hat preview', function () {
       // the expected view. An omitted badge or a badge on the far side fails.
       const recolor = await browser.addInitScript(asset => {
         const originalFetch = globalThis.fetch.bind(globalThis);
-        globalThis.fetch = async (input, init) => {
+        const browserWindow: Window = window;
+        browserWindow.fetch = async (input, init) => {
           const response = await originalFetch(input, init);
           if (String(input).endsWith(`/static/image/store/${asset}`)) {
             return new Response(
@@ -786,7 +795,8 @@ describe('3D hat preview', function () {
   it('releases the graphics context and falls back when model construction fails', async () => {
     const malformedArtwork = await browser.addInitScript(() => {
       const originalFetch = globalThis.fetch.bind(globalThis);
-      globalThis.fetch = async (input, init) => {
+      const browserWindow: Window = window;
+      browserWindow.fetch = async (input, init) => {
         if (String(input).endsWith('/static/image/store/5950.svg')) {
           // No front logo: fails after the fabric and interior are allocated.
           return new Response('<svg xmlns="http://www.w3.org/2000/svg"/>', {
@@ -844,7 +854,8 @@ describe('3D hat preview', function () {
           }
           originalWarn(...args);
         };
-        globalThis.fetch = async (input, init) => {
+        const browserWindow: Window = window;
+        browserWindow.fetch = async (input, init) => {
           if (String(input).endsWith(`/static/image/store/${asset}`)) {
             rejected = true;
             return new Response('', {status: 503});

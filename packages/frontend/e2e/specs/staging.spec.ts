@@ -1,5 +1,10 @@
+import {afterAll, beforeAll, describe, it} from 'bun:test';
 import assert from 'node:assert';
+import {browser, expect, startBrowser, stopBrowser} from '../browser';
 import {Base, BasePage} from '../pageObjects/base';
+
+beforeAll(startBrowser, 60000);
+afterAll(stopBrowser, 60000);
 
 describe('staging environment', () => {
   it('keeps search and store in the navigation for testing', async () => {
@@ -108,7 +113,8 @@ describe('store page', () => {
     };
     const resetFixtures = await browser.addInitScript(fixtures => {
       const originalFetch = globalThis.fetch.bind(globalThis);
-      globalThis.fetch = async (input, init) => {
+      const browserWindow: Window = window;
+      browserWindow.fetch = async (input, init) => {
         const inputUrl =
           typeof input === 'string'
             ? input
@@ -271,7 +277,8 @@ describe('store page', () => {
   it('fills the whole shipping form from one saved address', async () => {
     const storefront = await browser.addInitScript(() => {
       const originalFetch = globalThis.fetch.bind(globalThis);
-      globalThis.fetch = async (input, init) =>
+      const browserWindow: Window = window;
+      browserWindow.fetch = async (input, init) =>
         String(input).endsWith('/api/storefront')
           ? Response.json({
               products: [
