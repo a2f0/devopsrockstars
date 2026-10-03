@@ -34,6 +34,69 @@ describe('staging environment', () => {
   });
 });
 
+describe('staging 3D skyline', () => {
+  it('renders, keeps controls usable, and cleans up on desktop and mobile navigation', async () => {
+    try {
+      for (const [width, height] of [
+        [1280, 900],
+        [390, 844],
+      ]) {
+        await browser.setWindowSize(width as number, height as number);
+        await BasePage.openStaging('');
+        await BasePage.waitForAppReady();
+        await expect(await browser.$('img#skyline')).not.toExist();
+        const viewer = await browser.$('#skyline > iframe');
+        await viewer.waitForExist({timeout: 30000});
+        await expect(viewer).toHaveAttribute(
+          'title',
+          'Interactive Chicago skyline'
+        );
+        await browser.switchFrame(viewer);
+        await expect(await browser.$('nav.controls')).not.toBeDisplayed();
+        const scene = await browser.$('#skyline-3d-scene');
+        await scene.waitForExist({timeout: 30000});
+        await browser.switchFrame(scene);
+        await browser.waitUntil(
+          () =>
+            browser.execute(() =>
+              Boolean(
+                (window as Window & {__buildingStudy?: {ready: boolean}})
+                  .__buildingStudy?.ready
+              )
+            ),
+          {
+            timeout: 30000,
+            timeoutMsg: 'The shared 3D skyline must render its first frame',
+          }
+        );
+        await expect(await browser.$('canvas#building')).toBeDisplayed();
+        await (await browser.$('#menu-toggle')).click();
+        await expect(await browser.$('#show-original')).toBeDisplayed();
+        await (await browser.$('#show-original')).click();
+        await browser.switchFrame(null);
+        await browser.switchFrame(await browser.$('#skyline > iframe'));
+        await expect(await browser.$('#return-skyline-3d')).toBeDisplayed();
+        await (await browser.$('#return-skyline-3d')).click();
+        await expect(scene).toBeDisplayed();
+        await browser.switchFrame(null);
+        // The host navigation stays above the viewer and remains clickable.
+        await (await browser.$('a[href="/company"]')).click();
+        await expect(await browser.$('h1=Contact')).toExist();
+        await expect(BasePage.skyline).not.toExist();
+        await expect(
+          await browser.$('iframe[title="Interactive Chicago skyline"]')
+        ).not.toExist();
+        await (await browser.$('footer a[href="/"]')).click();
+        await expect(await browser.$('#skyline > iframe')).toExist();
+        assert.strictEqual(await browser.$$('#skyline > iframe').length, 1);
+      }
+    } finally {
+      await browser.switchFrame(null);
+      await browser.setWindowSize(1280, 1000);
+    }
+  });
+});
+
 describe('search page', () => {
   it('shows the original search frontend', async () => {
     await BasePage.openStaging('search');

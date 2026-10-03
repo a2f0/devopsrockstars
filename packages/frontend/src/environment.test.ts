@@ -15,6 +15,7 @@ test('production hides the unlaunched store and search', () => {
     indexable: true,
     search: false,
     store: false,
+    skyline3d: false,
   });
 });
 
@@ -23,5 +24,6 @@ test('staging keeps the store and search but stays out of search engines', () =>
     indexable: false,
     search: true,
     store: true,
+    skyline3d: true,
   });
 });

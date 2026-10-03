@@ -1,6 +1,8 @@
 #!/usr/bin/env bun
-import {cp, mkdir, rm} from 'node:fs/promises';
+import {cp, mkdir, mkdtemp, readdir, rm} from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
+import {copySkylineAssets} from 'chicago-skyline/build';
 import {headersFile, robotsMetaTags, robotsTxt} from '../buildAssets';
 import {parseSiteEnvironment, siteFeatures} from '../src/environment';
 
@@ -62,6 +64,30 @@ export async function bundleFrontend({
     '/_headers',
     new Blob([headersFile(features)], {type: 'text/plain'})
   );
+  if (features.skyline3d) {
+    const temporary = await mkdtemp(path.join(os.tmpdir(), 'skyline-assets-'));
+    try {
+      await copySkylineAssets(temporary);
+      for (const entry of await readdir(temporary, {
+        recursive: true,
+        withFileTypes: true,
+      })) {
+        if (!entry.isFile()) continue;
+        const filename = path.join(entry.parentPath, entry.name);
+        const relative = path
+          .relative(temporary, filename)
+          .split(path.sep)
+          .join('/');
+        const file = Bun.file(filename);
+        assets.set(
+          `/static/skyline/${relative}`,
+          new Blob([await file.arrayBuffer()], {type: file.type})
+        );
+      }
+    } finally {
+      await rm(temporary, {recursive: true, force: true});
+    }
+  }
   return assets;
 }
 

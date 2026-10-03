@@ -101,6 +101,29 @@ test('static assets have correct MIME types and missing files never become HTML'
   ).toBe(405);
 });
 
+test('only staging serves the complete shared skyline viewer', async () => {
+  for (const pathname of [
+    '/static/skyline/index.html',
+    '/static/skyline/skyline-3d.html',
+    '/static/skyline/skyline-3d.js',
+    '/static/skyline/models/crain-geographic.js',
+    '/static/skyline/vendor/three-r186.js',
+    '/static/skyline/stars.svg',
+  ]) {
+    const response = await fetch(new URL(pathname, staging.url));
+    expect(response.status).toBe(200);
+    expect(response.headers.get('X-Robots-Tag')).toBe('noindex, nofollow');
+    expect((await fetch(new URL(pathname, production.url))).status).toBe(404);
+  }
+  const module = await fetch(
+    new URL('/static/skyline/skyline-3d.js', staging.url)
+  );
+  expect(module.headers.get('Content-Type')).toContain('javascript');
+  expect(
+    (await fetch(new URL('/static/skyline/missing.js', staging.url))).status
+  ).toBe(404);
+});
+
 test('API proxy preserves method, body, query, response status and headers', async () => {
   const response = await fetch(new URL('/api/checkouts?test=1', staging.url), {
     method: 'POST',

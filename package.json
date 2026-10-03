@@ -8,6 +8,7 @@
   },
   "type": "module",
   "scripts": {
+    "postinstall": "bun packages/frontend/node_modules/chicago-skyline/scripts/build-package.ts",
     "start-server": "bun run --filter @devopsrockstars/frontend start",
     "start-test-server": "bun run --filter @devopsrockstars/frontend start:test",
     "test": "bun run --filter @devopsrockstars/frontend test",

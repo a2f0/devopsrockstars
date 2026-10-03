@@ -33,6 +33,25 @@ describe('index page', () => {
     const title = await browser.getTitle();
     assert.strictEqual(title, '\u200E');
     await expect(BasePage.skyline).toExist();
+    assert.strictEqual(await BasePage.skyline.getTagName(), 'img');
+    assert.strictEqual(
+      await BasePage.skyline.getAttribute('src'),
+      '/static/image/skyline.svg'
+    );
+    await expect(
+      await browser.$('iframe[title="Interactive Chicago skyline"]')
+    ).not.toExist();
+    assert.deepStrictEqual(
+      await browser.execute(() =>
+        performance
+          .getEntriesByType('resource')
+          .filter(entry =>
+            new URL(entry.name).pathname.startsWith('/static/skyline/')
+          )
+          .map(entry => entry.name)
+      ),
+      []
+    );
     await expectNoHatPreparation();
   });
 });
