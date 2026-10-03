@@ -6,6 +6,11 @@ from [bun.sh](https://bun.sh), then run `bun install`. Commit `bun.lock` with
 dependency changes. Development rebuilds on source edits; refresh the browser
 to load the updated bundle.
 
+`bun install` explicitly builds the commit-pinned `chicago-skyline` GitHub
+dependency with this repo's Bun and TypeScript tools. Dependency lifecycle
+scripts remain disabled. The resulting package includes its own viewer assets;
+no sibling checkout is required.
+
 ## Workspace layout
 
 - `packages/frontend` — React site, static assets, Bun build scripts, and
@@ -131,6 +136,12 @@ Stripe test keys. Staging builds with `PUBLIC_ENVIRONMENT=staging`, which also
 adds a `noindex, nofollow` meta tag, an `X-Robots-Tag` response header, and a
 `robots.txt` that disallows everything, so only production is offered to search
 engines.
+
+Staging's Home page embeds the shared interactive 3D skyline from
+[a2f0/skyline](https://github.com/a2f0/skyline). Its assets are included only in
+staging builds and its iframe is removed when leaving Home. Production keeps
+the original `/static/image/skyline.svg`. The `skyline3d` feature in
+`packages/frontend/src/environment.ts` controls the eventual cutover.
 
 Cloudflare prepends its own managed `robots.txt` block whose `User-agent: *`
 group merges with ours, and `Allow` wins that tie, so the header and meta tag

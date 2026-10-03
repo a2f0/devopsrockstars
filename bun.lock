@@ -32,6 +32,7 @@
       "dependencies": {
         "@devopsrockstars/shared-types": "workspace:*",
         "@stripe/stripe-js": "10.0.0",
+        "chicago-skyline": "github:a2f0/skyline#d7406d2aadf64ec32d88954d297cc03379fe2dc2",
         "leaflet": "1.9.4",
         "react": "19.3.0",
         "react-dom": "19.3.0",
@@ -538,6 +539,8 @@
     "cheerio": ["cheerio@1.2.0", "", { "dependencies": { "cheerio-select": "2.1.0", "dom-serializer": "2.0.0", "domhandler": "5.0.3", "domutils": "3.2.2", "encoding-sniffer": "0.2.1", "htmlparser2": "10.1.0", "parse5": "7.3.0", "parse5-htmlparser2-tree-adapter": "7.1.0", "parse5-parser-stream": "7.1.2", "undici": "7.30.0", "whatwg-mimetype": "4.0.0" } }, "sha512-WDrybc/gKFpTYQutKIK6UvfcuxijIZfMfXaYm8NMsPQxSYvf+13fXUJ4rztGGbJcBQ/GF55gvrZ0Bc0bj/mqvg=="],
 
     "cheerio-select": ["cheerio-select@2.1.0", "", { "dependencies": { "boolbase": "1.0.0", "css-select": "5.2.2", "css-what": "6.2.2", "domelementtype": "2.3.0", "domhandler": "5.0.3", "domutils": "3.2.2" } }, "sha512-9v9kG0LvzrlcungtnJtpGNxY+fzECQKhK4EGJX2vByejiMX84MFNQw4UxPJl3bFbTMw+Dfs37XaIkCwTZfLh4g=="],
+
+    "chicago-skyline": ["chicago-skyline@github:a2f0/skyline#d7406d2", { "dependencies": { "@types/three": "0.186.0" }, "peerDependencies": { "three": "~0.186.0" }, "optionalPeers": ["three"] }, "a2f0-skyline-d7406d2", "sha512-iOzrf4oXotTxjxqRUXAjBaySdgduLtDfV2thFFogW8KC/3Xr1cTuDEycZfWqID44DYfaDZlrLqrFTMhtRJLlCA=="],
 
     "ci-info": ["ci-info@4.4.0", "", {}, "sha512-77PSwercCZU2Fc4sX94eF8k8Pxte6JAwL4/ICZLFjJLqegs7kCuAsqqj/70NQF6TvDpgFjkubQB2FW2ZZddvQg=="],
 
