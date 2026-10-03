@@ -13,10 +13,32 @@ to load the updated bundle.
 - `packages/backend` — Cloudflare Worker, D1 migrations, and Wrangler
   configuration
 - `packages/shared-types` — API types shared by the frontend and backend
-- `packages/agent-tool` — guarded review, pull request, and merge tooling
 
 Root scripts orchestrate the packages, so the existing development, test, and
 deployment commands remain stable.
+
+## Agent tooling
+
+PR tooling comes from the commit-pinned [agent-tool package](https://github.com/a2f0/agent-tool).
+`agent-tool.json` sets the conventional title limit and the required
+`code-quality` check in `Github Actions`. The managed shared skills in
+`.agents/skills` and `.claude/skills` provide review, PR creation, shipping, and
+cleanup; project validation and deployment rules stay in `AGENTS.md`.
+
+```shell
+bun run agent-tool --help
+bun run agent-tool review claude
+bun run agent-tool pr open 'feat: describe the change' < /tmp/pr-body.md
+node_modules/.bin/agent-tool pr merge '' "$REVIEWED_SHA" "$BASE_REF"
+bun run agents:check
+```
+
+Invoke the installed executable directly when passing an empty merge subject;
+`bun run` drops empty positional arguments. To update the tooling, review the
+upstream change, pin its full merged commit SHA in `package.json`, run
+`bun install`, then `bun run agents:sync`. Commit the lockfile, installed skills,
+and `.agent-tool-skills.json` together. Hooks and CI reject missing or stale
+skills. The shared package owns its tests; application checks stay in this repo.
 
 ## Development
 

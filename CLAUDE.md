@@ -72,7 +72,6 @@ store backend.
 - `packages/frontend` — React application, assets, Bun tooling, and browser tests
 - `packages/backend` — Cloudflare Worker, D1 migrations, and Wrangler config
 - `packages/shared-types` — shared API request and response types
-- `packages/agent-tool` — repository shipping automation
 
 ### Core Stack
 
@@ -150,31 +149,30 @@ reusable layout primitives:
 
 ## Agent Skills
 
-Both agents ship the same skills, each discovering them from its own directory:
+The commit-pinned shared [agent-tool package](https://github.com/a2f0/agent-tool)
+provides the CLI and managed skills in `.agents/skills` for Codex and
+`.claude/skills` for Claude Code. OpenCode discovers both paths. `agent-tool.json`
+sets the conventional title limit and the required `code-quality` CI check.
+Follow `AGENTS.md` for project validation, Gemini feedback, and production checks.
 
-- `.claude/skills/<name>/SKILL.md` for Claude Code
-- `.codex/skills/<name>/SKILL.md` for Codex
-
-`ship-pr` runs the full flow: commit on a feature branch, cross-agent review and
-repair, open or update the PR, address Gemini feedback, wait for CI, squash-merge
-the exact reviewed head, then clean up. `address-gemini-feedback` handles review
-threads and is invoked by `ship-pr`.
-
-The skills shared by both agents are **byte-identical on purpose** and their
-wording is agent-neutral, so one text serves both. The reviewer defaults to the
-*other* agent from whichever is running the flow, which is the point of a
-cross-agent review. `scripts/check-agent-skills-in-sync.mjs` runs in pre-commit
-and fails if the copies diverge; edit one and copy it over the other.
-
-They drive `packages/agent-tool`, which owns review isolation, PR-title
-validation, and the exact-head squash merge:
+`ship-pr` coordinates commit, independent review and repair, PR creation, review
+feedback, CI, exact-head squash merge, cleanup, and deployment verification.
+`address-gemini-feedback` remains a project skill for replies in review threads.
 
 ```bash
-bun run agent-tool                       # usage
-bun run agent-tool solicitCodexReview    # or solicitClaudeCodeReview
-bun run agent-tool openPr 'feat: ...'    # body from stdin
-bun run agent-tool squashMerge '' "$SHA" "$BASE"
+bun run agent-tool --help
+bun run agent-tool review codex     # or review claude
+bun run agent-tool pr open 'feat: describe the change' < /tmp/pr-body.md
+node_modules/.bin/agent-tool pr merge '' "$SHA" "$BASE"
+bun run agents:check
 ```
+
+Invoke the installed executable directly for empty merge arguments. After
+updating the full GitHub commit pin, run `bun install` and `bun run agents:sync`,
+then commit the lockfile, installed skills, and `.agent-tool-skills.json`.
+`agents:check` rejects drift from the pinned package; edit shared workflow text
+upstream. The project skill sync hook also keeps local skills shared by both
+agents identical.
 
 ## Pre-commit Hooks
 

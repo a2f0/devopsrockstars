@@ -9,10 +9,6 @@
       ],
       "project": ["scripts/**/*.mjs", "scripts/**/*.ts"]
     },
-    "packages/agent-tool": {
-      "entry": ["test/**/*.test.ts"],
-      "project": ["src/**/*.ts", "test/**/*.ts"]
-    },
     "packages/backend": {
       "entry": ["src/**/*.test.ts"],
       "project": ["src/**/*.ts"]

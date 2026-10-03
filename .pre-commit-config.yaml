@@ -24,6 +24,11 @@ repos:
       entry: bun scripts/check-agent-skills-in-sync.mjs
       pass_filenames: false
       language: system
+    - id: check-shared-agent-skills
+      name: check-shared-agent-skills
+      entry: bun run agents:check
+      pass_filenames: false
+      language: system
     - id: biome format
       name: biome format
       entry: bun run --bun biome format

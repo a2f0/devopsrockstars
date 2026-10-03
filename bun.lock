@@ -12,15 +12,12 @@
         "@types/node": "26.6.4",
         "@types/react": "19.3.0",
         "@types/react-dom": "19.3.0",
+        "agent-tool": "github:a2f0/agent-tool#dfae8d2caca5710eb69717b3f441ec5256bf1f48",
         "knip": "6.39.0",
         "markdownlint-cli2": "0.23.3",
         "typescript": "7.0.2",
         "wrangler": "4.147.0",
       },
-    },
-    "packages/agent-tool": {
-      "name": "@devopsrockstars/agent-tool",
-      "version": "0.1.0",
     },
     "packages/backend": {
       "name": "@devopsrockstars/backend",
@@ -97,8 +94,6 @@
     "@cloudflare/workerd-windows-64": ["@cloudflare/workerd-windows-64@1.20261001.1", "", { "os": "win32", "cpu": "x64" }, "sha512-uRxm5W4VyBkoSaoP1BfOuH0873tE+vxsknF4sab6/5YIRvIAufChq3QDp+zlAn67PuGPGcn7W8QraA0t4ucmOQ=="],
 
     "@cspotcode/source-map-support": ["@cspotcode/source-map-support@0.8.1", "", { "dependencies": { "@jridgewell/trace-mapping": "0.3.9" } }, "sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw=="],
-
-    "@devopsrockstars/agent-tool": ["@devopsrockstars/agent-tool@workspace:packages/agent-tool"],
 
     "@devopsrockstars/backend": ["@devopsrockstars/backend@workspace:packages/backend"],
 
@@ -481,6 +476,8 @@
     "abort-controller": ["abort-controller@3.0.0", "", { "dependencies": { "event-target-shim": "5.0.1" } }, "sha512-h8lQ8tacZYnR3vNQTgibj+tODHI5/+l06Au2Pcriv/Gmet0eaj4TwWH41sO9wnHDiQsEj19q0drzdWdeAHtweg=="],
 
     "agent-base": ["agent-base@7.1.4", "", {}, "sha512-MnA+YT8fwfJPgBx3m60MNqakm30XOkyIoH1y6huTQvC0PwZG7ki8NacLBcrPbNoo8vEZy7Jpuk7+jMO+CUovTQ=="],
+
+    "agent-tool": ["agent-tool@github:a2f0/agent-tool#dfae8d2", { "bin": { "agent-tool": "src/index.ts" } }, "a2f0-agent-tool-dfae8d2", "sha512-dnv9tsvuBZAEbFmKXJyaxPxv9ULaQ/yWgT2cCcN4mLGwDHJ5DW2BYsGZUJLe9lsj/RqnaBaoUd0S7H8J4RwLIg=="],
 
     "ansi-regex": ["ansi-regex@6.4.0", "", {}, "sha512-KzTVk2tCWAHtYrvvvaP8bJKJq2pVinhLcGEQdtLIYPbmNGNyYe8QwNaTUYQp2J7/vIsUKt5QCqAfUkYyG9DkOw=="],
 
