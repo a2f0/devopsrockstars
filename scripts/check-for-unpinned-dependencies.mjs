@@ -3,6 +3,8 @@ import {readdirSync, readFileSync} from 'node:fs';
 import path from 'node:path';
 
 const exactVersion = /^\d+\.\d+\.\d+(-[\w.]+)?$/;
+// Immutable GitHub commits are allowed; branches and tags are rejected.
+const githubCommit = /^github:[^/#\s]+\/[^/#\s]+#[0-9a-f]{40}$/i;
 const unpinned = [];
 const manifests = [
   'package.json',
@@ -16,7 +18,11 @@ for (const manifest of manifests) {
 
   for (const group of ['dependencies', 'devDependencies']) {
     for (const [name, spec] of Object.entries(pkg[group] ?? {})) {
-      if (!exactVersion.test(spec) && spec !== 'workspace:*') {
+      if (
+        !exactVersion.test(spec) &&
+        !githubCommit.test(spec) &&
+        spec !== 'workspace:*'
+      ) {
         unpinned.push(`${manifest}: ${group}/${name}: ${spec}`);
       }
     }

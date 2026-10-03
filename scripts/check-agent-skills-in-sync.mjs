@@ -10,7 +10,7 @@ import {readdirSync, readFileSync} from 'node:fs';
 import {join} from 'node:path';
 
 const CLAUDE_SKILLS = '.claude/skills';
-const CODEX_SKILLS = '.codex/skills';
+const CODEX_SKILLS = '.agents/skills';
 
 function skillNames(directory) {
   try {

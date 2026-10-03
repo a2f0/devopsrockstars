@@ -5,6 +5,6 @@
     // Allow duplicate headings under different parent sections.
     "MD024": { "siblings_only": true }
   },
-  "globs": ["**/*.md", ".codex/**/*.md"],
+  "globs": ["**/*.md", ".agents/**/*.md", ".claude/**/*.md"],
   "ignores": ["**/node_modules/**", "terraform/**", "**/build/**", ".ts-out/**"]
 }

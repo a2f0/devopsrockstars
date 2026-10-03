@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "subject": {
+    "maxLength": 72
+  },
+  "merge": {
+    "requiredChecks": [
+      {
+        "name": "code-quality",
+        "workflow": "Github Actions"
+      }
+    ]
+  },
+  "pr": {
+    "rejectClaudeBranding": true
+  }
+}
