@@ -139,8 +139,10 @@ engines.
 
 Staging's Home page embeds the shared interactive 3D skyline from
 [a2f0/skyline](https://github.com/a2f0/skyline). Its assets are included only in
-staging builds and its iframe is removed when leaving Home. Production keeps
-the original `/static/image/skyline.svg`. The `skyline3d` feature in
+staging builds and its iframe is removed when leaving Home. The original SVG
+stays visible while the background hat preview prepares; the 3D skyline starts
+after that preparation succeeds or fails so the two models build in sequence.
+Production keeps the original `/static/image/skyline.svg`. The `skyline3d` feature in
 `packages/frontend/src/environment.ts` controls the eventual cutover.
 
 Cloudflare prepends its own managed `robots.txt` block whose `User-agent: *`
