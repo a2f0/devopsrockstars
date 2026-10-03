@@ -179,6 +179,9 @@ describe('store page', () => {
       await (await sizes.$('[role="option"]=7 1/4')).click();
       await expect(sizes).not.toBeDisplayed();
       await expect(size).toHaveText('7 1/4');
+      // Move off the option so hover cannot compete with keyboard focus
+      // when the list reopens beneath the pointer.
+      await (await browser.$('[data-product-price]')).moveTo();
       // The keyboard walks the list; Escape keeps the size, and Enter or
       // Space picks one without reopening the list.
       await browser.keys(['ArrowDown', 'ArrowUp', 'Escape']);
