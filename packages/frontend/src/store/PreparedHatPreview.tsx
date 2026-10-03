@@ -9,7 +9,13 @@ import React, {
 } from 'react';
 import {createPortal} from 'react-dom';
 import {features} from '../environment';
-import HatPreview from './HatPreview';
+import HatPreview, {type HatPreviewStatus} from './HatPreview';
+
+const PreparationContext = createContext(false);
+
+export function useHatPreviewPreparing() {
+  return useContext(PreparationContext);
+}
 
 const PreviewContext = createContext<{
   container: HTMLDivElement;
@@ -19,6 +25,7 @@ const PreviewContext = createContext<{
 
 function PreparedPreview({children}: {children: ReactNode}) {
   const [container] = useState(() => document.createElement('div'));
+  const [status, setStatus] = useState<HatPreviewStatus>('loading');
   const parking = useRef<HTMLDivElement>(null);
   const [presentation, setPresentation] = useState({
     name: 'Hat',
@@ -51,8 +58,13 @@ function PreparedPreview({children}: {children: ReactNode}) {
           pointerEvents: 'none',
         }}
       />
-      {createPortal(<HatPreview {...presentation} />, container)}
-      {children}
+      {createPortal(
+        <HatPreview {...presentation} onStatusChange={setStatus} />,
+        container
+      )}
+      <PreparationContext.Provider value={status === 'loading'}>
+        {children}
+      </PreparationContext.Provider>
     </PreviewContext.Provider>
   );
 }
