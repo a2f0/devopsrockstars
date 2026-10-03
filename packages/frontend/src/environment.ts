@@ -4,6 +4,7 @@ export interface SiteFeatures {
   readonly indexable: boolean;
   readonly search: boolean;
   readonly store: boolean;
+  readonly skyline3d: boolean;
 }
 
 export function parseSiteEnvironment(
@@ -17,7 +18,12 @@ export function parseSiteEnvironment(
 // only production is offered to search engines.
 export function siteFeatures(environment: SiteEnvironment): SiteFeatures {
   const production = environment === 'production';
-  return {indexable: production, search: !production, store: !production};
+  return {
+    indexable: production,
+    search: !production,
+    store: !production,
+    skyline3d: !production,
+  };
 }
 
 const siteEnvironment = parseSiteEnvironment(globalThis.__SITE_ENVIRONMENT__);
