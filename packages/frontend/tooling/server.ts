@@ -28,7 +28,19 @@ export async function startFrontendServer({
         const proxyRequest = new Request(upstream, request);
         proxyRequest.headers.delete('host');
         try {
-          return await fetch(proxyRequest, {redirect: 'manual'});
+          const response = await fetch(proxyRequest, {redirect: 'manual'});
+          // Fetch decodes compressed bodies while preserving the upstream
+          // headers. Forward the decoded stream with matching headers so the
+          // browser does not try to decompress the JSON a second time.
+          const headers = new Headers(response.headers);
+          headers.delete('content-encoding');
+          headers.delete('content-length');
+          headers.delete('transfer-encoding');
+          return new Response(response.body, {
+            status: response.status,
+            statusText: response.statusText,
+            headers,
+          });
         } catch {
           return new Response('Store API unavailable', {status: 502});
         }

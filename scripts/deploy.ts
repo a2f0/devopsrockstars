@@ -1,5 +1,6 @@
 #!/usr/bin/env bun
 import path from 'node:path';
+
 // Publish the store API before the website that calls it. Custom domains are
 // managed by Terraform; deployments only publish Workers and static assets.
 const [environment, ...flags] = process.argv.slice(2);

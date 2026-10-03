@@ -56,6 +56,7 @@
     },
   },
   "patchedDependencies": {
+    "miniflare@5.20261001.0-alpha": "patches/miniflare@5.20261001.0-alpha.patch",
     "expect@30.5.2": "patches/expect@30.5.2.patch",
   },
   "packages": {

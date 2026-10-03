@@ -1,10 +1,30 @@
 import {afterAll, beforeAll, expect, test} from 'bun:test';
+import {hasAllowedOrigin} from '../../backend/src/http';
 import {startFrontendServer} from './server';
 
+// Use the actual local Worker command's configuration, so a proxy request must
+// satisfy the same origin validation as checkout and cancellation in dev.
+const backendManifest = (await Bun.file(
+  new URL('../../backend/package.json', import.meta.url)
+).json()) as {scripts: {dev: string}};
+const localOrigins = backendManifest.scripts.dev.match(
+  /--var STOREFRONT_ORIGINS:(\S+)/u
+)?.[1];
+if (!localOrigins)
+  throw new Error('Local Worker command must configure storefront origins');
 const upstream = Bun.serve({
   hostname: '127.0.0.1',
   port: 0,
   async fetch(request) {
+    if (!hasAllowedOrigin(request, localOrigins))
+      return new Response('Forbidden', {status: 403});
+    if (new URL(request.url).pathname === '/api/compressed')
+      return new Response(Bun.gzipSync(JSON.stringify({ok: true})), {
+        headers: {
+          'Content-Encoding': 'gzip',
+          'Content-Type': 'application/json',
+        },
+      });
     return Response.json(
       {
         method: request.method,
@@ -82,7 +102,7 @@ test('static assets have correct MIME types and missing files never become HTML'
 });
 
 test('API proxy preserves method, body, query, response status and headers', async () => {
-  const response = await fetch(new URL('/api/checkout?test=1', staging.url), {
+  const response = await fetch(new URL('/api/checkouts?test=1', staging.url), {
     method: 'POST',
     body: 'order',
   });
@@ -90,8 +110,44 @@ test('API proxy preserves method, body, query, response status and headers', asy
   expect(response.headers.get('X-API')).toBe('proxied');
   expect(await response.json()).toEqual({
     method: 'POST',
-    path: '/api/checkout',
+    path: '/api/checkouts',
     query: '?test=1',
     body: 'order',
   });
+});
+
+test('local browser checkout and cancellation pass the backend origin check', async () => {
+  for (const origin of localOrigins.split(',')) {
+    for (const endpoint of [
+      '/api/checkouts',
+      '/api/orders/10000000-0000-4000-8000-000000000001/cancel',
+    ]) {
+      const response = await fetch(new URL(endpoint, staging.url), {
+        method: 'POST',
+        headers: {Origin: origin, 'Sec-Fetch-Site': 'same-origin'},
+        body: '{}',
+      });
+      expect(response.status).toBe(201);
+    }
+  }
+});
+
+test('proxy preserves rejection of cross-site browser requests', async () => {
+  for (const headers of [
+    {Origin: 'https://attacker.example', 'Sec-Fetch-Site': 'cross-site'},
+    {'Sec-Fetch-Site': 'cross-site'},
+  ]) {
+    const response = await fetch(new URL('/api/checkouts', staging.url), {
+      method: 'POST',
+      headers,
+      body: '{}',
+    });
+    expect(response.status).toBe(403);
+  }
+});
+
+test('proxy forwards compressed upstream JSON as a readable decoded response', async () => {
+  const response = await fetch(new URL('/api/compressed', staging.url));
+  expect(response.headers.has('Content-Encoding')).toBe(false);
+  expect(await response.json()).toEqual({ok: true});
 });

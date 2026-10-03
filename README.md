@@ -29,7 +29,10 @@ bun run start-server
 
 The site and the store API are separate Workers, so local development runs
 them side by side. Start the store Worker on port 8787 and the Bun server
-proxies `/api` to it, keeping development same-origin:
+proxies `/api` to it, keeping development same-origin. The local Worker
+command allows the frontend origins on ports 8080, 8081, and 8082 for both
+`localhost` and `127.0.0.1`; deployed Workers retain their domain-only origin
+configuration:
 
 ```shell
 cp packages/backend/.dev.vars.example packages/backend/.dev.vars
