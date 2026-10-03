@@ -44,9 +44,9 @@ cancellation or a stopping condition below that prevents safe progress.
 
 ## Prerequisites
 
-- `git`, `gh`, `jq`, Node, and pnpm are available.
+- `git`, `gh`, `jq`, Bun are available.
 - `gh` is authenticated.
-- Dependencies are installed with `pnpm install`.
+- Dependencies are installed with `bun install`.
 - At least one authenticated local reviewer CLI (`claude` or `codex`) is
   preferred. If neither is usable, perform the same review in-session.
 - The worktree contains only work intended for this PR.
@@ -90,14 +90,14 @@ from the live default branch during the base-sync step below.
 Run validation appropriate to the changed files before committing:
 
 ```bash
-pnpm run lint:md
-pnpm compile
-pnpm unit
-pnpm exec biome format .
-pnpm exec biome lint .
+bun run lint:md
+bun run compile
+bun run unit
+bun run --bun biome format .
+bun run --bun biome lint .
 ```
 
-Run `pnpm ci-headless` when application or browser behavior changed. Stage only
+Run `bun run ci-headless` when application or browser behavior changed. Stage only
 the intended paths and commit with a conventional subject. Do not add AI
 attribution or co-author footers.
 
@@ -159,7 +159,7 @@ Run the selected reviewer with the pinned base. Use
 ```bash
 AGENT_TOOL_REVIEW_BASE_REF="$BASE_REF" \
 AGENT_TOOL_REVIEW_BASE_OID="$BASE_OID" \
-pnpm agent-tool solicitCodexReview
+bun run agent-tool solicitCodexReview
 ```
 
 Pass an explicit effort as the final argument only when requested; the defaults
@@ -233,7 +233,7 @@ the helper:
 
 ```bash
 git push -u origin "$BRANCH"
-pnpm agent-tool openPr "$PR_TITLE" <<'EOF'
+bun run agent-tool openPr "$PR_TITLE" <<'EOF'
 ## Summary
 
 - Describe the user-visible outcome.
@@ -304,7 +304,7 @@ thread remains, and local and remote heads still equal `REVIEWED_SHA`.
 Invoke the mandatory merge helper:
 
 ```bash
-pnpm agent-tool squashMerge '' "$REVIEWED_SHA" "$BASE_REF"
+bun run agent-tool squashMerge '' "$REVIEWED_SHA" "$BASE_REF"
 ```
 
 Do not replace this with `gh pr merge`. The helper creates a synchronous,

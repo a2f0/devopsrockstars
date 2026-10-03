@@ -8,9 +8,9 @@ request mutations and cross-agent review.
 Review the current feature branch with a local Claude or Codex CLI:
 
 ```bash
-pnpm agent-tool solicitClaudeCodeReview
-pnpm agent-tool solicitCodexReview
-pnpm agent-tool solicitCodexReview xhigh
+bun run agent-tool solicitClaudeCodeReview
+bun run agent-tool solicitCodexReview
+bun run agent-tool solicitCodexReview xhigh
 ```
 
 The review base is the open PR's base branch, or the repository default branch
@@ -28,7 +28,7 @@ The title defaults to the latest commit subject. An explicit title and body can
 be supplied as follows:
 
 ```bash
-pnpm agent-tool openPr 'feat(store): add inventory' <<'EOF'
+bun run agent-tool openPr 'feat(store): add inventory' <<'EOF'
 ## Summary
 
 Add inventory handling.
@@ -46,7 +46,7 @@ rejects queued or automatic merges, and can bind the mutation to both a reviewed
 head SHA and the expected base branch:
 
 ```bash
-pnpm agent-tool squashMerge '' "$REVIEWED_SHA" "$BASE_REF"
+bun run agent-tool squashMerge '' "$REVIEWED_SHA" "$BASE_REF"
 ```
 
 GitHub enforces the head SHA atomically through `expectedHeadOid`. GitHub does

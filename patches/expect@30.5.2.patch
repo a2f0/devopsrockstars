@@ -1,0 +1,10 @@
+diff --git a/build/index.mjs b/build/index.mjs
+index e5b67ee79fa951a07c26bd89290c11118a900642..da3ca81313929f8ffbccc69b22a663f6c3e09904 100644
+--- a/build/index.mjs
++++ b/build/index.mjs
+@@ -1,4 +1,4 @@
+-import cjsModule from './index.js';
++import * as cjsModule from './index.js';
+ 
+ export const AsymmetricMatcher = cjsModule.AsymmetricMatcher;
+ export const JestAssertionError = cjsModule.JestAssertionError;

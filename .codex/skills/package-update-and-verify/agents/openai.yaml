@@ -3,5 +3,5 @@ interface:
   display_name: "Package Update + Verify"
   short_description: "Update deps, compile, lint, and pass tests."
   default_prompt: >-
-    Update dependencies in package.json, refresh pnpm-lock.yaml, compile
+    Update dependencies in package.json, refresh bun.lock, compile
     TypeScript, run lint, and verify tests with minimal safe fixes.

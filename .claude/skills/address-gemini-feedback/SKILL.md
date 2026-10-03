@@ -34,9 +34,9 @@ Resolve Gemini review comments directly in GitHub PR threads.
 
    - Make code changes scoped to the feedback.
    - For this repo, validate with the closest impacted commands:
-   - `pnpm run compile` (TypeScript)
-   - `pnpm run lint` (Biome)
-   - `pnpm run test-headless` for WebdriverIO checks when behavior/UI is affected
+   - `bun run compile` (TypeScript)
+   - `bun run lint` (Biome)
+   - `bun run test-headless` for WebdriverIO checks when behavior/UI is affected
 
 4. Commit and push.
 

@@ -1,5 +1,10 @@
+import {afterAll, beforeAll, describe, it} from 'bun:test';
 import assert from 'node:assert';
+import {browser, expect, startBrowser, stopBrowser} from '../browser';
 import {BasePage} from '../pageObjects/base';
+
+beforeAll(startBrowser, 60000);
+afterAll(stopBrowser, 60000);
 
 async function expectNoHatPreparation() {
   await expect(

@@ -6,8 +6,10 @@ import React, {
   useState,
 } from 'react';
 import styled, {keyframes} from 'styled-components';
-import whiteStar from '/static/image/white-star-only.svg';
+
 import type {createHatViewer} from './hatViewer';
+
+const whiteStar = '/static/image/white-star-only.svg';
 
 const Preview = styled.div`
   width: min(100%, 640px);
