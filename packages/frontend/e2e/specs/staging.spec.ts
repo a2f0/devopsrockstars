@@ -35,6 +35,80 @@ describe('staging environment', () => {
 });
 
 describe('staging 3D skyline', () => {
+  it('keeps the SVG visible until background hat preparation finishes', async () => {
+    const delayArtwork = await browser.addInitScript(() => {
+      const artworkReady = new Promise<void>(resolve => {
+        window.addEventListener('release-hat-artwork', () => resolve(), {
+          once: true,
+        });
+      });
+      const originalFetch = globalThis.fetch.bind(globalThis);
+      const browserWindow: Window = window;
+      browserWindow.fetch = async (input, init) => {
+        if (String(input).endsWith('/static/image/store/5950.svg')) {
+          await artworkReady;
+        }
+        return originalFetch(input, init);
+      };
+    });
+    try {
+      await BasePage.openStaging('');
+      await BasePage.waitForAppReady();
+      await expect(await browser.$('img#skyline')).toExist();
+      assert.strictEqual(await browser.$$('#skyline > iframe').length, 0);
+      await browser.execute(() =>
+        window.dispatchEvent(new Event('release-hat-artwork'))
+      );
+      await browser.waitUntil(
+        async () =>
+          String(
+            await browser
+              .$('[data-hat-preview-status]')
+              .getProperty('textContent')
+          ).includes('3D preview ready'),
+        {timeout: 20_000}
+      );
+      await (await browser.$('#skyline > iframe')).waitForExist({
+        timeout: 30_000,
+      });
+      await expect(await browser.$('img#skyline')).not.toExist();
+    } finally {
+      await browser.execute(() =>
+        window.dispatchEvent(new Event('release-hat-artwork'))
+      );
+      await delayArtwork.remove();
+    }
+  });
+
+  it('starts the skyline even when background hat preparation times out', async () => {
+    const shortenTimeout = await browser.addInitScript(() => {
+      const originalSetTimeout = window.setTimeout;
+      window.setTimeout = ((...args: Parameters<typeof window.setTimeout>) => {
+        const [handler, delay, ...rest] = args;
+        return originalSetTimeout(
+          handler,
+          delay === 15_000 ? 0 : delay,
+          ...rest
+        );
+      }) as typeof window.setTimeout;
+    });
+    try {
+      await BasePage.openStaging('');
+      await browser.waitUntil(async () =>
+        String(
+          await browser
+            .$('[data-hat-preview-status]')
+            .getProperty('textContent')
+        ).includes('3D preview unavailable')
+      );
+      await (await browser.$('#skyline > iframe')).waitForExist({
+        timeout: 30_000,
+      });
+    } finally {
+      await shortenTimeout.remove();
+    }
+  });
+
   it('renders, keeps controls usable, and cleans up on desktop and mobile navigation', async () => {
     try {
       for (const [width, height] of [
@@ -44,9 +118,9 @@ describe('staging 3D skyline', () => {
         await browser.setWindowSize(width as number, height as number);
         await BasePage.openStaging('');
         await BasePage.waitForAppReady();
-        await expect(await browser.$('img#skyline')).not.toExist();
         const viewer = await browser.$('#skyline > iframe');
         await viewer.waitForExist({timeout: 30000});
+        await expect(await browser.$('img#skyline')).not.toExist();
         await expect(viewer).toHaveAttribute(
           'title',
           'Interactive Chicago skyline'
