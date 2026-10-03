@@ -36,7 +36,7 @@ When addressing Gemini or reviewer feedback:
 1. Determine repo and PR number for the current branch.
 2. Fetch unresolved review threads (`reviewThreads`) and prioritize Gemini comments.
 3. Implement fixes scoped to valid feedback.
-4. Run relevant validation (`pnpm compile`, `pnpm unit`, `pnpm ci-headless` as needed).
+4. Run relevant validation (`bun run compile`, `bun run unit`, `bun run ci-headless` as needed).
 5. Commit and push.
 6. Reply in each addressed thread via the REST reply endpoint.
 7. Resolve threads only when fully addressed.
@@ -45,20 +45,20 @@ When addressing Gemini or reviewer feedback:
 
 Primary checks in this repo:
 
-- `pnpm run lint:md`
-- `pnpm compile`
-- `pnpm unit`
-- `pnpm ci-headless`
+- `bun run lint:md`
+- `bun run compile`
+- `bun run unit`
+- `bun run ci-headless`
 
 Pre-commit hook entrypoint:
 
-- `sh ./.husky/pre-commit`
+- `pre-commit run --all-files`
 
 ## Markdown Linting
 
 Markdown lint is enforced in CI and hooks:
 
-- Script: `pnpm run lint:md`
+- Script: `bun run lint:md`
 - Tool: `markdownlint-cli2`
 - Config: `.markdownlint-cli2.jsonc`
 

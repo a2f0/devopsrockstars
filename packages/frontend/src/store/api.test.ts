@@ -12,7 +12,7 @@ afterEach(() => {
 // response, or an error that fetch throws the way a dropped connection does.
 function stubFetch(outcomes: readonly (number | Error | Response)[]) {
   const requests: RequestInit[] = [];
-  globalThis.fetch = async (_input, init) => {
+  const fetchStub = async (_input: RequestInfo | URL, init?: RequestInit) => {
     requests.push(init ?? {});
     const outcome = outcomes[requests.length - 1];
     if (outcome === undefined) throw new Error('Unexpected request.');
@@ -20,6 +20,9 @@ function stubFetch(outcomes: readonly (number | Error | Response)[]) {
     if (outcome instanceof Response) return outcome;
     return Response.json({}, {status: outcome});
   };
+  globalThis.fetch = Object.assign(fetchStub, {
+    preconnect: originalFetch.preconnect,
+  });
   return requests;
 }
 

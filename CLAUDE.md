@@ -9,70 +9,67 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 pip install pre-commit
 pre-commit install
-pnpm install
+bun install
 ```
 
 ### Development Server
 
 ```bash
-pnpm run start-server           # Development server (default port)
-pnpm run start-test-server      # Test server on port 8081 (production features)
-pnpm run start-staging-server   # Test server on port 8082 (staging features)
-pnpm run dev:cloudflare         # Store API Worker on port 8787
+bun run start-server           # Development server (default port)
+bun run start-test-server      # Test server on port 8081 (production features)
+bun run start-staging-server   # Test server on port 8082 (staging features)
+bun run dev:cloudflare         # Store API Worker on port 8787
 ```
 
-The webpack dev server proxies `/api` to `http://127.0.0.1:8787`, so the site
+The Bun dev server proxies `/api` to `http://127.0.0.1:8787`, so the site
 and the store API stay same-origin in development.
 
 ### Build and Production
 
 ```bash
-pnpm run build                 # Production webpack build
-pnpm run compile              # TypeScript compilation (runs automatically in prepare/pretest)
+bun run build                 # Production Bun build
+bun run compile              # TypeScript 7 type checking (without emitting JavaScript)
 ```
 
 ### Code Quality
 
 ```bash
-pnpm run lint                 # Biome linting with auto-fix
-pnpm run format              # Biome formatting
+bun run lint                 # Biome linting with auto-fix
+bun run format              # Biome formatting
 ```
 
 ### Testing
 
 ```bash
-pnpm run test                 # Run e2e tests (requires test server running)
-pnpm run test-headless       # Run e2e tests in headless mode
-pnpm run ci                  # Full CI: start server + run tests
-pnpm run ci-headless        # Full CI in headless mode
+bun run test                 # Run e2e tests (requires test server running)
+bun run test-headless       # Run e2e tests in headless mode
+bun run ci                  # Full CI: start server + run tests
+bun run ci-headless        # Full CI in headless mode
 
 # Run specific test spec
-pnpm --filter @devopsrockstars/frontend exec wdio wdio.shared.conf.ts \
-  --spec=./e2e/specs/basic.spec.ts
+bun run --cwd packages/frontend test \
+  --test-name-pattern="loads correctly"
 ```
 
 ## Package Management
 
-This project uses **pnpm** instead of npm for package management. Key benefits:
+This project uses **Bun 1.4.2** for package management, TypeScript execution,
+bundling, development servers, and unit/browser test execution. The version is
+pinned in `.bun-version` and `package.json`; CI installs that same version.
 
-- Faster installs due to content-addressable storage
-- Disk space efficiency through hard linking
-- Stricter dependency resolution
-
-Always use `pnpm` commands instead of `npm`:
-
-- `pnpm install` instead of `npm install`
-- `pnpm add <package>` instead of `npm install <package>`
-- `pnpm run <script>` instead of `npm run <script>`
+Use `bun install`, `bun add --exact <package>`, and `bun run <script>`.
+Commit `bun.lock` with dependency changes. JavaScript CLIs run with
+`bun run --bun <command>` so their Node hashbangs also execute under Bun.
+Third-party lifecycle scripts are disabled with `trustedDependencies: []`.
 
 ## Architecture Overview
 
-This is a pnpm monorepo for the DevOps Rockstars React site and Cloudflare
+This is a Bun monorepo for the DevOps Rockstars React site and Cloudflare
 store backend.
 
 ### Workspace packages
 
-- `packages/frontend` — React application, assets, Webpack, and browser tests
+- `packages/frontend` — React application, assets, Bun tooling, and browser tests
 - `packages/backend` — Cloudflare Worker, D1 migrations, and Wrangler config
 - `packages/shared-types` — shared API request and response types
 - `packages/agent-tool` — repository shipping automation
@@ -82,9 +79,9 @@ store backend.
 - **Frontend**: React 19+ with TypeScript in strict mode
 - **Styling**: styled-components with CSS-in-JS architecture
 - **Routing**: react-router with two main routes (`/` and `/company`)
-- **Build**: Webpack 5 with ES modules output
+- **Build**: Bun bundler with ES modules output
 - **Testing**: WebDriverIO (WDIO) for end-to-end testing
-- **Package Manager**: pnpm for dependency management
+- **Package Manager**: Bun for dependency management
 
 ### Application Structure
 
@@ -125,7 +122,8 @@ reusable layout primitives:
 
 - Extends `@tsconfig/strictest` for maximum type safety
 - Configured for ESNext modules with React JSX
-- WebDriverIO types included for testing
+- Bun types included for scripts and test execution
+- WebdriverIO browser types come from its standalone API
 
 ### Code Quality (Biome)
 
@@ -133,16 +131,19 @@ reusable layout primitives:
 - 2-space indentation, single quotes, 80-character line width
 - Auto-organizes imports and fixes lint issues
 
-### Webpack
+### Bun bundler
 
 - ES module output format
 - Content hashing for production builds
-- SVG handling via @svgr/webpack + url-loader
+- Source changes rebuild automatically; refresh the browser to load them
+- Static SVG URLs served directly from `/static/`
 - Copies static assets to build directory
+- `patches/expect@30.5.2.patch` preserves Jest's named exports under Bun
+  by using a namespace import for its CommonJS module
 
 ### Testing
 
-- WebDriverIO with Mocha framework
+- Bun test runner with WebdriverIO standalone browser automation
 - Chrome browser automation
 - Page object model in `packages/frontend/e2e/pageObjects/`
 - Tests validate page loading and component visibility
@@ -169,10 +170,10 @@ They drive `packages/agent-tool`, which owns review isolation, PR-title
 validation, and the exact-head squash merge:
 
 ```bash
-pnpm agent-tool                       # usage
-pnpm agent-tool solicitCodexReview    # or solicitClaudeCodeReview
-pnpm agent-tool openPr 'feat: ...'    # body from stdin
-pnpm agent-tool squashMerge '' "$SHA" "$BASE"
+bun run agent-tool                       # usage
+bun run agent-tool solicitCodexReview    # or solicitClaudeCodeReview
+bun run agent-tool openPr 'feat: ...'    # body from stdin
+bun run agent-tool squashMerge '' "$SHA" "$BASE"
 ```
 
 ## Pre-commit Hooks
@@ -190,7 +191,7 @@ D1 database.
 | Production | `devopsrockstars.com` | `store.devopsrockstars.com` |
 | Staging | `staging.devopsrockstars.com` | `store-staging.devopsrockstars.com` |
 
-- `pnpm run deploy:staging` and `pnpm run deploy:prod` wrap `scripts/deploy.sh`,
+- `bun run deploy:staging` and `bun run deploy:prod` wrap `scripts/deploy.ts`,
   which builds the site for the environment, applies D1 migrations, then
   publishes the store and site Workers in that order
 - Wrangler owns Worker and asset deployments; Terraform (`terraform/`) owns the
@@ -205,7 +206,7 @@ D1 database.
 ### Environment feature flags
 
 `packages/frontend/src/environment.ts` derives the environment from
-`PUBLIC_ENVIRONMENT`, injected at build time by webpack's `DefinePlugin`.
+`PUBLIC_ENVIRONMENT`, injected at build time by Bun's `define` option.
 
 - The store and search are unlaunched, so **production** hides their links and
   routes; staging keeps them for testing
