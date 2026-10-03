@@ -21,6 +21,14 @@ export async function startFrontendServer({
     port,
     async fetch(request) {
       const url = new URL(request.url);
+      // Loopback binding alone does not stop a remote hostname from resolving
+      // to this server. Validate Host before exposing files or the API proxy.
+      if (
+        !['localhost', '127.0.0.1'].includes(url.hostname) ||
+        Number(url.port || 80) !== server.port
+      ) {
+        return new Response('Forbidden host', {status: 403});
+      }
       if (url.pathname === '/api' || url.pathname.startsWith('/api/')) {
         const upstream = new URL(apiProxy);
         upstream.pathname = url.pathname;

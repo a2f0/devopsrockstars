@@ -151,3 +151,32 @@ test('proxy forwards compressed upstream JSON as a readable decoded response', a
   expect(response.headers.has('Content-Encoding')).toBe(false);
   expect(await response.json()).toEqual({ok: true});
 });
+
+test('server rejects DNS rebinding hosts before serving pages, assets or proxy responses', async () => {
+  for (const pathname of [
+    '/',
+    '/static/image/white-star-only.svg',
+    '/api/checkouts',
+  ]) {
+    for (const host of [
+      'attacker.example',
+      'localhost.attacker.example',
+      '127.0.0.1.attacker.example',
+    ]) {
+      const response = await fetch(new URL(pathname, staging.url), {
+        headers: {Host: `${host}:${staging.url.port}`},
+      });
+      expect(response.status).toBe(403);
+      expect(await response.text()).toBe('Forbidden host');
+    }
+  }
+  const wrongPort = await fetch(staging.url, {headers: {Host: '127.0.0.1:1'}});
+  expect(wrongPort.status).toBe(403);
+  for (const host of ['localhost', '127.0.0.1']) {
+    const response = await fetch(staging.url, {
+      headers: {Host: `${host}:${staging.url.port}`},
+    });
+    expect(response.status).toBe(200);
+    expect(await response.text()).toContain('type="module"');
+  }
+});
