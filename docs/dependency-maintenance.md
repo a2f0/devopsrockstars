@@ -11,7 +11,7 @@ a reported coverage limit, never a reason to downgrade newer installed versions.
 
 - Agent-tool 0.1.11 is the published exact npm pin. Its installer generates both
   harnesses' skills and `.agent-tool-skills.json`; keep them with `bun.lock`.
-- The retained Skyline 0.2.2 mounts a region in an open shadow root. The React
+- Skyline 0.2.16 mounts a region in an open shadow root. The React
   effect handles `ready`, shares the host's Three.js through
   `@a2f0/skyline/three`, and always destroys the viewer on cleanup. Browser tests
   use the region/shadow DOM and verify readiness, controls, and navigation cleanup.
