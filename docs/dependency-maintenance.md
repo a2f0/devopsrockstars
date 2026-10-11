@@ -9,7 +9,7 @@ a reported coverage limit, never a reason to downgrade newer installed versions.
 
 ## Current pins and compatibility
 
-- Agent-tool 0.1.10 is the published exact npm pin. Its installer generates both
+- Agent-tool 0.1.11 is the published exact npm pin. Its installer generates both
   harnesses' skills and `.agent-tool-skills.json`; keep them with `bun.lock`.
 - The retained Skyline 0.2.2 mounts a region in an open shadow root. The React
   effect handles `ready`, shares the host's Three.js through
