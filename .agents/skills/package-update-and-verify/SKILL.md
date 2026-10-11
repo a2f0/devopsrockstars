@@ -18,6 +18,13 @@ checks required by repository policy. Run `skyline:update` before the first
 review; migrate its viewer and copy the complete published asset set together.
 Report blocked checks rather than weakening their scope.
 
+Capture noisy finite checks with `bun run agent:run --label <name> -- <command>`.
+The receipt preserves exit status and names the complete private log; inspect
+required warnings and artifacts with `bun run agent-tool logs <log-path>` or a
+targeted search. Keep audit decisions, review verdicts, and complete deployment
+preview evidence visible. Do not capture interactive commands or persistent
+servers.
+
 Deployment always uses `scripts/deploy.ts`, including workspace and CI commands.
 Both Worker bundle previews and the real account-scoped resource inspection must
 succeed before publication. Pending D1 migrations hold deployment; never use

@@ -16,6 +16,7 @@
     "ci": "bun scripts/ci.ts",
     "ci-headless": "bun scripts/ci.ts --headless",
     "agent-tool": "agent-tool",
+    "agent:run": "agent-tool run",
     "flags": "bun scripts/feature-flags.ts",
     "flags:check": "bun scripts/feature-flags.ts --check",
     "skyline:update": "bun scripts/skyline.ts",
@@ -41,7 +42,7 @@
   "keywords": [],
   "author": "Dan Sullivan",
   "devDependencies": {
-    "@a2f0/agent-tool": "0.1.10",
+    "@a2f0/agent-tool": "0.1.11",
     "@biomejs/biome": "2.5.15",
     "@tsconfig/strictest": "2.0.8",
     "@types/bun": "1.4.2",

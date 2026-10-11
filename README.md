@@ -39,7 +39,18 @@ bun run agent-tool review claude
 bun run agent-tool pr open 'feat: describe the change' < /tmp/pr-body.md
 node_modules/.bin/agent-tool pr merge '' "$REVIEWED_SHA" "$BASE_REF"
 bun run agents:check
+bun run agent:run --label unit -- bun run unit
+bun run agent:run --label browser -- bun run ci-headless
+bun run agent-tool logs <log-path>
 ```
+
+Use `agent:run` for noisy finite checks, builds, installs, and hooks. It retains
+their complete output in a private temporary log and preserves their exit status;
+successful commands return a compact receipt, and failures also show a bounded
+excerpt. Inspect the reported log with `agent-tool logs` or a targeted search
+when warnings, timings, or artifacts matter. Leave review verdicts and structured
+decision output visible, inspect complete deployment previews, and run interactive
+commands and persistent servers directly.
 
 Invoke the installed executable directly when passing an empty merge subject;
 `bun run` drops empty positional arguments. To update the tooling, review the
