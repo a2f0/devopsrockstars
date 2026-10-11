@@ -45,6 +45,16 @@ them with `bun run agents:check`. Do not edit managed skills locally.
 `scripts/check-agent-skills-in-sync.mjs` keeps skills present in both
 `.agents/skills` and `.claude/skills` identical through the pre-commit hook.
 
+Capture noisy finite commands with the pinned harness, for example
+`bun run agent:run --label unit -- bun run unit` or
+`bun run agent:run --label hooks -- pre-commit run --all-files`.
+It preserves exit status and full private logs while returning a compact receipt
+and a bounded failure excerpt. Use `bun run agent-tool logs <log-path>` or a
+targeted search to inspect warnings, timings, and artifacts needed to accept a
+check. Keep review verdicts and structured decision output visible, and inspect
+complete deployment preview evidence before publication. Do not wrap interactive
+commands or persistent servers.
+
 Keep README focused on purpose, setup, and normal usage. Maintain reusable upgrade
 procedures and active constraints in
 [dependency maintenance](docs/dependency-maintenance.md), with operational

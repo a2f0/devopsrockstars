@@ -5,7 +5,7 @@
     "": {
       "name": "devopsrockstars",
       "devDependencies": {
-        "@a2f0/agent-tool": "0.1.10",
+        "@a2f0/agent-tool": "0.1.11",
         "@biomejs/biome": "2.5.15",
         "@tsconfig/strictest": "2.0.8",
         "@types/bun": "1.4.2",
@@ -64,7 +64,7 @@
     },
   },
   "packages": {
-    "@a2f0/agent-tool": ["@a2f0/agent-tool@0.1.10", "", { "bin": { "agent-tool": "src/index.ts" } }, "sha512-kuAMx7swbLNU86c6fbSUgs88rXDLOvbtVlABEqaJVrsWdNetsg1KEkURZZlyVZq7Jjl//Koij/WoRiQ2RAmZ7Q=="],
+    "@a2f0/agent-tool": ["@a2f0/agent-tool@0.1.11", "", { "bin": { "agent-tool": "src/index.ts" } }, "sha512-eRAHiNz+sujqHS+nyCWcKBQKGqU9tlm0iCvm6CghZ5+KjSWCjWKJQgeq3pd6Ax45amSltFToryR/m68T0XMnIg=="],
 
     "@a2f0/skyline": ["@a2f0/skyline@0.2.17", "", { "dependencies": { "@types/three": "0.186.0" }, "peerDependencies": { "three": "~0.186.0" }, "optionalPeers": ["three"] }, "sha512-BqksISjhkzQXKFesVqWy5tMUEsWTXmuTomVzJAYhjflUwk0alAzcOnlcKsznDMjP+kE0JU6D4nn300TAp5ssMA=="],
 
