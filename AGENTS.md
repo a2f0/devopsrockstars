@@ -55,6 +55,13 @@ check. Keep review verdicts and structured decision output visible, and inspect
 complete deployment preview evidence before publication. Do not wrap interactive
 commands or persistent servers.
 
+Keep README focused on purpose, setup, and normal usage. Maintain reusable upgrade
+procedures and active constraints in
+[dependency maintenance](docs/dependency-maintenance.md), with operational
+runbooks in [deployment operations](docs/deployment.md). Update or remove obsolete
+guidance. Put each run's version inventory, audit findings, validation, and preview
+evidence in its PR; do not append upgrade journals to README or maintenance docs.
+
 Primary checks in this repo:
 
 - `bun run lint:md`
