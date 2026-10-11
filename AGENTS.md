@@ -45,6 +45,13 @@ them with `bun run agents:check`. Do not edit managed skills locally.
 `scripts/check-agent-skills-in-sync.mjs` keeps skills present in both
 `.agents/skills` and `.claude/skills` identical through the pre-commit hook.
 
+Keep README focused on purpose, setup, and normal usage. Maintain reusable upgrade
+procedures and active constraints in
+[dependency maintenance](docs/dependency-maintenance.md), with operational
+runbooks in [deployment operations](docs/deployment.md). Update or remove obsolete
+guidance. Put each run's version inventory, audit findings, validation, and preview
+evidence in its PR; do not append upgrade journals to README or maintenance docs.
+
 Primary checks in this repo:
 
 - `bun run lint:md`

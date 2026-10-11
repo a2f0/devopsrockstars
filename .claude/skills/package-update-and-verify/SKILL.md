@@ -27,5 +27,8 @@ complete refreshed non-destructive plan; unavailable state holds that group.
 
 Use `ship-pr` only within existing shipping authorization, independently review
 the exact committed candidate, and retain the repository's merge/CI policy.
-Report dependency decisions, audit exceptions, previews, validation limits, and
-shipping/deployment status without exposing secrets or state.
+Record each run's dependency decisions, audits, previews, validation limits, and
+shipping/deployment status in its PR without exposing secrets or state. Keep
+reusable procedures and active constraints in `docs/dependency-maintenance.md`,
+updating or removing obsolete guidance. Keep README focused on setup and normal
+usage; do not append upgrade journals to README or maintenance docs.

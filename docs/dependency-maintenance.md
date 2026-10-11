@@ -1,5 +1,12 @@
 # Dependency maintenance
 
+Keep reusable upgrade procedures and active constraints here. Update or remove
+guidance as it stops applying; keep each run's version inventory, audit findings,
+validation, and preview evidence in its PR instead of accumulating a journal.
+[PR #841](https://github.com/a2f0/devopsrockstars.com/pull/841) records the upgrade
+and guard rollout that introduced the constraints below. Historical findings
+and previews are not current audit or live-state evidence.
+
 Use the managed `update-dependencies` skill for both Codex and Claude. Inventory
 all workspace manifests, `bun.lock`, Bun and CI runtimes, Actions, pre-commit,
 Terraform core/providers, and intentional patches. Query official releases and
@@ -7,38 +14,39 @@ registries, read migrations, and choose compatible groups before changing pins.
 Cached metadata must retain its observation date; unavailable fresh metadata is
 a reported coverage limit, never a reason to downgrade newer installed versions.
 
-## Current pins and compatibility
+## Compatibility constraints
 
-- Agent-tool 0.1.10 is the published exact npm pin. Its installer generates both
-  harnesses' skills and `.agent-tool-skills.json`; keep them with `bun.lock`.
-- The retained Skyline 0.2.2 mounts a region in an open shadow root. The React
+- Read current pins from workspace manifests, `bun.lock`, and tool configuration.
+  Agent-tool's installer generates both harnesses' skills and
+  `.agent-tool-skills.json`; commit them with its manifest and `bun.lock`.
+- Skyline mounts a region in an open shadow root. The React
   effect handles `ready`, shares the host's Three.js through
   `@a2f0/skyline/three`, and always destroys the viewer on cleanup. Browser tests
   use the region/shadow DOM and verify readiness, controls, and navigation cleanup.
-  The retained asset build uses a fresh dedicated temporary directory and removes
-  the previous build before writing a complete new asset set. The existing Three
-  0.186.1 and its 0.186 types follow Skyline's supported peer range. See its
+  The asset build uses a fresh dedicated temporary directory and removes
+  the previous build before writing a complete new asset set. Keep Three and its
+  types within Skyline's supported peer range. See its
   [migration guide](https://github.com/a2f0/skyline/blob/main/docs/package.md).
-- The retained TypeScript 7.0.2 remains the native CLI compiler here. Repository
-  scripts do not import its removed JavaScript compiler API; Knip 6.40 uses Oxc
+- TypeScript runs as the native CLI compiler here. Repository
+  scripts do not import its removed JavaScript compiler API; Knip uses Oxc
   analysis. Compile and actual Knip checks must pass before shipping.
 - Preserve `expect@30.5.2.patch` for Bun's CommonJS interoperability and
   `miniflare@5.20261001.0-alpha.patch` for its installed Undici transport.
   Remove either only after the actual browser/Worker regressions pass unpatched.
-- CI installs pre-commit 4.6.2 exactly; the existing Python 3.13 line remains
-  supported. Changing the interpreter needs actual hook environment validation.
+- Keep CI's exact pre-commit pin and Python line compatible. Changing the
+  interpreter needs actual hook environment validation.
 
 Run `skyline:update` before the first review, as required by `AGENTS.md`. A
 verified published cached release permits a local candidate, but a failed fresh
 query or unavailable browser tests holds review/shipping; do not claim that gate
 passed. The common merge subject is `chore: update dependencies`.
 
-## Audits and the parser fix
+## Audits and security constraints
 
 Run the configured registry's read-only `bun audit --json` against baseline and
 candidate locks, including development and native dependencies. The existing
 production-critical CI audit is retained; it does not cover all tooling findings.
-Keep unavailable audit refreshes and unresolved findings in the upgrade ledger.
+Record unavailable audit refreshes and unresolved findings in the upgrade PR.
 
 `markdownlint-cli2@0.23.3` pins vulnerable Smol-TOML 1.8. The exact-owner nested
 override selects 1.9 to address
@@ -55,7 +63,10 @@ patch when upstream preserves those options and the CLI regression passes
 unpatched. Repository maintainers review both by **2026-11-07** or on either
 owner's next upgrade, whichever comes first.
 
-The fresh candidate registry audit on 2026-10-07 retains the following findings.
+The following owner constraints were recorded in PR #841's 2026-10-07 audit and
+still describe the committed lockfile. They are active holds to revisit, not a
+fresh advisory inventory; recheck current advisories and owner releases during
+each upgrade.
 
 | Locked dependency | Owning path and exposure | Fix or hold |
 | --- | --- | --- |
@@ -74,11 +85,9 @@ integration does not justify forcing a security override into the lock.
 
 ## Deployment preview gate
 
-This guard ships atomically with the dependency sweep because merging the pins
-alone would trigger the existing production workflow, which previously applied
-remote D1 migrations and published Workers without a complete account preview.
-The guard is a prerequisite for this sweep's production release, and the PR
-description calls out the operational change for reviewers.
+Every maintenance deployment must pass this guard before publication. See
+[deployment operations](deployment.md) for provisioning and infrastructure
+procedures; a successful bundle alone does not establish deployment safety.
 
 All owned remote deploy and migration commands route through `scripts/deploy.ts`,
 including workspace entrypoints and GitHub Actions. Set the real
@@ -111,14 +120,13 @@ would let an accidental resource replacement pass this guard.
 The deployment calls Wrangler with `--keep-vars` so publishing cannot remove
 existing Worker variables that are absent from the new bundle; the live binding
 inventory must still match the reviewed configuration before either upload.
-The account's Workers Domains API returned complete `result_info` pagination
-in the authenticated 2026-10-07 preview. A different or incomplete page holds
-deployment. Zone route pagination is also checked when the API supplies
-`result_info`.
-The production store flag is off, and its existing Worker has only
-`CHECKOUT_HASH_SECRET`; staging also has the three Stripe secrets. The guard
-preserves those exact live secret sets. A production store launch needs a
-separate reviewed secret and flag rollout.
+The guard requires complete `result_info` pagination from the Workers Domains
+API. A different or incomplete page holds deployment. Zone route pagination is
+also checked when the API supplies `result_info`.
+The committed production store flag is off. The guard expects only
+`CHECKOUT_HASH_SECRET` in production and the three Stripe secrets as well in
+staging, verifying those exact sets during each live preview. A production store
+launch needs a separate reviewed secret and flag rollout.
 Publishing also requires a clean committed tree without assume-unchanged or
 skip-worktree flags. The captured commit must match GitHub Actions' validated
 checkout SHA in CI and remain unchanged before each upload. Preview-only modes
@@ -130,10 +138,11 @@ Worker publication is sequential. If the backend succeeds and a later site
 preview or upload fails, the guard stops with a partial deployment; inspect the
 live backend and site identities, then rerun the same reviewed commit once the
 failure is resolved. Never bypass the guard or delete a Worker to recover.
-Before merging this guarded deployment change, manually dispatch the staging
-workflow on the exact reviewed feature-branch commit and confirm that its
-complete preview passes with the CI token before any staging upload. Ordinary
-feature-branch pushes do not receive deployment credentials.
+For changes to the deployment guard, verify its complete preview with the CI
+token on the exact reviewed feature-branch commit before shipping. When a
+staging deployment is authorized, manually dispatch the staging workflow; it
+must pass that preview before any upload. Ordinary feature-branch pushes do not
+receive deployment credentials.
 
 **D1 migrations must already be applied.** The gate reads only
 `SELECT name FROM d1_migrations ORDER BY id` from the existing database and checks
@@ -147,9 +156,9 @@ queries. They do not apply SQL. New migrations need a separate reviewed rollout 
 scoped apply command and meaningful execution preview before
 this restriction can be changed. Local disposable database tests retain explicit
 `--local` commands.
-There are no pending migrations in either current remote database. Blocking a
-future deployment until its schema rollout is independently reviewed is
-intentional; the former unscoped remote apply command is not an approved path.
+Check migration state afresh for each deployment. Blocking publication until a
+schema rollout is independently reviewed is intentional; an unscoped remote
+apply command is not an approved path.
 
 For a planned runtime date or plain-text variable change, edit the fixed desired
 values in `deploymentSafety.ts` and the matching Wrangler configuration in the
@@ -173,7 +182,7 @@ After both Workers have reached the desired state, remove it in a subsequent
 reviewed PR. Secret provisioning and D1 migrations require their own scoped
 rollout commands and preview; they cannot use this Worker transition path.
 
-`--dry-run` now means that the complete bundle and live-resource gate succeeded,
+`--dry-run` means that the complete bundle and live-resource gate succeeded,
 not just that uploads were disabled. A bundle alone and fixture metadata are not
 production safety evidence. No Worker or database is created, deleted, replaced,
 recreated, renamed or retired by this maintenance workflow. Failed or unavailable
