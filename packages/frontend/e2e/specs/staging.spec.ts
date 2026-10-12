@@ -20,7 +20,9 @@ describe('staging environment', () => {
     for (const [path, linked] of [
       ['company', true],
       ['store', true],
+      ['company/', true],
       ['store/checkout', true],
+      ['store/missing', false],
       ['search', false],
       ['missing', false],
     ] as const) {

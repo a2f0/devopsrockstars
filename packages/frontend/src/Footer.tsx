@@ -1,5 +1,5 @@
 import React from 'react';
-import {Link, useLocation} from 'react-router';
+import {Link, matchPath, useLocation} from 'react-router';
 import {ReactSVG} from 'react-svg';
 import {features} from './featureFlags';
 import FlexContainerCenter from './styled-components/FlexContainerCenter';
@@ -13,11 +13,14 @@ import MenuItemRight from './styled-components/MenuItemRight';
 
 const repositoryUrl = 'https://github.com/a2f0/devopsrockstars.com';
 
+// Match the router so trailing slashes and unknown store paths agree with it.
+const repositoryLinkRoutes = [
+  '/company',
+  ...(features.store ? ['/store', '/store/checkout', '/store/receipt'] : []),
+];
+
 function showsRepositoryLink(pathname: string) {
-  if (pathname === '/company') return true;
-  return (
-    features.store && (pathname === '/store' || pathname.startsWith('/store/'))
-  );
+  return repositoryLinkRoutes.some(route => matchPath(route, pathname));
 }
 
 const Footer = React.memo(() => {
