@@ -1,7 +1,8 @@
 import React from 'react';
-import {Link, matchPath, useLocation} from 'react-router';
+import {Link, useLocation} from 'react-router';
 import {ReactSVG} from 'react-svg';
 import {features} from './featureFlags';
+import {matchesRoute, storeRoutes} from './routes';
 import FlexContainerCenter from './styled-components/FlexContainerCenter';
 import FlexContainerLeft from './styled-components/FlexContainerLeft';
 import FlexContainerRight from './styled-components/FlexContainerRight';
@@ -13,15 +14,10 @@ import MenuItemRight from './styled-components/MenuItemRight';
 
 const repositoryUrl = 'https://github.com/a2f0/devopsrockstars.com';
 
-// Match the router so trailing slashes and unknown store paths agree with it.
 const repositoryLinkRoutes = [
   '/company',
-  ...(features.store ? ['/store', '/store/checkout', '/store/receipt'] : []),
+  ...(features.store ? storeRoutes : []),
 ];
-
-function showsRepositoryLink(pathname: string) {
-  return repositoryLinkRoutes.some(route => matchPath(route, pathname));
-}
 
 const Footer = React.memo(() => {
   const location = useLocation();
@@ -53,7 +49,7 @@ const Footer = React.memo(() => {
         </FlexContainerCenter>
         <FlexContainerRight>
           <MenuItemRight>
-            {showsRepositoryLink(location.pathname) ? (
+            {matchesRoute(repositoryLinkRoutes, location.pathname) ? (
               <a href={repositoryUrl} aria-label="GitHub repository">
                 {/* Sized and raised to sit on the LLC logo's text baseline */}
                 <div

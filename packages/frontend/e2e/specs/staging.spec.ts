@@ -40,7 +40,10 @@ describe('staging environment', () => {
       ['store', ['/store']],
       ['store/checkout', ['/store']],
       ['search', ['/search']],
+      ['company/', ['/company']],
       ['missing', []],
+      ['company/missing', []],
+      ['store/missing', []],
     ] as const) {
       await BasePage.openStaging(path);
       await BasePage.waitForAppReady();

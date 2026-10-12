@@ -1,7 +1,8 @@
 import React, {useLayoutEffect, useRef} from 'react';
-import {NavLink} from 'react-router';
+import {Link, useLocation} from 'react-router';
 import styled from 'styled-components';
 import {features} from './featureFlags';
+import {matchesRoute, storeRoutes} from './routes';
 import FlexContainerLeft from './styled-components/FlexContainerLeft';
 import FlexContainerRight from './styled-components/FlexContainerRight';
 import FlexContainerRow from './styled-components/FlexContainerRow';
@@ -9,9 +10,7 @@ import FlexHeader from './styled-components/FlexHeader';
 import MenuItemLeft from './styled-components/MenuItemLeft';
 import MenuItemRight from './styled-components/MenuItemRight';
 
-// Only the link for the current page, or the section it belongs to, is
-// underlined.
-const MenuLink = styled(NavLink)`
+const MenuLink = styled(Link)`
   display: inline-flex;
   align-items: center;
   min-height: 44px;
@@ -22,6 +21,26 @@ const MenuLink = styled(NavLink)`
     text-decoration: underline;
   }
 `;
+
+interface INavItemProps {
+  to: string;
+  routes: readonly string[];
+  children: React.ReactNode;
+}
+
+// Only the link for the current page, or the section it belongs to, is
+// underlined. Unknown paths render NotFound and leave every link plain.
+const NavItem = ({to, routes, children}: INavItemProps) => {
+  const {pathname} = useLocation();
+  return (
+    <MenuLink
+      to={to}
+      aria-current={matchesRoute(routes, pathname) ? 'page' : undefined}
+    >
+      {children}
+    </MenuLink>
+  );
+};
 
 const MenuNav = styled.nav`
   display: flex;
@@ -59,10 +78,18 @@ const Header = React.memo(() => {
           <MenuItemRight>
             <MenuNav aria-label="Main navigation">
               {features.search ? (
-                <MenuLink to="/search">search</MenuLink>
+                <NavItem to="/search" routes={['/search']}>
+                  search
+                </NavItem>
               ) : null}
-              {features.store ? <MenuLink to="/store">store</MenuLink> : null}
-              <MenuLink to="/company">company</MenuLink>
+              {features.store ? (
+                <NavItem to="/store" routes={storeRoutes}>
+                  store
+                </NavItem>
+              ) : null}
+              <NavItem to="/company" routes={['/company']}>
+                company
+              </NavItem>
             </MenuNav>
           </MenuItemRight>
         </FlexContainerRight>
