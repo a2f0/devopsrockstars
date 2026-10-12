@@ -1,9 +1,7 @@
 import {afterAll, beforeAll, describe, it} from 'bun:test';
 import assert from 'node:assert/strict';
-import {mkdir, writeFile} from 'node:fs/promises';
-import {tmpdir} from 'node:os';
-import {join} from 'node:path';
 import {browser, expect, startBrowser, stopBrowser} from '../browser';
+import {saveFailureArtifacts} from '../failureArtifacts';
 import {BasePage} from '../pageObjects/base';
 
 beforeAll(startBrowser, 60000);
@@ -52,14 +50,14 @@ async function canvasSnapshot(elementId: string) {
 }
 
 async function saveFailureRenders(renders: Record<string, string>) {
-  const directory = join(
-    process.env['RUNNER_TEMP'] ?? tmpdir(),
-    'hat-preview-failures'
+  await saveFailureArtifacts(
+    Object.fromEntries(
+      Object.entries(renders).map(([name, png]) => [
+        `hat-preview-${name}.png`,
+        Buffer.from(png, 'base64'),
+      ])
+    )
   );
-  await mkdir(directory, {recursive: true});
-  for (const [name, png] of Object.entries(renders)) {
-    await writeFile(join(directory, `${name}.png`), Buffer.from(png, 'base64'));
-  }
 }
 
 describe('3D hat preview', () => {
