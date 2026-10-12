@@ -69,6 +69,18 @@ describe('company page', () => {
     assert.strictEqual(title, '\u200E');
     await expectNoHatPreparation();
   });
+
+  it('links the repository with logos flush to the bottom', async () => {
+    await BasePage.open('company');
+    await BasePage.waitForAppReady();
+    assert.strictEqual(
+      await BasePage.repositoryLink.getAttribute('href'),
+      'https://github.com/a2f0/devopsrockstars.com'
+    );
+    for (const gap of await BasePage.footerLogoGaps(2)) {
+      assert.ok(Math.abs(gap) < 1, `Footer logo is ${gap}px from the bottom`);
+    }
+  });
 });
 
 describe('production feature flags', () => {
@@ -86,6 +98,7 @@ describe('production feature flags', () => {
       await BasePage.open(path);
       await BasePage.waitForAppReady();
       await expect(await browser.$('h1=Not found')).toExist();
+      await expect(BasePage.repositoryLink).not.toExist();
     }
   });
 
