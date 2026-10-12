@@ -136,9 +136,12 @@ describe('mobile layouts', () => {
         }
       }
       await expect(BasePage.repositoryLink).toExist();
-      for (const gap of await BasePage.footerLogoGaps(2)) {
-        assert.ok(Math.abs(gap) < 1, `Footer logo is ${gap}px from the bottom`);
-      }
+      const {company, repository} = await BasePage.footerLogoGaps();
+      assert.ok(Math.abs(company) < 1, `Company logo is ${company}px up`);
+      assert.ok(
+        Math.abs(repository - 6) < 1,
+        `GitHub mark is ${repository}px up, not on the logo baseline`
+      );
       await tap('footer a[href="/"]');
       await expect(await browser.$('img#skyline')).toExist();
       await BasePage.open('store');
