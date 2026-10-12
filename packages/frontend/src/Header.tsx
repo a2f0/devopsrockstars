@@ -1,5 +1,5 @@
 import React, {useLayoutEffect, useRef} from 'react';
-import {Link} from 'react-router';
+import {NavLink} from 'react-router';
 import styled from 'styled-components';
 import {features} from './featureFlags';
 import FlexContainerLeft from './styled-components/FlexContainerLeft';
@@ -9,11 +9,18 @@ import FlexHeader from './styled-components/FlexHeader';
 import MenuItemLeft from './styled-components/MenuItemLeft';
 import MenuItemRight from './styled-components/MenuItemRight';
 
-const MenuLink = styled(Link)`
+// Only the link for the current page, or the section it belongs to, is
+// underlined.
+const MenuLink = styled(NavLink)`
   display: inline-flex;
   align-items: center;
   min-height: 44px;
   font-size: clamp(20px, 6vw, 24px);
+  text-decoration: none;
+
+  &[aria-current='page'] {
+    text-decoration: underline;
+  }
 `;
 
 const MenuNav = styled.nav`

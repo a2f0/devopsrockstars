@@ -25,6 +25,15 @@ class Base {
     const companyLink = await browser.$('a[href="/company"]');
     await companyLink.waitForExist({timeout: 30000});
   }
+  underlinedNavLinks() {
+    return browser.execute(() =>
+      [...document.querySelectorAll('nav a')]
+        .filter(link =>
+          getComputedStyle(link).textDecorationLine.includes('underline')
+        )
+        .map(link => link.getAttribute('href'))
+    );
+  }
   // Distance from the company logo and the GitHub mark to the bottom of the
   // viewport, once both have been injected.
   async footerLogoGaps() {
