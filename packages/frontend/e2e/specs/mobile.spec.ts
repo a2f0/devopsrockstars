@@ -135,6 +135,10 @@ describe('mobile layouts', () => {
           assert.ok(child.left >= link.left && child.right <= link.right + 1);
         }
       }
+      await expect(BasePage.repositoryLink).toExist();
+      for (const gap of await BasePage.footerLogoGaps(2)) {
+        assert.ok(Math.abs(gap) < 1, `Footer logo is ${gap}px from the bottom`);
+      }
       await tap('footer a[href="/"]');
       await expect(await browser.$('img#skyline')).toExist();
       await BasePage.open('store');
