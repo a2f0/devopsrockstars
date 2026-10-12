@@ -35,12 +35,12 @@ jobs:
       - name: Unit tests
         run: bun run unit
       - run: bun run ci-headless
-      - name: Upload hat preview failure screenshots
+      - name: Upload browser test failure evidence
         if: failure()
         uses: actions/upload-artifact@v7.0.2
         with:
-          name: hat-preview-failures
-          path: ${{ runner.temp }}/hat-preview-failures/
+          name: browser-failures
+          path: ${{ runner.temp }}/browser-failures/
           if-no-files-found: ignore
           retention-days: 7
 
