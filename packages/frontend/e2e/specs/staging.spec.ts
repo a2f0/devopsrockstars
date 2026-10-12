@@ -1,6 +1,7 @@
 import {afterAll, beforeAll, describe, it} from 'bun:test';
 import assert from 'node:assert';
 import {browser, expect, startBrowser, stopBrowser} from '../browser';
+import {saveFailureArtifacts} from '../failureArtifacts';
 import {Base, BasePage} from '../pageObjects/base';
 
 beforeAll(startBrowser, 60000);
@@ -509,6 +510,25 @@ describe('store page', () => {
         stripePublishableKey: 'pk_test_store',
       },
     };
+    // Keeps the page's uncaught errors for the failure evidence below. This
+    // test has failed intermittently in CI with its edit form disappearing.
+    const resetErrorLog = await browser.addInitScript(() => {
+      const errors: string[] = [];
+      Object.assign(window, {__storeTestErrors: errors});
+      addEventListener('error', event =>
+        errors.push(`error: ${(event as ErrorEvent).message}`)
+      );
+      addEventListener('unhandledrejection', event =>
+        errors.push(
+          `rejection: ${String((event as PromiseRejectionEvent).reason)}`
+        )
+      );
+      const consoleError = console.error.bind(console);
+      console.error = (...args: unknown[]) => {
+        errors.push(`console.error: ${args.map(String).join(' ')}`);
+        consoleError(...args);
+      };
+    });
     const resetFixtures = await browser.addInitScript(fixtures => {
       const originalFetch = globalThis.fetch.bind(globalThis);
       const browserWindow: Window = window;
@@ -879,9 +899,29 @@ describe('store page', () => {
         ),
         '[]'
       );
+    } catch (failure) {
+      const state = await browser.execute(() => ({
+        url: location.href,
+        errors:
+          (window as unknown as {__storeTestErrors?: string[]})
+            .__storeTestErrors ?? null,
+        rootChildren: document.getElementById('©')?.childElementCount ?? null,
+        activeElement: document.activeElement?.outerHTML.slice(0, 500),
+        sessionStorage: {...sessionStorage},
+      }));
+      await saveFailureArtifacts({
+        'store-checkout.png': Buffer.from(
+          await browser.takeScreenshot(),
+          'base64'
+        ),
+        'store-checkout.html': await browser.getPageSource(),
+        'store-checkout.json': JSON.stringify(state, null, 2),
+      });
+      throw failure;
     } finally {
       await browser.execute(() => sessionStorage.clear());
       await resetFixtures.remove();
+      await resetErrorLog.remove();
     }
   });
 
