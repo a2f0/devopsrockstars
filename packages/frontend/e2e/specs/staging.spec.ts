@@ -33,6 +33,28 @@ describe('staging environment', () => {
     }
   });
 
+  it('underlines only the navigation link for the current page', async () => {
+    for (const [path, underlined] of [
+      ['', []],
+      ['company', ['/company']],
+      ['store', ['/store']],
+      ['store/checkout', ['/store']],
+      ['search', ['/search']],
+      ['company/', ['/company']],
+      ['missing', []],
+      ['company/missing', []],
+      ['store/missing', []],
+    ] as const) {
+      await BasePage.openStaging(path);
+      await BasePage.waitForAppReady();
+      assert.deepStrictEqual(
+        await BasePage.underlinedNavLinks(),
+        underlined,
+        `/${path}`
+      );
+    }
+  });
+
   it('tells crawlers not to index the document', async () => {
     await BasePage.openStaging('');
     await BasePage.waitForAppReady();
