@@ -16,6 +16,21 @@ describe('staging environment', () => {
     await expect(await browser.$('a[href="/company"]')).toExist();
   });
 
+  it('links the repository from the company and store footers only', async () => {
+    for (const [path, linked] of [
+      ['company', true],
+      ['store', true],
+      ['store/checkout', true],
+      ['search', false],
+      ['missing', false],
+    ] as const) {
+      await BasePage.openStaging(path);
+      await BasePage.waitForAppReady();
+      const link = BasePage.repositoryLink;
+      await (linked ? expect(link).toExist() : expect(link).not.toExist());
+    }
+  });
+
   it('tells crawlers not to index the document', async () => {
     await BasePage.openStaging('');
     await BasePage.waitForAppReady();

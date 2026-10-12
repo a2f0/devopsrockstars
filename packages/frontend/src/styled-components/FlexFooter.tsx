@@ -1,13 +1,19 @@
 import styled from 'styled-components';
 
+// The logos rest on the bottom edge of the screen. Only devices with a home
+// indicator keep a gap, sized by the safe-area inset.
 const FlexFooter = styled.footer`
   display: flex;
-  padding: 12px 0 max(12px, env(safe-area-inset-bottom));
+  padding: 12px 0 env(safe-area-inset-bottom);
 
   a {
-    display: inline-flex;
-    align-items: center;
+    display: flex;
+    align-items: flex-end;
     min-height: 44px;
+  }
+
+  svg {
+    display: block;
   }
 `;
 
