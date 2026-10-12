@@ -55,7 +55,14 @@ const Footer = React.memo(() => {
           <MenuItemRight>
             {showsRepositoryLink(location.pathname) ? (
               <a href={repositoryUrl} aria-label="GitHub repository">
-                <div style={{width: '24px'}}>
+                {/* Sized and raised to sit on the LLC logo's text baseline */}
+                <div
+                  style={{
+                    cursor: 'pointer',
+                    width: '16px',
+                    paddingBottom: '6px',
+                  }}
+                >
                   <ReactSVG src="/static/image/github.svg" />
                 </div>
               </a>

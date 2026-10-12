@@ -25,20 +25,23 @@ class Base {
     const companyLink = await browser.$('a[href="/company"]');
     await companyLink.waitForExist({timeout: 30000});
   }
-  // Distance from each footer logo to the bottom of the viewport, once the
-  // expected number of logos has been injected.
-  async footerLogoGaps(count: number) {
+  // Distance from the company logo and the GitHub mark to the bottom of the
+  // viewport, once both have been injected.
+  async footerLogoGaps() {
     await browser.waitUntil(() =>
       browser.execute(
-        expected => document.querySelectorAll('footer svg').length === expected,
-        count
+        () => document.querySelectorAll('footer svg').length === 2
       )
     );
-    return browser.execute(() =>
-      [...document.querySelectorAll('footer svg')].map(
-        svg => innerHeight - svg.getBoundingClientRect().bottom
-      )
-    );
+    return browser.execute(() => {
+      const gap = (selector: string) =>
+        innerHeight -
+        (document.querySelector(selector)?.getBoundingClientRect().bottom ?? 0);
+      return {
+        company: gap('footer a[href="/"] svg'),
+        repository: gap('footer a[aria-label="GitHub repository"] svg'),
+      };
+    });
   }
 
   static readonly productionOrigin = 'http://localhost:8081';
