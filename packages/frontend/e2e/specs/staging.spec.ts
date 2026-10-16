@@ -313,6 +313,8 @@ describe('staging 3D skyline', () => {
             const bounds = region?.getBoundingClientRect();
             return {
               bounds: [innerWidth, bounds?.top, bounds?.bottom],
+              backdrop: region && getComputedStyle(region).backgroundColor,
+              scheme: region && getComputedStyle(region).colorScheme,
               frames:
                 document.querySelectorAll('iframe').length +
                 (region?.shadowRoot?.querySelectorAll('iframe').length ?? 0),
@@ -321,7 +323,13 @@ describe('staging 3D skyline', () => {
                 region,
             };
           }, skylineRegion),
-          {bounds: [width, 0, height], frames: 0, pressTarget: true}
+          {
+            bounds: [width, 0, height],
+            backdrop: 'rgb(0, 0, 0)',
+            scheme: 'dark',
+            frames: 0,
+            pressTarget: true,
+          }
         );
         await expect(await viewer.shadow$('canvas#building')).toBeDisplayed();
         const menu = await viewer.shadow$('#menu-toggle');
