@@ -6,6 +6,9 @@ node_modules/
 .dev.vars
 .wrangler
 
+# matrix-secrets link; no trailing slash, so the pattern matches the symlink
+.secrets
+
 # vercel
 .vercel
 
@@ -28,6 +31,5 @@ override.tf.json
 terraform.rc
 *.backend
 /terraform/main.tfvars
-/terraform/terraform.backend
 
 # claude (skills are committed; see .claude/.gitignore for local state)

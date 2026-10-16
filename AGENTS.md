@@ -295,9 +295,12 @@ D1 database.
 - GitHub Actions deploys the `production` branch to production and the
   `staging` branch to staging; `workflow_dispatch` deploys any branch to staging
 - Frontend build artifacts are generated in `packages/frontend/build/`
-- Terraform manages Cloudflare only. The AWS website stack (S3, CloudFront,
-  ACM, Route 53) is destroyed; the S3 Terraform state backend is all that
-  remains, so `terraform` still needs AWS credentials
+- Terraform manages Cloudflare only; the AWS website stack (S3, CloudFront,
+  ACM, Route 53) is destroyed. Its state is in the Cloudflare R2 bucket
+  `devopsrockstars-com-terraform-state`, and the `terraform/` scripts read the
+  Cloudflare token and R2 state key from the gitignored `.secrets` link to
+  matrix-secrets (see [deployment operations](docs/deployment.md#infrastructure)),
+  so no AWS credentials are involved
 
 ### Environment feature flags
 
