@@ -311,10 +311,15 @@ describe('staging 3D skyline', () => {
           await browser.execute(selector => {
             const region = document.querySelector(selector);
             const bounds = region?.getBoundingClientRect();
+            const controls = region?.shadowRoot?.querySelector('.control-bar');
             return {
               bounds: [innerWidth, bounds?.top, bounds?.bottom],
               backdrop: region && getComputedStyle(region).backgroundColor,
               scheme: region && getComputedStyle(region).colorScheme,
+              controlsBackdrop:
+                controls && getComputedStyle(controls).backgroundColor,
+              controlsScheme:
+                controls && getComputedStyle(controls).colorScheme,
               frames:
                 document.querySelectorAll('iframe').length +
                 (region?.shadowRoot?.querySelectorAll('iframe').length ?? 0),
@@ -327,6 +332,8 @@ describe('staging 3D skyline', () => {
             bounds: [width, 0, height],
             backdrop: 'rgb(0, 0, 0)',
             scheme: 'dark',
+            controlsBackdrop: 'rgb(8, 8, 8)',
+            controlsScheme: 'dark',
             frames: 0,
             pressTarget: true,
           }
