@@ -204,7 +204,8 @@ account variable, and serializes deployments per environment. See
 for exact coverage, permissions, and the migration restriction.
 
 See [deployment operations](docs/deployment.md) for Cloudflare provisioning,
-Terraform setup, Worker identity changes, and the store alert queue. Resource
-creation, secret changes, and schema rollouts require separate review and a
-complete execution preview. Routine maintenance preserves existing identities
-and never applies remote SQL.
+Terraform setup (state in Cloudflare R2, credentials from the gitignored
+`.secrets` link to matrix-secrets), Worker identity changes, and the store
+alert queue. Resource creation, secret changes, and schema rollouts require
+separate review and a complete execution preview. Routine maintenance preserves
+existing identities and never applies remote SQL.
