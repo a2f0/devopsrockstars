@@ -39,6 +39,8 @@ function Skyline3d() {
     if (preparingHat || unavailable || !container.current) return;
     const viewer = mountSkyline(container.current, {
       assetsUrl: '/static/skyline/',
+      // Match the site's dark backdrop while the scene assets load.
+      theme: 'dark',
       // Share the hat preview's three.js instead of loading a second engine.
       three: import('@a2f0/skyline/three'),
     });
