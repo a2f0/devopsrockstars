@@ -5,5 +5,6 @@ terraform {
       version = "~> 5.26"
     }
   }
-  required_version = ">= 1.0.10"
+  # The S3 backend gained lockfile-based locking (use_lockfile) in 1.10.
+  required_version = ">= 1.10"
 }

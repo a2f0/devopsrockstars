@@ -83,11 +83,12 @@ need a separately reviewed execution preview before any mutation.
    Routine Worker maintenance uses `bun run deploy:staging` and
    `bun run deploy:prod` after their guarded dry-runs.
 
-   Terraform needs `TF_VAR_cloudflare_api_token` in the environment and
-   `cloudflare_account_id` in `main.tfvars`. The token needs Workers Scripts
-   Edit, Workers Routes Edit, DNS Edit, Zone Read, and Zone Settings Edit.
-   Creating the zone itself needs Zone Create, which is easier to do once in
-   the dashboard.
+   The scripts read `TF_VAR_cloudflare_api_token` and the state key from
+   `.secrets` (see [Infrastructure](#infrastructure)); `main.tfvars`, decrypted
+   from `main.tfvars.gpg`, supplies `cloudflare_account_id`. The token needs
+   Workers Scripts Edit, Workers Routes Edit, DNS Edit, Zone Read, and Zone
+   Settings Edit. Creating the zone itself needs Zone Create, which is easier to
+   do once in the dashboard.
 
    Zone Settings Edit is required for `cloudflare_zone_setting.always_use_https`,
    which restores the HTTPS redirect CloudFront used to perform. **A token
@@ -116,8 +117,40 @@ new Worker before cutover.
 ## Infrastructure
 
 Terraform (`terraform/`) manages the Cloudflare Worker custom domains, the `www`
-hostname, and the Google Workspace `MX` records. Its state remains in an S3
-bucket, so Terraform still needs AWS credentials for its backend.
+hostname, the HTTPS redirect, and the Google Workspace `MX` records for both
+environments in one stack. Its state is the object `terraform.tfstate` in the
+Cloudflare R2 bucket `devopsrockstars-com-terraform-state`, read through the S3
+backend with lockfile locking, so Terraform 1.10 or later is required. The
+bucket was created by hand and is not managed here, and the backend settings
+are committed in `terraform/main.tf`. No AWS account is involved.
+
+`.secrets` is a gitignored link to this project's folder in `matrix-secrets`,
+which the matrix workspace manages and backs up
+([a2f0/matrix `docs/secrets.md`](https://github.com/a2f0/matrix/blob/main/docs/secrets.md)).
+Link it from the repository root and confirm Git ignores it:
+
+```shell
+ln -s ../matrix-secrets/devopsrockstars.com .secrets   # ../../../ from a matrix checkout
+git check-ignore .secrets
+```
+
+`init.sh`, `upgrade.sh`, `apply.sh`, and `destroy.sh` load
+`.secrets/prod/shared.env` when present and then `.secrets/prod/app.env`, which
+wins; values in the files replace ones already exported in the shell. Each
+script stops before running Terraform when `app.env` or a variable is missing:
+
+| Variable | File | Purpose |
+| --- | --- | --- |
+| `TF_VAR_cloudflare_api_token` | `shared.env` | Cloudflare provider token, copied from the account-level token |
+| `TF_STATE_ACCESS_KEY_ID` | `app.env` | R2 S3 key ID of the token limited to the state bucket |
+| `TF_STATE_SECRET_ACCESS_KEY` | `app.env` | R2 S3 secret of that token |
+
+Only Terraform receives the state key, as `AWS_ACCESS_KEY_ID` and
+`AWS_SECRET_ACCESS_KEY`, and the scripts unset `AWS_PROFILE` and
+`AWS_SESSION_TOKEN` so an ambient AWS profile or session cannot redirect the
+backend. `init.sh` and `upgrade.sh` pass `-reconfigure`, so a working
+directory initialized against the former S3 bucket switches to R2 without
+offering to migrate state.
 
 Wrangler owns Worker and asset deployments; Terraform owns hostnames. Publish a
 Worker before pointing a hostname at it.
