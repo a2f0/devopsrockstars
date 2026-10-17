@@ -33,6 +33,9 @@ a reported coverage limit, never a reason to downgrade newer installed versions.
 - Preserve `expect@30.5.2.patch` for Bun's CommonJS interoperability and
   `miniflare@5.20261012.1-beta.patch` for its installed Undici transport.
   Remove either only after the actual browser/Worker regressions pass unpatched.
+- Keep the store Worker's `upload_source_maps: false` explicit and checked by
+  the deployment guard. [Wrangler 4.150](https://github.com/cloudflare/workers-sdk/releases/tag/wrangler%404.150.0)
+  enables uploads by default; tool updates must preserve the existing policy.
 - WebdriverIO 10 and expect-webdriverio 8 must move together. Use
   `setDefaultOptions` and selectors that identify a single element; strict `$`
   checks expose ambiguous selectors. Chrome does not yet implement every BiDi
