@@ -83,10 +83,10 @@ need a separately reviewed execution preview before any mutation.
    Routine Worker maintenance uses `bun run deploy:staging` and
    `bun run deploy:prod` after their guarded dry-runs.
 
-   The scripts read `TF_VAR_cloudflare_api_token` and the state key from
-   `.secrets` (see [Infrastructure](#infrastructure)); `main.tfvars`, decrypted
-   from `main.tfvars.gpg`, supplies `cloudflare_account_id`. The token needs
-   Workers Scripts Edit, Workers Routes Edit, DNS Edit, Zone Read, and Zone
+   The scripts read `TF_VAR_cloudflare_api_token`, the state key, and
+   `.secrets/prod/main.tfvars`, which supplies `host`, `domain`, and
+   `cloudflare_account_id` (see [Infrastructure](#infrastructure)). The token
+   needs Workers Scripts Edit, Workers Routes Edit, DNS Edit, Zone Read, and Zone
    Settings Edit. Creating the zone itself needs Zone Create, which is easier to
    do once in the dashboard.
 
@@ -136,14 +136,21 @@ git check-ignore .secrets
 
 `init.sh`, `upgrade.sh`, `apply.sh`, and `destroy.sh` load
 `.secrets/prod/shared.env` when present and then `.secrets/prod/app.env`, which
-wins; values in the files replace ones already exported in the shell. Each
-script stops before running Terraform when `app.env` or a variable is missing:
+wins; values in the files replace ones already exported in the shell.
+`apply.sh` and `destroy.sh` pass `.secrets/prod/main.tfvars` to Terraform with
+`-var-file`. Each script stops before running Terraform when `app.env`,
+`main.tfvars`, or a variable is missing:
 
 | Variable | File | Purpose |
 | --- | --- | --- |
 | `TF_VAR_cloudflare_api_token` | `shared.env` | Cloudflare provider token, copied from the account-level token |
 | `TF_STATE_ACCESS_KEY_ID` | `app.env` | R2 S3 key ID of the token limited to the state bucket |
 | `TF_STATE_SECRET_ACCESS_KEY` | `app.env` | R2 S3 secret of that token |
+| `host`, `domain`, `cloudflare_account_id` | `main.tfvars` | Staging host label, zone name, and Cloudflare account for the Terraform resources |
+
+The repository keeps no encrypted secret files. The scripts no longer read a
+`terraform/main.tfvars`; delete any copy left in an older clone once `.secrets`
+is linked.
 
 Only Terraform receives the state key, as `AWS_ACCESS_KEY_ID` and
 `AWS_SECRET_ACCESS_KEY`, and the scripts unset `AWS_PROFILE` and

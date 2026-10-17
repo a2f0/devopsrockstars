@@ -298,9 +298,10 @@ D1 database.
 - Terraform manages Cloudflare only; the AWS website stack (S3, CloudFront,
   ACM, Route 53) is destroyed. Its state is in the Cloudflare R2 bucket
   `devopsrockstars-com-terraform-state`, and the `terraform/` scripts read the
-  Cloudflare token and R2 state key from the gitignored `.secrets` link to
-  matrix-secrets (see [deployment operations](docs/deployment.md#infrastructure)),
-  so no AWS credentials are involved
+  Cloudflare token, R2 state key, and `main.tfvars` variables from the gitignored
+  `.secrets` link to matrix-secrets (see
+  [deployment operations](docs/deployment.md#infrastructure)), so no AWS
+  credentials or encrypted files are involved
 
 ### Environment feature flags
 

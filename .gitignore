@@ -12,11 +12,6 @@ node_modules/
 # vercel
 .vercel
 
-# blackbox
-/.blackbox/pubring.gpg~
-/.blackbox/pubring.kbx~
-/.blackbox/secring.gpg
-
 # terraform
 **/.terraform/*
 *.tfstate
@@ -30,6 +25,5 @@ override.tf.json
 .terraformrc
 terraform.rc
 *.backend
-/terraform/main.tfvars
 
 # claude (skills are committed; see .claude/.gitignore for local state)

@@ -13,7 +13,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-run_terraform plan -input=false -var-file=main.tfvars -out="$private_plan_dir/reviewed.tfplan"
+run_terraform plan -input=false -var-file="$terraform_var_file" -out="$private_plan_dir/reviewed.tfplan"
 run_terraform show -json "$private_plan_dir/reviewed.tfplan" > "$private_plan_dir/plan.json"
 "$script_dir/../node_modules/.bin/agent-tool" dependencies check-terraform-plan "$private_plan_dir/plan.json"
 run_terraform show "$private_plan_dir/reviewed.tfplan"
