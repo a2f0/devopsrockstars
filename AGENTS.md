@@ -16,7 +16,7 @@ Use `-R "$REPO"` (or `--repo "$REPO"`) on `gh` commands when ambiguity is possib
 
 ## Branch and Commit Rules
 
-- Do not commit or push directly to `production` or `main`; work on a branch.
+- Do not commit or push directly to `main`; work on a branch.
 - Use conventional commits.
 - Do not force-push unless explicitly requested.
 - Do not add AI attribution/co-author footers.
@@ -104,10 +104,10 @@ Handle review comments on the PR with the reply rules above. Use the shared
 exact-head squash helper; invoke `node_modules/.bin/agent-tool pr merge` directly
 when passing an empty subject because `bun run` drops empty arguments. Per
 `agent-tool.json`, it requires `code-quality` from `Github Actions` on the
-reviewed head and refuses to merge unless the `production` ruleset enforces
+reviewed head and refuses to merge unless the `main` ruleset enforces
 strict status checks that the merging account cannot bypass.
 
-After merging to `production`, wait for `.github/workflows/main.yml` to deploy
+After merging to `main`, wait for `.github/workflows/main.yml` to deploy
 that merge commit successfully. Smoke-test Home and Company at phone and desktop
 sizes, and verify navigation, routes, and the Home skyline match the committed
 feature flag matrix for each deployed environment. Check the production
@@ -292,7 +292,7 @@ D1 database.
   Undici transport to avoid Bun's incomplete built-in dispatcher
 - Wrangler owns Worker and asset deployments; Terraform (`terraform/`) owns the
   custom domains, including `www` (which serves the production site)
-- GitHub Actions deploys the `production` branch to production and the
+- GitHub Actions deploys the `main` branch to production and the
   `staging` branch to staging; `workflow_dispatch` deploys any branch to staging
 - Frontend build artifacts are generated in `packages/frontend/build/`
 - Terraform manages Cloudflare only; the AWS website stack (S3, CloudFront,

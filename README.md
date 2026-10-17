@@ -185,7 +185,7 @@ Cloudflare prepends its own managed `robots.txt` block whose `User-agent: *`
 group merges with ours, and `Allow` wins that tie, so the header and meta tag
 are what actually keep staging out of search results.
 
-GitHub Actions deploys `production` to production and `staging` to staging, and
+GitHub Actions deploys `main` to production and `staging` to staging, and
 `workflow_dispatch` deploys any branch to staging. Deployments run locally the
 same way:
 
