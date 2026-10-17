@@ -12,12 +12,16 @@ const appEnv =
   'export TF_STATE_ACCESS_KEY_ID=fixture-state-id\n' +
   'TF_STATE_SECRET_ACCESS_KEY=fixture-state-secret\n';
 
+// The stack's input variables, read from the tier rather than from terraform/.
+const mainTfvars = 'host = "fixture-host"\n';
+
 // What Terraform must see: the R2 state key as AWS credentials, no ambient AWS
 // profile or session token, and the token from the secrets files.
 const terraformEnvironment =
   'fixture-state-id|fixture-state-secret|unset|unset|fixture-cloudflare-token';
 
-type Secrets = {shared?: string; app?: string};
+// main.tfvars defaults to the fixture; null leaves it out.
+type Secrets = {shared?: string; app?: string; tfvars?: string | null};
 
 async function readIfPresent(file: string) {
   return (await Bun.file(file).exists()) ? readFile(file, 'utf8') : '';
@@ -53,10 +57,20 @@ async function runScript(
       await Bun.write(path.join(tier, 'shared.env'), secrets.shared);
     if (secrets.app !== undefined)
       await Bun.write(path.join(tier, 'app.env'), secrets.app);
+    if (secrets.tfvars !== null)
+      await Bun.write(
+        path.join(tier, 'main.tfvars'),
+        secrets.tfvars ?? mainTfvars
+      );
+    // A leftover copy where the scripts once read it must be ignored.
+    await Bun.write(path.join(terraform, 'main.tfvars'), 'host = "stale"\n');
     await Bun.write(
       path.join(bin, 'terraform'),
       `#!/bin/sh
 printf '%s\\n' "$*" >> "$CALL_LOG"
+for arg in "$@"; do
+  case "$arg" in -var-file=*) cat "\${arg#-var-file=}" >> "$VAR_LOG";; esac
+done
 printf '%s|%s|%s|%s|%s\\n' "\${AWS_ACCESS_KEY_ID-}" "\${AWS_SECRET_ACCESS_KEY-}" \\
   "\${AWS_PROFILE-unset}" "\${AWS_SESSION_TOKEN-unset}" \\
   "\${TF_VAR_cloudflare_api_token-}" >> "$ENV_LOG"
@@ -93,6 +107,7 @@ exit "$CHECK_EXIT"
     const envLog = path.join(root, 'env.log');
     const gateLog = path.join(root, 'gate.log');
     const planLog = path.join(root, 'plan.log');
+    const varLog = path.join(root, 'var.log');
     const env: Record<string, string | undefined> = {
       ...process.env,
       PATH: `${bin}:${process.env['PATH']}`,
@@ -100,6 +115,7 @@ exit "$CHECK_EXIT"
       ENV_LOG: envLog,
       GATE_LOG: gateLog,
       PLAN_LOG: planLog,
+      VAR_LOG: varLog,
       CHECK_EXIT: String(checkExit),
       AWS_PROFILE: 'ambient-profile',
       AWS_SESSION_TOKEN: 'ambient-session',
@@ -121,6 +137,8 @@ exit "$CHECK_EXIT"
       calls: await readIfPresent(callLog),
       environments: (await readIfPresent(envLog)).trim().split('\n'),
       gate: (await readIfPresent(gateLog)).trim(),
+      variables: await readIfPresent(varLog),
+      varFile: `${terraform}/../.secrets/prod/main.tfvars`,
       planRemoved: plan === '' || !(await Bun.file(plan).exists()),
       directoryRemoved:
         plan === '' ||
@@ -153,6 +171,10 @@ test('an unapproved Terraform plan cannot reach apply', async () => {
 test('an approved checked plan is the only plan passed to apply', async () => {
   const result = await runScript('apply.sh', {response: 'APPLY'});
   expect(result.exitCode).toBe(0);
+  expect(result.calls).toContain(
+    `plan -input=false -var-file=${result.varFile} -out=`
+  );
+  expect(result.variables).toBe(mainTfvars);
   expect(result.calls).toContain('apply ');
   expect(result.planRemoved).toBe(true);
   expect(result.directoryRemoved).toBe(true);
@@ -179,11 +201,24 @@ test('init and upgrade read the committed backend without migrating state', asyn
   }
 });
 
-test('destroy loads the same credentials', async () => {
+test('destroy loads the same credentials and variables', async () => {
   const result = await runScript('destroy.sh');
   expect(result.exitCode).toBe(0);
-  expect(result.calls).toBe('destroy -var-file=main.tfvars\n');
+  expect(result.calls).toBe(`destroy -var-file=${result.varFile}\n`);
+  expect(result.variables).toBe(mainTfvars);
   expect(result.environments).toEqual([terraformEnvironment]);
+});
+
+test('an env file cannot redirect the variable file', async () => {
+  const result = await runScript('destroy.sh', {
+    secrets: {
+      shared: sharedEnv,
+      app: `${appEnv}terraform_var_file=main.tfvars\n`,
+    },
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.calls).toBe(`destroy -var-file=${result.varFile}\n`);
+  expect(result.variables).toBe(mainTfvars);
 });
 
 test('app.env wins over shared.env, and shared.env is optional', async () => {
@@ -207,6 +242,16 @@ test('missing secrets stop every script before Terraform runs', async () => {
     expect(missingFile.exitCode).not.toBe(0);
     expect(missingFile.stderr).toContain('.secrets/prod/app.env is missing');
     expect(missingFile.calls).toBe('');
+
+    const missingVariables = await runScript(script, {
+      response: 'APPLY',
+      secrets: {shared: sharedEnv, app: appEnv, tfvars: null},
+    });
+    expect(missingVariables.exitCode).not.toBe(0);
+    expect(missingVariables.stderr).toContain(
+      '.secrets/prod/main.tfvars is missing'
+    );
+    expect(missingVariables.calls).toBe('');
 
     const missingValues = await runScript(script, {
       response: 'APPLY',

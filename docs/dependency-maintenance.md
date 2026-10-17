@@ -196,10 +196,10 @@ Do not substitute `wrangler d1 migrations list --remote`: its implementation
 initializes the migration table before listing.
 
 Terraform core/provider upgrades remain pinned until a complete refreshed saved
-plan against the real R2 backend and decrypted variables establishes safety.
-The encrypted variable file and the `.secrets` credentials described in
-[deployment operations](deployment.md#infrastructure) exist, so missing
-plaintext alone is not proof that credentials are absent; inspect documented
-key availability without exposing secrets. Never substitute other credentials,
-migrate backend state, provision replacement resources, or run destruction to
-work around unavailable state.
+plan against the real R2 backend and the `.secrets/prod/main.tfvars` variables
+establishes safety. That variable file and the `.secrets` credentials described
+in [deployment operations](deployment.md#infrastructure) live outside the
+repository, so their absence from a checkout alone is not proof that they do not
+exist; inspect documented key availability without exposing secrets. Never
+substitute other credentials, migrate backend state, provision replacement
+resources, or run destruction to work around unavailable state.
