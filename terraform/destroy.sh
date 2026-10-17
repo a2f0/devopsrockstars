@@ -7,4 +7,4 @@ cd "$script_dir"
 source "$script_dir/env.sh"
 load_terraform_env "$script_dir/.."
 
-run_terraform destroy -var-file=main.tfvars
+run_terraform destroy -var-file="$terraform_var_file"
