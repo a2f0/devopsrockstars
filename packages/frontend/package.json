@@ -20,7 +20,7 @@
     "webdriverio": "10.0.2"
   },
   "dependencies": {
-    "@a2f0/skyline": "0.2.27",
+    "@a2f0/skyline": "0.2.33",
     "@devopsrockstars/shared-types": "workspace:*",
     "@stripe/stripe-js": "10.1.0",
     "leaflet": "1.9.4",
