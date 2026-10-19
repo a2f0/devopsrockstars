@@ -21,6 +21,7 @@
     "flags:check": "bun scripts/feature-flags.ts --check",
     "skyline:update": "bun scripts/skyline.ts",
     "skyline:check": "bun scripts/skyline.ts --check",
+    "checkout:ascii": "bun packages/frontend/tooling/checkoutAscii.ts",
     "format": "bun run --bun biome format --write",
     "build": "bun run --filter @devopsrockstars/frontend build",
     "dev:cloudflare": "bun run --filter @devopsrockstars/backend dev",

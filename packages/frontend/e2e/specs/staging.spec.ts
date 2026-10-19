@@ -702,17 +702,19 @@ describe('store page', () => {
 
       const customerName = await browser.$('input[name="name"]');
       await customerName.waitForDisplayed();
-      await expect(await browser.$('h1 img[alt="checkout"]')).toBeDisplayed();
-      await browser.waitUntil(() =>
-        browser.execute(() => {
-          const image = document.querySelector('h1 img[alt="checkout"]');
+      await expect(
+        await browser.$('h1 pre[role="img"][aria-label="checkout"]')
+      ).toBeDisplayed();
+      expect(
+        await browser.execute(() => {
+          const art = document.querySelector('h1 pre[aria-label="checkout"]');
           return (
-            image instanceof HTMLImageElement &&
-            image.complete &&
-            image.naturalWidth > 0
+            art instanceof HTMLElement &&
+            art.querySelector('.face') !== null &&
+            art.scrollWidth <= art.clientWidth + 1
           );
         })
-      );
+      ).toBe(true);
       await customerName.setValue('Grace Hopper');
       await (await browser.$('input[name="email"]')).setValue(
         'grace@example.com'
