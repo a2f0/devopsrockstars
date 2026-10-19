@@ -124,7 +124,8 @@ export const Input = styled.input`
   ${controlStyles}
 `;
 
-const monospace = 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
+export const monospace =
+  'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
 
 // The size picker is wider than the add-to-cart button beneath it.
 export const SizeField = styled.div`
