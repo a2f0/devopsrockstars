@@ -3,7 +3,7 @@
 // the glyph whose ink sits where the artwork's does, measured with six
 // sampling circles, as on a2f0.net. Rerun it after changing the SVG:
 //
-//   bun run checkout:ascii [--columns 144] [--print]
+//   bun run checkout:ascii [--columns 120] [--print]
 
 import {readFile, writeFile} from 'node:fs/promises';
 import path from 'node:path';
@@ -280,7 +280,7 @@ const render = async (
 
 const {values} = parseArgs({
   options: {
-    columns: {type: 'string', default: '144'},
+    columns: {type: 'string', default: '120'},
     print: {type: 'boolean', default: false},
   },
 });
