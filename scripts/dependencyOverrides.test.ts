@@ -39,12 +39,12 @@ test('temporary overrides still match resolved parent versions', async () => {
   const manifest = (await Bun.file(
     new URL('../package.json', import.meta.url)
   ).json()) as {
-    overrides: Record<string, unknown>;
+    overrides?: Record<string, unknown>;
   };
-  assertOverrideParents(Object.keys(manifest.overrides), source);
+  assertOverrideParents(Object.keys(manifest.overrides ?? {}), source);
 });
 
-test('the Markdownlint override resolves only the patched Smol-TOML', async () => {
+test('Markdownlint resolves the fixed Smol-TOML parser', async () => {
   const source = await Bun.file(new URL('../bun.lock', import.meta.url)).text();
   const lockfile = Bun.JSONC.parse(source) as {
     packages: Record<string, [string, ...unknown[]]>;

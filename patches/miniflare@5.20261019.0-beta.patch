@@ -1,5 +1,8 @@
+diff --git a/node_modules/miniflare/.bun-tag-4c44b4006ccb90f4 b/.bun-tag-4c44b4006ccb90f4
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 diff --git a/dist/src/index.js b/dist/src/index.js
-index 6eec3456a8534828f2951074b1a212ed2acda92a..d874f3b3be2e74f818f47b6c22adf1db259b1f07 100644
+index aba6d186062debca2d6197ae859d76171e3e2385..ba88fd6ca3f3ba09dc067090a9e968365fa2299e 100644
 --- a/dist/src/index.js
 +++ b/dist/src/index.js
 @@ -58849,7 +58849,7 @@ var bgWhite = init(47, 49);
@@ -52,7 +55,7 @@ index 6eec3456a8534828f2951074b1a212ed2acda92a..d874f3b3be2e74f818f47b6c22adf1db
  
  // src/plugins/shared/index.ts
  var import_node_crypto6 = require("node:crypto");
-@@ -94138,7 +94138,7 @@ var path14 = __toESM(require("node:path"), 1);
+@@ -94233,7 +94233,7 @@ var path15 = __toESM(require("node:path"), 1);
  var import_node_path9 = __toESM(require("node:path"), 1);
  var import_node_util3 = require("node:util");
  var import_node_url2 = require("node:url");
@@ -61,7 +64,7 @@ index 6eec3456a8534828f2951074b1a212ed2acda92a..d874f3b3be2e74f818f47b6c22adf1db
  var import_node_child_process2 = require("node:child_process");
  var import_node_crypto = require("node:crypto");
  var import_node_os6 = require("node:os");
-@@ -120206,7 +120206,7 @@ var SynchronousFetcher = class {
+@@ -120181,7 +120181,7 @@ var SynchronousFetcher = class {
  var import_node_buffer5 = require("node:buffer");
  var import_consumers = require("node:stream/consumers");
  var import_web3 = require("node:stream/web");
