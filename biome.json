@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.6.2/schema.json",
   "assist": {
     "actions": {
       "source": {
@@ -44,7 +44,20 @@
       "!**/dev-dist/",
       "!**/dist/",
       "!**/node_modules/",
-      "!**/static/**/*.svg"
+      "!**/static/**/*.svg",
+      "!**/.agents/skills/**",
+      "!**/.claude/skills/**",
+      "!**/.wrangler/**"
     ]
+  },
+  "markdown": {
+    "formatter": {
+      "enabled": false
+    }
+  },
+  "yaml": {
+    "formatter": {
+      "enabled": false
+    }
   }
 }

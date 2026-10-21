@@ -17,6 +17,10 @@ a reported coverage limit, never a reason to downgrade newer installed versions.
 ## Compatibility constraints
 
 - Read current pins from workspace manifests, `bun.lock`, and tool configuration.
+  Bun 1.4.3 selects lockfile format 3 only when nested owner overrides need it;
+  removing the last nested override can legitimately restore format 2. Confirm
+  the pinned binary and an unchanged frozen install instead of hand-editing the
+  lock version. See [Bun overrides](https://bun.sh/docs/pm/overrides).
   Agent-tool's installer generates both harnesses' skills and
   `.agent-tool-skills.json`; commit them with its manifest and `bun.lock`.
 - Skyline mounts a region in an open shadow root. The React
@@ -31,7 +35,7 @@ a reported coverage limit, never a reason to downgrade newer installed versions.
   scripts do not import its removed JavaScript compiler API; Knip uses Oxc
   analysis. Compile and actual Knip checks must pass before shipping.
 - Preserve `expect@30.5.2.patch` for Bun's CommonJS interoperability and
-  `miniflare@5.20261012.1-beta.patch` for its installed Undici transport.
+  `miniflare@5.20261019.0-beta.patch` for its installed Undici transport.
   Remove either only after the actual browser/Worker regressions pass unpatched.
 - Keep the store Worker's `upload_source_maps: false` explicit and checked by
   the deployment guard. [Wrangler 4.150](https://github.com/cloudflare/workers-sdk/releases/tag/wrangler%404.150.0)
@@ -59,20 +63,29 @@ candidate locks, including development and native dependencies. The existing
 production-critical CI audit is retained; it does not cover all tooling findings.
 Record unavailable audit refreshes and unresolved findings in the upgrade PR.
 
-`markdownlint-cli2@0.23.3` pins vulnerable Smol-TOML 1.8. The exact-owner nested
-override selects 1.9 to address
-[GHSA-r4xh-jqrq-34v2](https://github.com/advisories/GHSA-r4xh-jqrq-34v2).
-Its parser returns null-prototype objects, so `markdownlint@0.41.1.patch` preserves
-nested rule options that the library otherwise silently drops. The actual CLI
-test proves custom limits and disabled rules fail without the patch and pass
-with it; glob ignores and malformed configuration retain their behavior.
-This repository's current lint config is JSONC; the tested TOML path is a
-compatibility safeguard for the installed CLI, rather than a current config
-requirement.
-Remove the override when the owner naturally selects a fixed parser; remove the
-patch when upstream preserves those options and the CLI regression passes
-unpatched. Repository maintainers review both by **2026-11-07** or on either
-owner's next upgrade, whichever comes first.
+Markdownlint CLI2 now selects Smol-TOML 1.9.1 directly, so the previous
+exact-owner override is unnecessary. Its parser still returns null-prototype
+objects, and `markdownlint@0.42.0.patch` preserves nested rule options that the
+library otherwise silently drops. The actual CLI regression proves custom
+limits and disabled rules fail without the patch and pass with it; glob ignores
+and malformed configuration retain their behavior. The repository's lint config
+is JSONC; the TOML checks safeguard the installed CLI's supported config path.
+Remove the patch when upstream preserves these options and the actual CLI tests
+pass unpatched. Review on the next owner release or by **2026-11-07**.
+
+Wrangler 4.151.2 is retained because 4.151.3 rejects the pinned Bun runtime.
+[Wrangler 4.151.3](https://github.com/cloudflare/workers-sdk/releases/tag/wrangler%404.151.3)
+adds an unconditional Bun request-forwarding rejection: the real local Worker
+returns HTTP 503. Keep 4.151.2 with its Miniflare Undici transport patch until
+upstream supports this runtime or a separately reviewed toolchain migration is
+validated. The local Worker/proxy unit regression must pass before lifting this
+hold; recheck on the next Wrangler/Bun release or by **2026-11-07**. A successful
+deployment dry-run alone does not establish local compatibility.
+
+Biome's new Markdown and YAML formatters remain disabled: Markdownlint and the
+existing YAML hooks own those formats. Generated Wrangler files and installed
+agent skills are excluded from Biome, while the dedicated skill check remains
+mandatory.
 
 The following owner constraints need compatible upstream fixes. Recheck current
 advisories and owner releases during each upgrade.

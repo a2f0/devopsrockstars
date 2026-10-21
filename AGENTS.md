@@ -291,7 +291,7 @@ D1 database.
 - `bun run deploy:staging` and `bun run deploy:prod` wrap `scripts/deploy.ts`,
   which builds the site, dry-runs both Workers, verifies live resource identities
   and zero pending D1 migrations, then publishes the store and site Workers
-- `patches/miniflare@5.20261012.1-beta.patch` resolves Miniflare's installed
+- `patches/miniflare@5.20261019.0-beta.patch` resolves Miniflare's installed
   Undici transport to avoid Bun's incomplete built-in dispatcher
 - Wrangler owns Worker and asset deployments; Terraform (`terraform/`) owns the
   custom domains, including `www` (which serves the production site)
