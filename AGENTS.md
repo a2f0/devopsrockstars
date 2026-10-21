@@ -132,6 +132,7 @@ Do not create GitHub issues unless the user explicitly requests it.
 ### Setup and Installation
 
 ```bash
+mise install
 pip install pre-commit==4.7.0
 pre-commit install
 bun install
@@ -180,7 +181,9 @@ bun run --cwd packages/frontend test \
 
 This project uses **Bun 1.4.3** for package management, TypeScript execution,
 bundling, development servers, and unit/browser test execution. The version is
-pinned in `.bun-version` and `package.json`; CI installs that same version.
+pinned in `.mise.toml` and `package.json`; CI installs it with `mise-action`.
+When mise is not activated, agent shells using its default data directory should
+put `~/.local/share/mise/installs/bun/1.4.3/bin` first on `PATH`.
 
 Use `bun install`, `bun add --exact <package>`, and `bun run <script>`.
 Commit `bun.lock` with dependency changes. JavaScript CLIs run with

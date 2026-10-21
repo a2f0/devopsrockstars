@@ -1,8 +1,9 @@
 # DevOps Rockstars
 
-Use Bun **1.4.3** (see `.bun-version`) for all workspace commands. TypeScript
-**7.0.2** checks types; Bun transpiles and bundles the application. Install Bun
-from [bun.sh](https://bun.sh), then run `bun install`. Commit `bun.lock` with
+Use Bun **1.4.3** (see `.mise.toml`) for all workspace commands. TypeScript
+**7.0.2** checks types; Bun transpiles and bundles the application. Install
+[mise](https://mise.jdx.dev), then run `mise install` and `bun install` from a
+shell with mise activated. CI uses the same Bun pin. Commit `bun.lock` with
 dependency changes. Development rebuilds on source edits; refresh the browser
 to load the updated bundle.
 
@@ -29,6 +30,7 @@ active constraints, and security override removal conditions.
 ## Development
 
 ```shell
+mise install
 pip install pre-commit==4.7.0
 pre-commit install
 bun install
