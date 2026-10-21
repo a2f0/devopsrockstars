@@ -30,7 +30,7 @@
       "name": "@devopsrockstars/frontend",
       "version": "0.1.1",
       "dependencies": {
-        "@a2f0/skyline": "0.2.35",
+        "@a2f0/skyline": "0.2.36",
         "@devopsrockstars/shared-types": "workspace:*",
         "@stripe/stripe-js": "10.1.0",
         "leaflet": "1.9.4",
@@ -66,7 +66,7 @@
   "packages": {
     "@a2f0/agent-tool": ["@a2f0/agent-tool@0.1.15", "", { "dependencies": { "@resvg/resvg-wasm": "2.6.2" }, "bin": { "agent-tool": "src/index.ts" } }, "sha512-7i7usmCNd/d1QCTb6jEbWYzcuBcDTUSTUWJCTi0sNyUDodro2Gc6HBWvhg7Q8sWJ4IGtAjOIsQoS26Rm04phmw=="],
 
-    "@a2f0/skyline": ["@a2f0/skyline@0.2.35", "", { "dependencies": { "@types/three": "0.186.0" }, "peerDependencies": { "three": "~0.186.0" }, "optionalPeers": ["three"] }, "sha512-3P/ZVM96/j5m063A6W3OC27WBZjhW1ImynT1zvx+fV4Q7MboGbrsTiq9cPOm3ZM2cGNsOurRr1yJBZPU+Et8zA=="],
+    "@a2f0/skyline": ["@a2f0/skyline@0.2.36", "", { "dependencies": { "@types/three": "0.186.0" }, "peerDependencies": { "three": "~0.186.0" }, "optionalPeers": ["three"] }, "sha512-dg2ZRcloSbkF6UsbYWytV5Uw4K3qBC/XzQR55gYFQZ5GMXNyP5auar9iLZRBgmKZ5v3SGoTJduvz9YOIo0MAVg=="],
 
     "@babel/code-frame": ["@babel/code-frame@7.29.7", "", { "dependencies": { "@babel/helper-validator-identifier": "7.29.7", "js-tokens": "4.0.0", "picocolors": "1.1.1" } }, "sha512-Aup7aUOfpbAUg2ROOJN6Iw5f9DMBlzu0mIkm/malLQFN/YQgO48wCj0Kxa3sEHJvPVFg7siR+qRInwXd2qhQKw=="],
 
