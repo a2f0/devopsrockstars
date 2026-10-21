@@ -34,6 +34,12 @@ class Base {
         .map(link => link.getAttribute('href'))
     );
   }
+  headerBackground() {
+    return browser.execute(() => {
+      const header = document.querySelector('header');
+      return header && getComputedStyle(header).backgroundColor;
+    });
+  }
   // Distance from the company logo and the GitHub mark to the bottom of the
   // viewport, once both have been injected.
   async footerLogoGaps() {

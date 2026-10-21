@@ -306,12 +306,14 @@ describe('staging 3D skyline', () => {
         );
         await waitForSkylineFrame();
         // The viewer renders in the page, without frames, fills the viewport,
-        // and receives presses outside the header.
+        // shows its sky through the transparent header, and receives presses
+        // outside the header.
         assert.deepStrictEqual(
           await browser.execute(selector => {
             const region = document.querySelector(selector);
             const bounds = region?.getBoundingClientRect();
             const controls = region?.shadowRoot?.querySelector('.control-bar');
+            const header = document.querySelector('header') as HTMLElement;
             return {
               bounds: [innerWidth, bounds?.top, bounds?.bottom],
               backdrop: region && getComputedStyle(region).backgroundColor,
@@ -323,6 +325,12 @@ describe('staging 3D skyline', () => {
               frames:
                 document.querySelectorAll('iframe').length +
                 (region?.shadowRoot?.querySelectorAll('iframe').length ?? 0),
+              headerBackdrop: getComputedStyle(header).backgroundColor,
+              skyBehindHeader:
+                region !== null &&
+                document
+                  .elementsFromPoint(innerWidth / 2, header.offsetHeight / 2)
+                  .includes(region),
               pressTarget:
                 document.elementFromPoint(innerWidth / 2, innerHeight / 2) ===
                 region,
@@ -335,6 +343,8 @@ describe('staging 3D skyline', () => {
             controlsBackdrop: 'rgb(8, 8, 8)',
             controlsScheme: 'dark',
             frames: 0,
+            headerBackdrop: 'rgba(0, 0, 0, 0)',
+            skyBehindHeader: true,
             pressTarget: true,
           }
         );

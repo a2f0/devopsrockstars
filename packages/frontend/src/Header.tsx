@@ -50,6 +50,7 @@ const MenuNav = styled.nav`
 `;
 
 const Header = React.memo(() => {
+  const {pathname} = useLocation();
   const header = useRef<HTMLElement>(null);
   useLayoutEffect(() => {
     const element = header.current;
@@ -69,7 +70,7 @@ const Header = React.memo(() => {
   }, []);
 
   return (
-    <FlexHeader ref={header}>
+    <FlexHeader ref={header} $transparent={pathname === '/'}>
       <FlexContainerRow>
         <FlexContainerLeft>
           <MenuItemLeft />

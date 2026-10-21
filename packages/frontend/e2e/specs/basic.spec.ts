@@ -54,6 +54,7 @@ describe('index page', () => {
       ),
       []
     );
+    assert.strictEqual(await BasePage.headerBackground(), 'rgba(0, 0, 0, 0)');
     await expectNoHatPreparation();
   });
 });
@@ -65,6 +66,8 @@ describe('company page', () => {
     await expect(browser).toHaveUrl(expect.stringContaining('/company'));
     await expect(BasePage.skyline).not.toExist();
     await expect(await browser.$('h1=Contact')).toExist();
+    // Content scrolls beneath the sticky header away from the skyline.
+    assert.strictEqual(await BasePage.headerBackground(), 'rgb(0, 0, 0)');
     const title = await browser.getTitle();
     assert.strictEqual(title, '\u200E');
     await expectNoHatPreparation();
