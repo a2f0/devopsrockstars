@@ -1,6 +1,3 @@
-diff --git a/node_modules/miniflare/.bun-tag-4c44b4006ccb90f4 b/.bun-tag-4c44b4006ccb90f4
-new file mode 100644
-index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 diff --git a/dist/src/index.js b/dist/src/index.js
 index aba6d186062debca2d6197ae859d76171e3e2385..ba88fd6ca3f3ba09dc067090a9e968365fa2299e 100644
 --- a/dist/src/index.js

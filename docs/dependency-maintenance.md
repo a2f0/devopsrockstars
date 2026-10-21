@@ -17,6 +17,10 @@ a reported coverage limit, never a reason to downgrade newer installed versions.
 ## Compatibility constraints
 
 - Read current pins from workspace manifests, `bun.lock`, and tool configuration.
+  Bun 1.4.3 selects lockfile format 3 only when nested owner overrides need it;
+  removing the last nested override can legitimately restore format 2. Confirm
+  the pinned binary and an unchanged frozen install instead of hand-editing the
+  lock version. See [Bun overrides](https://bun.sh/docs/pm/overrides).
   Agent-tool's installer generates both harnesses' skills and
   `.agent-tool-skills.json`; commit them with its manifest and `bun.lock`.
 - Skyline mounts a region in an open shadow root. The React
@@ -69,13 +73,14 @@ is JSONC; the TOML checks safeguard the installed CLI's supported config path.
 Remove the patch when upstream preserves these options and the actual CLI tests
 pass unpatched. Review on the next owner release or by **2026-11-07**.
 
-Wrangler 4.151.2 is the latest supported release under the pinned Bun runtime.
+Wrangler 4.151.2 is retained because 4.151.3 rejects the pinned Bun runtime.
 [Wrangler 4.151.3](https://github.com/cloudflare/workers-sdk/releases/tag/wrangler%404.151.3)
 adds an unconditional Bun request-forwarding rejection: the real local Worker
 returns HTTP 503. Keep 4.151.2 with its Miniflare Undici transport patch until
 upstream supports this runtime or a separately reviewed toolchain migration is
 validated. The local Worker/proxy unit regression must pass before lifting this
-hold; a successful deployment dry-run alone does not establish local compatibility.
+hold; recheck on the next Wrangler/Bun release or by **2026-11-07**. A successful
+deployment dry-run alone does not establish local compatibility.
 
 Biome's new Markdown and YAML formatters remain disabled: Markdownlint and the
 existing YAML hooks own those formats. Generated Wrangler files and installed
