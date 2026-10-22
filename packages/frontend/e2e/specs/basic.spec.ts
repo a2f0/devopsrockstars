@@ -76,7 +76,12 @@ describe('company page', () => {
     await expect(BasePage.skyline).not.toExist();
     await expect(await browser.$('h1=Contact')).toExist();
     assert.strictEqual(
-      await browser.$('h1').getAttribute('data-ct-app'),
+      await browser.execute(() =>
+        document
+          .querySelector('h1')
+          ?.closest('[data-ct-app]')
+          ?.getAttribute('data-ct-app')
+      ),
       'company'
     );
     // Content scrolls beneath the sticky header away from the skyline.

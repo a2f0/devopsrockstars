@@ -1,5 +1,6 @@
 import {afterAll, beforeAll, describe, it} from 'bun:test';
 import assert from 'node:assert/strict';
+import path from 'node:path';
 import type {ClickEvent} from '@a2f0/ct-client';
 import type {SiteEnvironment} from '../../src/environment';
 import {enabledFeatureFlags} from '../../src/featureFlags';
@@ -22,7 +23,14 @@ afterAll(stopBrowser, 60000);
 async function fixture(
   origin: string,
   environment: SiteEnvironment,
-  privacy: 'none' | 'webdriver' | 'gpc' | 'dnt' | 'extension' | 'local' = 'none'
+  privacy:
+    | 'none'
+    | 'webdriver'
+    | 'gpc'
+    | 'dnt'
+    | 'extension'
+    | 'local' = 'none',
+  realSkyline = false
 ) {
   const bundle = await Bun.build({
     entrypoints: ['tracking-fixture'],
@@ -42,9 +50,10 @@ async function fixture(
           build.onLoad({filter: /.*/, namespace: 'fixture'}, () => ({
             loader: 'js',
             contents: `
-          import {startClickTracking} from ${JSON.stringify(new URL('../../src/clickTracking.ts', import.meta.url).pathname)};
+          import {startClickTracking} from ${JSON.stringify(path.join(import.meta.dir, '../../src/clickTracking.ts'))};
+          ${realSkyline ? `import {mountSkyline} from ${JSON.stringify(Bun.resolveSync('@a2f0/skyline', path.join(import.meta.dir, '../..')))};` : ''}
           const host = document.querySelector('[data-ct-app="skyline"]');
-          host.attachShadow({mode:'open'}).innerHTML = '<button data-ct="skyline.wireframe">wireframe</button><canvas width="40" height="40"></canvas>';
+          ${realSkyline ? `const viewer = mountSkyline(host, {assetsUrl:'/static/skyline/', controls:'open'}); await viewer.ready; document.addEventListener('tracking-stop', () => viewer.destroy());` : `host.attachShadow({mode:'open'}).innerHTML = '<button data-ct="skyline.wireframe">wireframe</button><canvas width="40" height="40"></canvas>';`}
           let stop = startClickTracking();
           document.addEventListener('tracking-stop', () => stop?.());
           document.addEventListener('tracking-restart', () => { stop?.(); stop = startClickTracking(); });
@@ -60,24 +69,39 @@ async function fixture(
   assert.ok(script);
   const html = `<!doctype html><html><body>
     <button id="nav" data-ct="nav.company">company</button>
-    <div data-ct-app="skyline"></div>
+    <div data-ct-app="skyline" style="width:900px;height:600px"></div>
     <section data-ct-app="store"><button id="checkout" data-ct="store.checkout">checkout</button></section>
     <input id="sensitive" value="private-value">
     <div contenteditable="true" id="editor">private-content</div>
     <div data-ct-ignore><button id="ignored">ignored</button></div>
     <script type="module" src="/fixture.js"></script>
   </body></html>`;
+  const assets = new Map<string, {body: string; type: string}>();
+  assets.set('/fixture.js', {body: script, type: 'application/javascript'});
+  if (realSkyline) {
+    const assetsDirectory = path.resolve(
+      path.dirname(
+        Bun.resolveSync('@a2f0/skyline', path.join(import.meta.dir, '../..'))
+      ),
+      '../site'
+    );
+    for await (const filename of new Bun.Glob('**/*').scan(assetsDirectory)) {
+      const file = Bun.file(path.join(assetsDirectory, filename));
+      assets.set(`/static/skyline/${filename}`, {
+        body: await file.text(),
+        type: file.type,
+      });
+    }
+  }
   const pageMock = await browser.mock(`${origin}/**`);
   pageMock.respond(
-    request =>
-      new URL(request.request.url).pathname === '/fixture.js' ? script : html,
+    request => assets.get(new URL(request.request.url).pathname)?.body ?? html,
     {
       fetchResponse: false,
       headers: request => ({
         'Content-Type':
-          new URL(request.request.url).pathname === '/fixture.js'
-            ? 'application/javascript'
-            : 'text/html',
+          assets.get(new URL(request.request.url).pathname)?.type ??
+          'text/html',
       }),
     }
   );
@@ -116,19 +140,34 @@ async function fixture(
         document.documentElement.setAttribute('data-ct-disabled', 'true')
       );
   }, privacy);
-  await browser.url(`${origin}/`);
-  await browser.waitUntil(() =>
-    browser.execute(() => document.documentElement.dataset['ready'] === 'true')
-  );
-  return async () => {
-    await browser.execute(() =>
-      document.dispatchEvent(new Event('tracking-stop'))
-    );
-    await browser.url('about:blank');
-    await injected.remove();
-    await pageMock.restore();
-    await collector.restore();
+  const cleanup = async () => {
+    try {
+      await browser.execute(() =>
+        document.dispatchEvent(new Event('tracking-stop'))
+      );
+      await browser.url('about:blank');
+    } finally {
+      await Promise.all([
+        injected.remove(),
+        pageMock.restore(),
+        collector.restore(),
+      ]);
+    }
   };
+  try {
+    await browser.url(`${origin}/`);
+    await browser.waitUntil(
+      () =>
+        browser.execute(
+          () => document.documentElement.dataset['ready'] === 'true'
+        ),
+      {timeout: 30000}
+    );
+    return cleanup;
+  } catch (error) {
+    await cleanup();
+    throw error;
+  }
 }
 
 async function flush() {
@@ -139,6 +178,41 @@ async function flush() {
 }
 
 describe('deployed click tracking', () => {
+  it('attributes a real Skyline viewer control without a second tracker', async () => {
+    const cleanup = await fixture(
+      'https://staging.devopsrockstars.com',
+      'staging',
+      'none',
+      true
+    );
+    try {
+      await browser
+        .$('[role="region"]')
+        .shadow$('[data-ct="skyline.wireframe"]')
+        .click();
+      const batches = await flush();
+      assert.equal(batches.length, 1);
+      assert.equal(batches[0]?.events.length, 1);
+      assert.equal(batches[0]?.events[0]?.app, 'skyline');
+      assert.equal(batches[0]?.events[0]?.label, 'skyline.wireframe');
+      const requests = await browser.execute(() =>
+        performance
+          .getEntriesByType('resource')
+          .map(entry => new URL(entry.name).pathname)
+      );
+      assert.ok(requests.includes('/static/skyline/skyline-viewer.js'));
+      assert.ok(
+        !requests.some(
+          url =>
+            url.endsWith('/click-tracking-page.js') ||
+            url.endsWith('/vendor/ct-client.js')
+        )
+      );
+    } finally {
+      await cleanup();
+    }
+  });
+
   for (const [origin, environment] of [
     ['https://devopsrockstars.com', 'production'],
     ['https://www.devopsrockstars.com', 'production'],

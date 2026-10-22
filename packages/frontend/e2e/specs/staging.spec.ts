@@ -467,6 +467,10 @@ describe('search page', () => {
     );
     await expect(logo).toBeDisplayed();
 
+    await expect(await browser.$('form')).toHaveAttribute(
+      'data-ct-app',
+      'search'
+    );
     const searchInput = await browser.$('input[aria-label="Search"]');
     await searchInput.setValue('continuous delivery');
     await browser.keys('Enter');
@@ -708,6 +712,15 @@ describe('store page', () => {
       await browser.keys(['ArrowDown', 'ArrowDown', ' ']);
       await expect(sizes).not.toBeDisplayed();
       await expect(size).toHaveText('7 1/4');
+      assert.strictEqual(
+        await browser.execute(() =>
+          document
+            .querySelector('[data-ct="store.add-to-cart"]')
+            ?.closest('[data-ct-app]')
+            ?.getAttribute('data-ct-app')
+        ),
+        'store'
+      );
       await (await browser.$('button=Add to cart')).click();
       await expect(
         await browser.$('aside[aria-label="Shopping cart"]')
