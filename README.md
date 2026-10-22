@@ -166,8 +166,7 @@ Static actions on search, checkout, and receipt pages remain trackable.
 
 GPC, Do Not Track, the CT browser extension, and the site's saved CT opt-out
 remain effective. The collector records the request IP and approximate
-Cloudflare location, with 90-day retention, and its admin data is currently
-public. See [CT privacy](https://github.com/a2f0/ct/blob/main/docs/privacy.md)
+Cloudflare location, with 90-day retention. See [CT privacy](https://github.com/a2f0/ct/blob/main/docs/privacy.md)
 for the full data contract and opt-out behavior.
 
 ### Environments
