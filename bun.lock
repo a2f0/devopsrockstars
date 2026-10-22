@@ -30,7 +30,7 @@
       "name": "@devopsrockstars/frontend",
       "version": "0.1.1",
       "dependencies": {
-        "@a2f0/skyline": "0.2.36",
+        "@a2f0/skyline": "0.2.38",
         "@devopsrockstars/shared-types": "workspace:*",
         "@stripe/stripe-js": "10.1.0",
         "leaflet": "1.9.4",
@@ -61,7 +61,9 @@
   "packages": {
     "@a2f0/agent-tool": ["@a2f0/agent-tool@0.1.17", "", { "dependencies": { "@resvg/resvg-wasm": "2.6.2" }, "bin": { "agent-tool": "src/index.ts" } }, "sha512-SknBpNArgVkIX0RdY4cLXDudJu0Cu8zYJbZJF2kx5gTnYLEzC9i4Qik39/ijQJYtZStdivit6pHeClsCwm5KnA=="],
 
-    "@a2f0/skyline": ["@a2f0/skyline@0.2.36", "", { "dependencies": { "@types/three": "0.186.0" }, "peerDependencies": { "three": "~0.186.0" }, "optionalPeers": ["three"] }, "sha512-dg2ZRcloSbkF6UsbYWytV5Uw4K3qBC/XzQR55gYFQZ5GMXNyP5auar9iLZRBgmKZ5v3SGoTJduvz9YOIo0MAVg=="],
+    "@a2f0/ct-client": ["@a2f0/ct-client@0.1.2", "", {}, "sha512-EfTVf5ZwcbNLOktMktmiwdp+nQ5GW6y7cVp2Wl9/ZX1yfPw3Gf4mZKqAKOPLC/rf2JsQ5xrV4cx1zPM/Xq22WA=="],
+
+    "@a2f0/skyline": ["@a2f0/skyline@0.2.38", "", { "dependencies": { "@a2f0/ct-client": "0.1.2", "@types/three": "0.186.0" }, "peerDependencies": { "three": "~0.186.0" }, "optionalPeers": ["three"] }, "sha512-+AnRFHwPsSKMPISNPOkcZx4E3rwB18pufWdHIqkNp1A4dBa3coFS69jq4KahGjzbkCTIeVXz6tVyw1W9oKVvVQ=="],
 
     "@babel/code-frame": ["@babel/code-frame@7.29.7", "", { "dependencies": { "@babel/helper-validator-identifier": "7.29.7", "js-tokens": "4.0.0", "picocolors": "1.1.1" } }, "sha512-Aup7aUOfpbAUg2ROOJN6Iw5f9DMBlzu0mIkm/malLQFN/YQgO48wCj0Kxa3sEHJvPVFg7siR+qRInwXd2qhQKw=="],
 
