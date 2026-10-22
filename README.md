@@ -149,6 +149,29 @@ the enabled and disabled behavior in tests.
 
 ## Deployment
 
+### Click analytics
+
+The explicitly initialized `@a2f0/ct-client` tracks clicks on the deployed sites
+under `site: devopsrockstars`. Production (apex and `www`) and staging are
+separate `environment` values in [CT admin](https://ct-admin.a2f0.net).
+The build environment must match the exact HTTPS origin; local development,
+preview hosts, and browser automation do not collect clicks.
+
+The `app` dimension identifies `skyline`, `company`, `search`, and `store`;
+shared navigation uses `website`. Skyline's open shadow root inherits its host's
+app boundary. Page names come from a fixed route allowlist, never query strings,
+receipt identifiers, or unknown paths. The SDK skips inputs, editable content,
+and `data-ct-ignore` areas and never reads text, form values, or link URLs.
+Static actions on search, checkout, and receipt pages remain trackable.
+
+GPC, Do Not Track, the CT browser extension, and the site's saved CT opt-out
+remain effective. The collector records the request IP and approximate
+Cloudflare location, with 90-day retention, and its admin data is currently
+public. See [CT privacy](https://github.com/a2f0/ct/blob/main/docs/privacy.md)
+for the full data contract and opt-out behavior.
+
+### Environments
+
 Both environments run entirely on Cloudflare. Each is a pair of Workers: a
 static-assets Worker serving the Bun output, and a store Worker serving
 `/api/*` against its own D1 database. Wrangler owns the Worker and asset

@@ -77,7 +77,7 @@ const Store = React.memo(() => {
 
   if (error) {
     return (
-      <StorePage>
+      <StorePage data-ct-app="store">
         <Status $error>{error}</Status>
       </StorePage>
     );
@@ -85,14 +85,14 @@ const Store = React.memo(() => {
 
   if (!storefront) {
     return (
-      <StorePage>
+      <StorePage data-ct-app="store">
         <Status>Loading inventory…</Status>
       </StorePage>
     );
   }
 
   return (
-    <StorePage>
+    <StorePage data-ct-app="store">
       {!inventoryReady ? (
         <InventoryStatus role="status">Updating inventory…</InventoryStatus>
       ) : null}
@@ -133,6 +133,7 @@ const Store = React.memo(() => {
                 }
               />
               <AddToCart
+                data-ct="store.add-to-cart"
                 type="button"
                 disabled={!inventoryReady || !variant}
                 onClick={() => variant && cart.add(variant.id)}
@@ -162,6 +163,7 @@ const Store = React.memo(() => {
                   )}
                 </span>
                 <button
+                  data-ct="store.remove-item"
                   type="button"
                   onClick={() => cart.remove(item.variantId)}
                 >
@@ -171,7 +173,9 @@ const Store = React.memo(() => {
             );
           })}
           <CartActions>
-            <ActionLink to="/store/checkout">Checkout</ActionLink>
+            <ActionLink to="/store/checkout" data-ct="store.checkout">
+              Checkout
+            </ActionLink>
           </CartActions>
         </CartPanel>
       ) : null}

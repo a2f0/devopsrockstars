@@ -37,6 +37,7 @@ export async function bundleFrontend({
     naming: 'assets/[name]-[hash].[ext]',
     define: {
       'globalThis.__FEATURE_FLAGS__': JSON.stringify(flags),
+      'globalThis.__SITE_ENVIRONMENT__': JSON.stringify(environment),
       'globalThis.__STORE_API_ORIGIN__': JSON.stringify(storeApiOrigin),
       'process.env.NODE_ENV': JSON.stringify(
         minify ? 'production' : 'development'

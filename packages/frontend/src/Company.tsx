@@ -9,8 +9,8 @@ const ContactRowContainer = styled.div`
 const Company = React.memo(() => {
   return (
     <>
-      <h1>Contact</h1>
-      <ContactRowContainer>
+      <h1 data-ct-app="company">Contact</h1>
+      <ContactRowContainer data-ct-app="company">
         <ContactRow
           svgHeight={20}
           svgWidth={20}

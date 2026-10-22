@@ -35,6 +35,15 @@ describe('index page', () => {
     await expect(BasePage.skyline).toExist();
     assert.strictEqual(await BasePage.skyline.getTagName(), 'img');
     assert.strictEqual(
+      await browser.execute(() =>
+        document
+          .getElementById('skyline')
+          ?.closest('[data-ct-app]')
+          ?.getAttribute('data-ct-app')
+      ),
+      'skyline'
+    );
+    assert.strictEqual(
       await BasePage.skyline.getAttribute('src'),
       '/static/image/skyline.svg'
     );
@@ -66,6 +75,10 @@ describe('company page', () => {
     await expect(browser).toHaveUrl(expect.stringContaining('/company'));
     await expect(BasePage.skyline).not.toExist();
     await expect(await browser.$('h1=Contact')).toExist();
+    assert.strictEqual(
+      await browser.$('h1').getAttribute('data-ct-app'),
+      'company'
+    );
     // Content scrolls beneath the sticky header away from the skyline.
     assert.strictEqual(await BasePage.headerBackground(), 'rgb(0, 0, 0)');
     const title = await browser.getTitle();

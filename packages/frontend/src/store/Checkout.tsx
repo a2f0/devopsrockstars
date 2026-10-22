@@ -242,7 +242,7 @@ const Checkout = React.memo(() => {
 
   if (!checkout && cart.items.length === 0) {
     return (
-      <StoreShell>
+      <StoreShell data-ct-app="store">
         <CheckoutHeading />
         <Status>Your cart is empty.</Status>
         <FormActions>
@@ -253,7 +253,7 @@ const Checkout = React.memo(() => {
   }
 
   return (
-    <StoreShell>
+    <StoreShell data-ct-app="store">
       <CheckoutHeading />
       <CheckoutGrid>
         <Section>

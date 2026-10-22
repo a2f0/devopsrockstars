@@ -299,6 +299,10 @@ describe('staging 3D skyline', () => {
         await BasePage.waitForAppReady();
         const viewer = await browser.$(skylineRegion);
         await viewer.waitForExist({timeout: 30000});
+        await expect(await browser.$('#skyline')).toHaveAttribute(
+          'data-ct-app',
+          'skyline'
+        );
         await expect(await browser.$('img#skyline')).not.toExist();
         await expect(viewer).toHaveAttribute(
           'aria-label',

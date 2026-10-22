@@ -30,6 +30,7 @@
       "name": "@devopsrockstars/frontend",
       "version": "0.1.1",
       "dependencies": {
+        "@a2f0/ct-client": "0.1.4",
         "@a2f0/skyline": "0.2.38",
         "@devopsrockstars/shared-types": "workspace:*",
         "@stripe/stripe-js": "10.1.0",
@@ -61,7 +62,7 @@
   "packages": {
     "@a2f0/agent-tool": ["@a2f0/agent-tool@0.1.17", "", { "dependencies": { "@resvg/resvg-wasm": "2.6.2" }, "bin": { "agent-tool": "src/index.ts" } }, "sha512-SknBpNArgVkIX0RdY4cLXDudJu0Cu8zYJbZJF2kx5gTnYLEzC9i4Qik39/ijQJYtZStdivit6pHeClsCwm5KnA=="],
 
-    "@a2f0/ct-client": ["@a2f0/ct-client@0.1.2", "", {}, "sha512-EfTVf5ZwcbNLOktMktmiwdp+nQ5GW6y7cVp2Wl9/ZX1yfPw3Gf4mZKqAKOPLC/rf2JsQ5xrV4cx1zPM/Xq22WA=="],
+    "@a2f0/ct-client": ["@a2f0/ct-client@0.1.4", "", {}, "sha512-b6JYVDpKMEbkPgMdd55D6JM+S45sqxTJj9wx687wjrGZEN2DBSE7M7v02Xxyh33QwUpv+kzG7NTBqQtR6tDgXg=="],
 
     "@a2f0/skyline": ["@a2f0/skyline@0.2.38", "", { "dependencies": { "@a2f0/ct-client": "0.1.2", "@types/three": "0.186.0" }, "peerDependencies": { "three": "~0.186.0" }, "optionalPeers": ["three"] }, "sha512-+AnRFHwPsSKMPISNPOkcZx4E3rwB18pufWdHIqkNp1A4dBa3coFS69jq4KahGjzbkCTIeVXz6tVyw1W9oKVvVQ=="],
 
@@ -1030,6 +1031,8 @@
     "zip-stream": ["zip-stream@7.0.5", "", { "dependencies": { "compress-commons": "7.0.1", "normalize-path": "3.0.0", "readable-stream": "4.7.0" } }, "sha512-dSvYKdvLsAHCDqPOhIwk/q5CvuWtTB3Dgpoe0uVEFjTzIOAmsQpprX25InCvrvJsirEbu1OHyy67n/kAj1Sw/w=="],
 
     "zod": ["zod@4.6.7", "", {}, "sha512-g8W2D2kU6a8untc053fX1uVBKzM7yqAxW/3zwk83+6RyF2+SKOuV+c0wBDhUwzV1PaGapmZH+rmcUzPf+3CGwg=="],
+
+    "@a2f0/skyline/@a2f0/ct-client": ["@a2f0/ct-client@0.1.2", "", {}, "sha512-EfTVf5ZwcbNLOktMktmiwdp+nQ5GW6y7cVp2Wl9/ZX1yfPw3Gf4mZKqAKOPLC/rf2JsQ5xrV4cx1zPM/Xq22WA=="],
 
     "@img/sharp-wasm32/@emnapi/runtime": ["@emnapi/runtime@1.11.3", "", { "dependencies": { "tslib": "2.8.1" } }, "sha512-Xz4Tpyki7XyrpbUK1jR1AhdAdaXyhhY4lZ3neLodmhpuWfy2PAQN5B46sAiU4liOXGLkHypn/qU+jvfWSCYYLA=="],
 
