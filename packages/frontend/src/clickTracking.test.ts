@@ -65,6 +65,23 @@ describe('click tracking configuration', () => {
     }
   });
 
+  test('uses canonical route names for router-supported case and trailing slashes', () => {
+    for (const [pathname, canonical] of [
+      ['/company/', '/company'],
+      ['/Company', '/company'],
+      ['/store/', '/store'],
+      ['/STORE/checkout/', '/store/checkout'],
+      ['/store/receipt/', '/store/receipt'],
+      ['/search/', '/search'],
+    ] as const) {
+      expect(trackingPage(pathname, enabledFeatureFlags)).toBe(canonical);
+    }
+    expect(trackingPage('/store/', disabledFeatureFlags)).toBe('/not-found');
+    expect(trackingPage('/store/private-id/', enabledFeatureFlags)).toBe(
+      '/not-found'
+    );
+  });
+
   test('unbundled server and unit test execution does not initialize', () => {
     expect(startClickTracking()).toBeUndefined();
   });

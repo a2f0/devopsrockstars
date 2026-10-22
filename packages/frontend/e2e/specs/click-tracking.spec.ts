@@ -1,6 +1,7 @@
 import {afterAll, beforeAll, describe, it} from 'bun:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
+import {fileURLToPath} from 'node:url';
 import type {ClickEvent} from '@a2f0/ct-client';
 import type {SiteEnvironment} from '../../src/environment';
 import {enabledFeatureFlags} from '../../src/featureFlags';
@@ -76,19 +77,19 @@ async function fixture(
     <div data-ct-ignore><button id="ignored">ignored</button></div>
     <script type="module" src="/fixture.js"></script>
   </body></html>`;
-  const assets = new Map<string, {body: string; type: string}>();
+  const assets = new Map<string, {body: string | ArrayBuffer; type: string}>();
   assets.set('/fixture.js', {body: script, type: 'application/javascript'});
   if (realSkyline) {
-    const assetsDirectory = path.resolve(
+    const assetsDirectory = path.join(
       path.dirname(
-        Bun.resolveSync('@a2f0/skyline', path.join(import.meta.dir, '../..'))
+        fileURLToPath(import.meta.resolve('@a2f0/skyline/package.json'))
       ),
-      '../site'
+      'site'
     );
     for await (const filename of new Bun.Glob('**/*').scan(assetsDirectory)) {
       const file = Bun.file(path.join(assetsDirectory, filename));
       assets.set(`/static/skyline/${filename}`, {
-        body: await file.text(),
+        body: await file.arrayBuffer(),
         type: file.type,
       });
     }
@@ -228,7 +229,7 @@ describe('deployed click tracking', () => {
           history.pushState(
             {},
             '',
-            '/store/receipt?order=private-order#private-fragment'
+            '/STORE/receipt/?order=private-order#private-fragment'
           )
         );
         await browser.$('#checkout').click();

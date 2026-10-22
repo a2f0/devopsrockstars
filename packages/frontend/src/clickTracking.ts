@@ -1,6 +1,7 @@
 import {createTracker} from '@a2f0/ct-client';
 import type {SiteEnvironment} from './environment';
 import {type FeatureFlags, features} from './featureFlags';
+import {matchesRoute, storeRoutes} from './routes';
 
 export function trackingEnvironment(
   origin: string,
@@ -22,15 +23,13 @@ export function trackingEnvironment(
 
 // Only fixed route names reach the collector, including on unknown URLs.
 export function trackingPage(pathname: string, flags: FeatureFlags): string {
-  if (pathname === '/' || pathname === '/company') return pathname;
-  if (flags.search && pathname === '/search') return '/search';
-  if (
-    flags.store &&
-    ['/store', '/store/checkout', '/store/receipt'].includes(pathname)
-  ) {
-    return pathname;
-  }
-  return '/not-found';
+  const routes = [
+    '/',
+    '/company',
+    ...(flags.search ? ['/search'] : []),
+    ...(flags.store ? storeRoutes : []),
+  ];
+  return routes.find(route => matchesRoute([route], pathname)) ?? '/not-found';
 }
 
 export function startClickTracking(): (() => void) | undefined {
