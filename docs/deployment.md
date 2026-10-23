@@ -144,7 +144,11 @@ Home mounts the shared interactive 3D skyline from
 `@a2f0/skyline` ([a2f0/skyline](https://github.com/a2f0/skyline)) in the page
 itself, inside a shadow root, and gives it the site's own three.js through
 `@a2f0/skyline/three`, so the skyline and the hat preview share one engine.
-Every build serves its assets at `/static/skyline/`. Leaving Home destroys the
+Every build serves its assets at `/static/skyline/`. They include copies of
+the package's viewer pages, which carry a `noindex` robots meta tag, and
+production's `_headers` sends `X-Robots-Tag: noindex, nofollow` on everything
+under that path, matching the package's own host, so neither the pages nor
+their images appear in search. Leaving Home destroys the
 viewer and releases its WebGL contexts. If the 3D skyline cannot start, as
 without WebGL 2, the viewer says why in its place and in the browser console,
 and its **show original** button still opens the original drawing, which its
