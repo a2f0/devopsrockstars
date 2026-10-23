@@ -66,7 +66,7 @@ test('simultaneous environments serve isolated HTML, hashed modules and robots r
     [production, true],
     [staging, false],
   ] as const) {
-    const page = await fetch(new URL('/store/receipt', server.url));
+    const page = await fetch(new URL('/company', server.url));
     const html = await page.text();
     expect(html.includes('noindex, nofollow')).toBe(!indexable);
     expect(page.headers.has('X-Robots-Tag')).toBe(!indexable);
@@ -78,8 +78,49 @@ test('simultaneous environments serve isolated HTML, hashed modules and robots r
     const robots = await (
       await fetch(new URL('/robots.txt', server.url))
     ).text();
-    expect(robots).toContain(indexable ? 'Allow: /' : 'Disallow: /');
+    expect(robots).toContain('Allow: /');
+    expect(robots).not.toContain('Disallow');
+    expect(robots.includes('Sitemap:')).toBe(indexable);
+    const sitemap = await fetch(new URL('/sitemap.xml', server.url));
+    expect(sitemap.status).toBe(indexable ? 200 : 404);
+    if (indexable)
+      expect(sitemap.headers.get('Content-Type')).toContain('application/xml');
   }
+});
+
+test('each route serves its own document and other paths a real 404', async () => {
+  const title = async (response: Response) =>
+    (await response.text()).match(/<title>([^<]*)<\/title>/u)?.[1];
+  for (const [server, pathname, expected] of [
+    [production, '/', 'Interactive 3D Chicago Skyline | DevOps Rockstars'],
+    [
+      production,
+      '/company',
+      'Contact: Email, vCard, and GnuPG Key | DevOps Rockstars',
+    ],
+    [production, '/admin/orders', 'Store admin | DevOps Rockstars'],
+    [staging, '/store/receipt', 'Order | DevOps Rockstars'],
+    [staging, '/search', 'Search | DevOps Rockstars'],
+  ] as const) {
+    const response = await fetch(new URL(pathname, server.url));
+    expect(response.status).toBe(200);
+    expect(await title(response)).toBe(expected);
+  }
+  // Disabled features and unknown paths still load the application, which
+  // renders its not-found page, but crawlers see the 404.
+  for (const pathname of ['/store', '/store/receipt', '/search', '/missing']) {
+    const response = await fetch(new URL(pathname, production.url));
+    expect(response.status).toBe(404);
+    expect(await title(response)).toBe('Not found | DevOps Rockstars');
+  }
+  const missing = await fetch(new URL('/company/missing', staging.url));
+  expect(missing.status).toBe(404);
+  expect(missing.headers.get('X-Robots-Tag')).toBe('noindex, nofollow');
+  const redirect = await fetch(new URL('/company/?from=test', production.url), {
+    redirect: 'manual',
+  });
+  expect(redirect.status).toBe(307);
+  expect(redirect.headers.get('Location')).toBe('/company?from=test');
 });
 
 test('static assets have correct MIME types and missing files never become HTML', async () => {

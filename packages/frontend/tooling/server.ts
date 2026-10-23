@@ -74,7 +74,15 @@ export async function startFrontendServer({
       } catch {
         return new Response('Bad path', {status: 400});
       }
+      const headers = new Headers({
+        'Cache-Control': 'no-cache, must-revalidate',
+        'Referrer-Policy': 'strict-origin-when-cross-origin',
+        'X-Content-Type-Options': 'nosniff',
+      });
+      if (environment !== 'production')
+        headers.set('X-Robots-Tag', 'noindex, nofollow');
       let body = assets.get(pathname);
+      let status = 200;
       if (pathname.startsWith('/static/')) {
         const filename = path.resolve(
           staticRoot,
@@ -85,18 +93,29 @@ export async function startFrontendServer({
         const file = Bun.file(filename);
         if (await file.exists()) body = file;
       } else if (!body && !path.extname(pathname)) {
-        body = assets.get('/index.html');
+        // Mirror Workers Static Assets: each page's document serves its path,
+        // a trailing slash redirects to it, and other paths get the
+        // not-found document with a 404 status.
+        const page = pathname === '/' ? '/index.html' : `${pathname}.html`;
+        if (
+          pathname.endsWith('/') &&
+          assets.has(`${pathname.slice(0, -1)}.html`)
+        ) {
+          headers.set('Location', `${url.pathname.slice(0, -1)}${url.search}`);
+          return new Response(null, {status: 307, headers});
+        }
+        body = assets.get(page);
+        if (!body) {
+          body = assets.get('/404.html');
+          status = 404;
+        }
       }
       if (!body) return new Response('Not found', {status: 404});
-      const headers = new Headers({
-        'Content-Type': body.type || 'application/octet-stream',
-        'Cache-Control': 'no-cache, must-revalidate',
-        'Referrer-Policy': 'strict-origin-when-cross-origin',
-        'X-Content-Type-Options': 'nosniff',
+      headers.set('Content-Type', body.type || 'application/octet-stream');
+      return new Response(request.method === 'HEAD' ? null : body, {
+        status,
+        headers,
       });
-      if (environment !== 'production')
-        headers.set('X-Robots-Tag', 'noindex, nofollow');
-      return new Response(request.method === 'HEAD' ? null : body, {headers});
     },
   });
   let rebuild = Promise.resolve();

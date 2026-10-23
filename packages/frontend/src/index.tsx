@@ -14,6 +14,7 @@ import {features} from './featureFlags';
 import Header from './Header';
 import FullScreenMap from './Map';
 import NotFound from './NotFound';
+import {titleForPath} from './pages';
 import Search from './Search';
 import Skyline from './Skyline';
 import Checkout from './store/Checkout';
@@ -48,11 +49,22 @@ function StorePrefetch() {
   return null;
 }
 
+function DocumentTitle() {
+  const {pathname} = useLocation();
+
+  useEffect(() => {
+    document.title = titleForPath(pathname, features);
+  }, [pathname]);
+
+  return null;
+}
+
 function AppRouter() {
   useEffect(startClickTracking, []);
   return (
     <Router>
       <GlobalStyle />
+      <DocumentTitle />
       <StorePrefetch />
       <FullScreenMap />
       <FlexContainerRow>

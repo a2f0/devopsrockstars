@@ -56,21 +56,28 @@ describe('staging environment', () => {
     }
   });
 
-  it('tells crawlers not to index the document', async () => {
-    await BasePage.openStaging('');
-    await BasePage.waitForAppReady();
+  it('tells crawlers not to index any document', async () => {
+    for (const path of ['', 'company', 'store', 'missing']) {
+      await BasePage.openStaging(path);
+      await BasePage.waitForAppReady();
 
-    const robots = await browser.$('meta[name="robots"]');
-    assert.strictEqual(
-      await robots.getAttribute('content'),
-      'noindex, nofollow'
-    );
+      const robots = await browser.$('meta[name="robots"]');
+      assert.strictEqual(
+        await robots.getAttribute('content'),
+        'noindex, nofollow',
+        `/${path}`
+      );
+      await expect(await browser.$('link[rel="canonical"]')).not.toExist();
+      await expect(await browser.$('meta[property="og:url"]')).not.toExist();
+    }
   });
 
-  it('serves a robots.txt that disallows everything', async () => {
+  it('lets crawlers fetch pages so they see the noindex', async () => {
     await browser.url(`${Base.stagingOrigin}/robots.txt`);
     const body = await browser.$('body');
-    assert.match(await body.getText(), /User-agent: \*\s+Disallow: \//u);
+    const robots = await body.getText();
+    assert.match(robots, /User-agent: \*\s+Allow: \//u);
+    assert.doesNotMatch(robots, /Disallow|Sitemap/u);
   });
 });
 

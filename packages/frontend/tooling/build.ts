@@ -7,9 +7,16 @@ import {
   type DiagnosticsConfig,
   validConfig,
 } from '@devopsrockstars/diagnostics/config';
-import {headersFile, robotsMetaTags, robotsTxt} from '../buildAssets';
+import {
+  headersFile,
+  pageFile,
+  pageHead,
+  robotsTxt,
+  sitemapXml,
+} from '../buildAssets';
 import {parseSiteEnvironment, type SiteEnvironment} from '../src/environment';
 import type {FeatureFlags} from '../src/featureFlags';
+import {notFoundPage, sitePages} from '../src/pages';
 import {loadFeatureFlagConfiguration, parseFeatureFlags} from './featureFlags';
 
 export const frontendRoot = path.resolve(import.meta.dir, '..');
@@ -77,22 +84,29 @@ export async function bundleFrontend({
     if (output.kind === 'entry-point') entry = url;
   }
   if (!entry) throw new Error('Frontend build did not emit an entry point');
-  const meta = Object.entries(robotsMetaTags(environment))
-    .map(([name, content]) => `<meta name="${name}" content="${content}" />`)
-    .join('\n');
   const template = await Bun.file(path.join(frontendRoot, 'index.html')).text();
-  const html = template.replace(
-    '</head>',
-    `${meta}\n<script type="module" src="${entry}"></script>\n</head>`
-  );
-  assets.set(
-    '/index.html',
-    new Blob([html], {type: 'text/html;charset=utf-8'})
-  );
+  // Each route gets the same application shell with its own metadata, so
+  // crawlers and link previews read it without running JavaScript.
+  const pages = sitePages(flags);
+  for (const page of [...pages, notFoundPage]) {
+    const html = template.replace(
+      '</head>',
+      `${pageHead(page, environment)}\n<script type="module" src="${entry}"></script>\n</head>`
+    );
+    assets.set(
+      pageFile(page),
+      new Blob([html], {type: 'text/html;charset=utf-8'})
+    );
+  }
   assets.set(
     '/robots.txt',
     new Blob([robotsTxt(environment)], {type: 'text/plain'})
   );
+  if (environment === 'production')
+    assets.set(
+      '/sitemap.xml',
+      new Blob([sitemapXml(pages)], {type: 'application/xml'})
+    );
   assets.set(
     '/_headers',
     new Blob([headersFile(environment)], {type: 'text/plain'})

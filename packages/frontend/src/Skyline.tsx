@@ -13,6 +13,20 @@ const FullScreenSkyline = styled.div`
   pointer-events: auto;
 `;
 
+// The scene is the page's content; this names the page for assistive
+// technology and search engines without covering the skyline.
+const Heading = styled.h1`
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  pointer-events: none;
+`;
+
 const Skyline = React.memo(() => {
   const container = useRef<HTMLDivElement>(null);
   const preparingHat = useHatPreviewPreparing();
@@ -32,7 +46,10 @@ const Skyline = React.memo(() => {
     return () => viewer.destroy();
   }, [preparingHat]);
   return (
-    <FullScreenSkyline id="skyline" ref={container} data-ct-app="skyline" />
+    <>
+      <Heading>DevOps Rockstars</Heading>
+      <FullScreenSkyline id="skyline" ref={container} data-ct-app="skyline" />
+    </>
   );
 });
 

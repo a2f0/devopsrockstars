@@ -245,7 +245,7 @@ export async function deploymentTarget(
     } else {
       equal(
         config['assets'],
-        {directory: './build', not_found_handling: 'single-page-application'},
+        {directory: './build', not_found_handling: '404-page'},
         'site assets'
       );
       for (const key of ['vars', 'd1_databases', 'ratelimits'])
