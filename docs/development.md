@@ -129,6 +129,7 @@ store backend.
 - `packages/frontend/src/admin/` - Lazily loaded store admin under `/admin`
 - `packages/frontend/src/NotFound.tsx` - Catch-all route for unmatched paths
 - `packages/frontend/src/pages.ts` - Every route's title, description, and indexing, prerendered by the build
+- `packages/frontend/src/pageHead.ts` - Each page's head tags, prerendered by the build and reapplied on navigation
 - `feature-flags.json` - Explicit production/staging rollout values
 - `packages/frontend/src/featureFlags.ts` - Typed flag registry and browser values
 - `packages/frontend/src/environment.ts` - Environment parsing and store API origin

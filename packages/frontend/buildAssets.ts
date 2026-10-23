@@ -1,5 +1,6 @@
 import type {SiteEnvironment} from './src/environment';
-import {type Page, pageTitle, siteName, siteOrigin} from './src/pages';
+import {pageHeadTags, pageUrl} from './src/pageHead';
+import {type Page, siteOrigin} from './src/pages';
 
 function escapeHtml(value: string) {
   return value
@@ -15,66 +16,24 @@ export function pageFile(page: Page) {
   return page.path === '/' ? '/index.html' : `${page.path}.html`;
 }
 
-export function pageUrl(page: Page) {
-  return new URL(page.path, siteOrigin).href;
-}
-
-const homeStructuredData = {
-  '@context': 'https://schema.org',
-  '@graph': [
-    {
-      '@type': 'Organization',
-      '@id': `${siteOrigin}/#organization`,
-      name: siteName,
-      url: `${siteOrigin}/`,
-    },
-    {
-      '@type': 'WebSite',
-      '@id': `${siteOrigin}/#website`,
-      name: siteName,
-      url: `${siteOrigin}/`,
-      publisher: {'@id': `${siteOrigin}/#organization`},
-    },
-  ],
-};
-
-// Metadata every page carries without JavaScript. The staging site is
-// publicly reachable, so it asks crawlers to stay away in each document and
-// in a response header. Only indexable production pages name a URL, in
-// their canonical link, social cards, and structured data, so a page that
-// must stay out of search results never points at one that should rank.
+// The same tags the application applies on navigation, as HTML for the
+// prerendered documents.
 export function pageHead(page: Page, environment: SiteEnvironment) {
-  const tags = [`<title>${escapeHtml(pageTitle(page))}</title>`];
-  if (page.description)
-    tags.push(
-      `<meta name="description" content="${escapeHtml(page.description)}" />`
-    );
-  if (environment !== 'production' || !page.indexable) {
-    tags.push('<meta name="robots" content="noindex, nofollow" />');
-    return tags.join('\n');
-  }
-  const url = pageUrl(page);
-  tags.push(`<link rel="canonical" href="${url}" />`);
-  const social = {
-    'og:type': 'website',
-    'og:site_name': siteName,
-    'og:title': page.name,
-    ...(page.description ? {'og:description': page.description} : {}),
-    'og:url': url,
-  };
-  for (const [property, content] of Object.entries(social))
-    tags.push(
-      `<meta property="${property}" content="${escapeHtml(content)}" />`
-    );
-  // There is no share image yet, so cards use the small summary layout.
-  tags.push('<meta name="twitter:card" content="summary" />');
-  if (page.path === '/')
-    tags.push(
-      `<script type="application/ld+json">${JSON.stringify(
-        homeStructuredData
-      ).replaceAll('<', '\\u003c')}</script>`
-    );
-  return tags.join('\n');
+  return pageHeadTags(page, environment)
+    .map(({name, attributes, text}) => {
+      const attributeList = Object.entries(attributes)
+        .map(([key, value]) => ` ${key}="${escapeHtml(value)}"`)
+        .join('');
+      if (name === 'meta' || name === 'link')
+        return `<${name}${attributeList} />`;
+      // Structured data is JSON, so only an early end tag needs escaping.
+      const content =
+        name === 'script'
+          ? (text ?? '').replaceAll('<', '\\u003c')
+          : escapeHtml(text ?? '');
+      return `<${name}${attributeList}>${content}</${name}>`;
+    })
+    .join('\n');
 }
 
 export function robotsTxt(environment: SiteEnvironment) {

@@ -128,8 +128,10 @@ carry Open Graph and Twitter summary cards, and Home adds `Organization` and
 indexable pages and names it in `robots.txt`. The admin, checkout, receipt,
 and not-found pages carry a `noindex, nofollow` robots meta tag in every
 environment, and production's admin also sends the `X-Robots-Tag` header.
-`packages/frontend/buildAssets.ts` renders the tags, `robots.txt`, `sitemap.xml`,
-and `_headers`.
+`packages/frontend/src/pageHead.ts` builds each page's tags, which the build
+writes into its document and the application reapplies on client-side
+navigation; `packages/frontend/buildAssets.ts` renders them along with
+`robots.txt`, `sitemap.xml`, and `_headers`.
 
 Staging builds with `PUBLIC_ENVIRONMENT=staging`, which puts the `noindex,
 nofollow` robots meta tag on every page and an `X-Robots-Tag` header on every

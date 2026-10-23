@@ -4,10 +4,10 @@ import {
   headersFile,
   pageFile,
   pageHead,
-  pageUrl,
   robotsTxt,
   sitemapXml,
 } from './buildAssets';
+import {pageUrl} from './src/pageHead';
 import {disabledFeatureFlags, enabledFeatureFlags} from './src/featureFlags';
 import {notFoundPage, type Page, pageTitle, sitePages} from './src/pages';
 import {storeRoutes} from './src/routes';

@@ -64,11 +64,10 @@ export function pageTitle(page: Page) {
   return `${page.name} | ${siteName}`;
 }
 
-// Crawlers read each URL's prerendered document; this keeps the browser's
-// title in step with client-side navigation.
-export function titleForPath(pathname: string, flags: FeatureFlags) {
-  return pageTitle(
+// Match like the router, so trailing slashes and unregistered paths agree.
+export function pageForPath(pathname: string, flags: FeatureFlags) {
+  return (
     sitePages(flags).find(page => matchesRoute([page.path], pathname)) ??
-      notFoundPage
+    notFoundPage
   );
 }
