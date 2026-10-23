@@ -57,9 +57,23 @@ export function sitemapXml(pages: readonly Page[]) {
   ].join('\n');
 }
 
+// Production paths that stay out of search results, on top of any robots
+// meta tag in their documents: the admin, and the @a2f0/skyline viewer pages
+// and assets the build copies to /static/skyline/, which the package keeps
+// out of search on its own host. Naming each path bare and with /* also
+// covers the trailing-slash redirects between the two forms.
+const productionNoindexPaths = [
+  '/admin',
+  '/admin/*',
+  '/static/skyline',
+  '/static/skyline/*',
+] as const;
+
 // Cloudflare Workers Static Assets reads this file from the build root.
 // Everything but the content-hashed bundles has to revalidate, because those
-// asset URLs stay the same when their contents change.
+// asset URLs stay the same when their contents change. A request receives
+// the headers of every rule that matches it, so these rules add X-Robots-Tag
+// to the /* headers; a second /* rule would replace the first instead.
 export function headersFile(environment: SiteEnvironment) {
   return [
     '/*',
@@ -74,10 +88,10 @@ export function headersFile(environment: SiteEnvironment) {
     '  ! Cache-Control',
     '  Cache-Control: public, max-age=31536000, immutable',
     '',
-    // Staging already refuses crawlers everywhere; production adds the
-    // header to the admin's own robots meta tag.
+    // Staging already refuses crawlers everywhere, and repeating the header
+    // there would send it twice.
     ...(environment === 'production'
-      ? ['/admin', '/admin/*'].flatMap(path => [
+      ? productionNoindexPaths.flatMap(path => [
           path,
           '  X-Robots-Tag: noindex, nofollow',
           '',

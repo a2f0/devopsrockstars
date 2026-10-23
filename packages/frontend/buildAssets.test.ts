@@ -29,24 +29,40 @@ function tagContent(head: string, attribute: string, name: string) {
   )?.[1];
 }
 
-test('production invites crawlers everywhere but the admin', () => {
+test('production invites crawlers everywhere but the admin and skyline viewer copies', () => {
   assert.equal(
     robotsTxt(production),
     'User-agent: *\nAllow: /\n\nSitemap: https://devopsrockstars.com/sitemap.xml\n'
   );
   const rules = headersFile(production).trimEnd().split('\n\n');
   assert.doesNotMatch(rules[0] ?? '', /X-Robots-Tag/u);
-  for (const path of ['/admin', '/admin/*'])
+  // The skyline package's viewer pages and assets, copied to /static/skyline/,
+  // follow the package's own host, which keeps them all out of search.
+  const noindexRules = [
+    '/admin',
+    '/admin/*',
+    '/static/skyline',
+    '/static/skyline/*',
+  ];
+  for (const path of noindexRules)
     assert.ok(
       rules.includes(`${path}\n  X-Robots-Tag: noindex, nofollow`),
       path
     );
+  // Rules for other patterns merge with /*; a second /* would replace it.
+  assert.equal(rules.filter(rule => rule.startsWith('/*\n')).length, 1);
+  assert.equal(
+    rules.filter(rule => rule.includes('X-Robots-Tag')).length,
+    noindexRules.length
+  );
 });
 
 test('staging refuses indexing in the document and headers but stays crawlable', () => {
   // Blocking the crawl would hide the noindex from crawlers.
   assert.equal(robotsTxt(staging), 'User-agent: *\nAllow: /\n');
   assert.match(headersFile(staging), /^ {2}X-Robots-Tag: noindex, nofollow$/mu);
+  // Only the /* rule: a second matching rule would send the header twice.
+  assert.equal(headersFile(staging).match(/X-Robots-Tag/gu)?.length, 1);
   for (const candidate of [...allPages, notFoundPage]) {
     const head = pageHead(candidate, staging);
     assert.equal(
