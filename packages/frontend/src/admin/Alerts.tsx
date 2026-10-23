@@ -111,7 +111,9 @@ const Alerts = () => {
               {alert.status === 'open' ? (
                 <SmallButton
                   type="button"
-                  disabled={busy === alert.eventId}
+                  // One resolution at a time, so an older response never
+                  // restores an alert that a newer one already resolved.
+                  disabled={busy !== ''}
                   onClick={() => void resolve(alert)}
                 >
                   Mark resolved

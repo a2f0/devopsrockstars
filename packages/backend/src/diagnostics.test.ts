@@ -192,8 +192,9 @@ test('a scheduled job failure reports the original error and preserves its rejec
     },
   };
   try {
+    // Off the hour, so only the order cleanup runs.
     worker.scheduled(
-      {scheduledTime: Date.now()},
+      {scheduledTime: Date.UTC(2026, 9, 23, 12, 30)},
       {DB},
       {
         waitUntil(promise) {
@@ -203,6 +204,42 @@ test('a scheduled job failure reports the original error and preserves its rejec
     );
     expect(promises).toHaveLength(1);
     await expect(promises[0]).rejects.toBe(failure);
+    expect(report).toHaveBeenCalledWith(failure, 'scheduled', 'cleanup');
+  } finally {
+    report.mockRestore();
+  }
+});
+
+test('on the hour, the administrator sweep also reports its failure', async () => {
+  const failure = new Error('private database details');
+  const report = spyOn(diagnostics, 'reportApiError').mockResolvedValue(
+    undefined
+  );
+  const promises: Promise<unknown>[] = [];
+  const DB: D1Database = {
+    prepare() {
+      throw failure;
+    },
+    async batch() {
+      return [];
+    },
+  };
+  try {
+    worker.scheduled(
+      {scheduledTime: Date.UTC(2026, 9, 23, 13, 0)},
+      {DB},
+      {
+        waitUntil(promise) {
+          promises.push(promise);
+        },
+      }
+    );
+    expect(promises).toHaveLength(2);
+    expect(await Promise.allSettled(promises)).toEqual([
+      {status: 'rejected', reason: failure},
+      {status: 'rejected', reason: failure},
+    ]);
+    expect(report).toHaveBeenCalledTimes(2);
     expect(report).toHaveBeenCalledWith(failure, 'scheduled', 'cleanup');
   } finally {
     report.mockRestore();
