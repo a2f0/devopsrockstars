@@ -1,3 +1,4 @@
+import {configureBrowserDiagnostics} from '@devopsrockstars/diagnostics/browser';
 import React, {useEffect} from 'react';
 import ReactDOM from 'react-dom/client';
 import {
@@ -8,8 +9,8 @@ import {
 } from 'react-router';
 import Company from './Company';
 import {startClickTracking} from './clickTracking';
-import {features} from './featureFlags';
 import Footer from './Footer';
+import {features} from './featureFlags';
 import Header from './Header';
 import FullScreenMap from './Map';
 import NotFound from './NotFound';
@@ -84,7 +85,19 @@ function AppRouter() {
   );
 }
 
+const diagnostics = configureBrowserDiagnostics(globalThis.__SENTRY_WEB__);
+const reportReactError = (
+  error: unknown,
+  info: {componentStack?: string | undefined}
+) => {
+  console.error(error, info.componentStack);
+  diagnostics?.capture(error, 'react');
+};
 const rootElement = document.getElementById('©');
 if (!rootElement) throw new Error('Failed to find the root element');
-const root = ReactDOM.createRoot(rootElement);
+const root = ReactDOM.createRoot(rootElement, {
+  onCaughtError: reportReactError,
+  onUncaughtError: reportReactError,
+  onRecoverableError: reportReactError,
+});
 root.render(<AppRouter />);

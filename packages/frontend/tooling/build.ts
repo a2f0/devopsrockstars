@@ -3,6 +3,10 @@ import {cp, mkdir, mkdtemp, readdir, rm} from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import {copySkylineAssets} from '@a2f0/skyline/build';
+import {
+  type DiagnosticsConfig,
+  validConfig,
+} from '@devopsrockstars/diagnostics/config';
 import {headersFile, robotsMetaTags, robotsTxt} from '../buildAssets';
 import {parseSiteEnvironment, type SiteEnvironment} from '../src/environment';
 import type {FeatureFlags} from '../src/featureFlags';
@@ -16,6 +20,7 @@ export interface FrontendBuildOptions {
   featureFlags?: FeatureFlags;
   storeApiOrigin?: string;
   minify?: boolean;
+  diagnostics?: DiagnosticsConfig;
 }
 
 export async function bundleFrontend({
@@ -23,7 +28,15 @@ export async function bundleFrontend({
   featureFlags,
   storeApiOrigin = process.env['STORE_API_ORIGIN'] ?? '',
   minify = true,
+  diagnostics,
 }: FrontendBuildOptions = {}) {
+  if (
+    diagnostics &&
+    (!validConfig(diagnostics) ||
+      diagnostics.runtime !== 'web' ||
+      diagnostics.environment !== environment)
+  )
+    throw new Error('Invalid frontend Sentry configuration');
   const flags = parseFeatureFlags(
     featureFlags ?? (await loadFeatureFlagConfiguration())[environment]
   );
@@ -34,11 +47,18 @@ export async function bundleFrontend({
     splitting: true,
     sourcemap: 'external',
     minify,
-    naming: 'assets/[name]-[hash].[ext]',
+    naming: {
+      entry: 'assets/[name]-[hash].[ext]',
+      chunk: 'assets/chunk-[hash].[ext]',
+      asset: 'assets/[name]-[hash].[ext]',
+    },
     define: {
       'globalThis.__FEATURE_FLAGS__': JSON.stringify(flags),
       'globalThis.__SITE_ENVIRONMENT__': JSON.stringify(environment),
       'globalThis.__STORE_API_ORIGIN__': JSON.stringify(storeApiOrigin),
+      'globalThis.__SENTRY_WEB__': diagnostics
+        ? JSON.stringify(diagnostics)
+        : 'undefined',
       'process.env.NODE_ENV': JSON.stringify(
         minify ? 'production' : 'development'
       ),
@@ -108,19 +128,43 @@ export async function bundleFrontend({
   return assets;
 }
 
-if (import.meta.main) {
-  const assets = await bundleFrontend();
+export async function writeFrontendBuild(
+  options: FrontendBuildOptions = {},
+  sourceMapsDirectory?: string,
+  destination = outputRoot
+) {
+  const assets = await bundleFrontend(options);
   // Wrangler uploads this entire directory. Remove every stale environment's
   // bundle before writing the successful build and copying static files.
-  await rm(outputRoot, {recursive: true, force: true});
-  await mkdir(outputRoot, {recursive: true});
-  for (const [url, contents] of assets)
-    await Bun.write(path.join(outputRoot, url.slice(1)), contents);
-  await cp(path.join(frontendRoot, 'static'), path.join(outputRoot, 'static'), {
-    recursive: true,
-  });
-  console.log(`Built ${assets.size} frontend assets in ${outputRoot}`);
+  await rm(destination, {recursive: true, force: true});
+  await mkdir(destination, {recursive: true});
+  if (sourceMapsDirectory)
+    await rm(sourceMapsDirectory, {recursive: true, force: true});
+  for (const [url, contents] of assets) {
+    if (
+      sourceMapsDirectory &&
+      url.startsWith('/assets/') &&
+      /\.js(?:\.map)?$/u.test(url)
+    )
+      await Bun.write(
+        path.join(sourceMapsDirectory, url.slice('/assets/'.length)),
+        contents
+      );
+    // Source maps are deployment artifacts, never public static assets.
+    if (!url.endsWith('.map'))
+      await Bun.write(path.join(destination, url.slice(1)), contents);
+  }
+  await cp(
+    path.join(frontendRoot, 'static'),
+    path.join(destination, 'static'),
+    {
+      recursive: true,
+    }
+  );
+  console.log(`Built ${assets.size} frontend assets in ${destination}`);
   console.log(
     `Feature flags: ${await assets.get('/feature-flags.json')?.text()}`
   );
 }
+
+if (import.meta.main) await writeFrontendBuild();

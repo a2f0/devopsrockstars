@@ -26,6 +26,68 @@ the request IP and approximate Cloudflare location, with 90-day retention. See
 [CT privacy](https://github.com/a2f0/ct/blob/main/docs/privacy.md) for the full data
 contract and opt-out behavior.
 
+## Error reporting
+
+Sentry uses the `tearleads` organization and four separate projects:
+
+| Runtime | Staging | Production |
+| --- | --- | --- |
+| React site | `devopsrockstars-web-staging` | `devopsrockstars-web-production` |
+| Store Worker | `devopsrockstars-api-staging` | `devopsrockstars-api-production` |
+
+The public DSNs are in `scripts/deploy/sentryProjects.ts`. Deployments embed
+only the selected DSN, runtime, environment, and full Git commit. Release names
+are `devopsrockstars-web@<commit>` and `devopsrockstars-api@<commit>`, with the
+environment as the distribution. Development servers and ordinary local builds
+have reporting disabled. Browser reporting also requires the matching deployed
+HTTPS origin.
+
+GitHub Actions needs the repository secret `SENTRY_AUTH_TOKEN` with source-map
+upload access to all four projects. Local deployments need the same variable;
+the ignored `.secrets/prod/shared.env` and `.secrets/ci/secrets.env` hold it.
+Never give the upload token a public build prefix. The deploy command passes it
+only to the pinned Sentry CLI uploader, with an isolated environment and home.
+
+The deploy guard builds private maps in `build/sentry`, validates both Workers
+and the live resources, uploads each runtime's maps, then publishes. Missing
+credentials, incomplete maps, upload failures, or changed artifacts stop
+publication. Dry runs validate maps locally without uploading or requiring a
+Sentry token. The API publishes the exact staged JavaScript bundle. Cloudflare
+source-map uploads remain disabled; Sentry receives the private maps. Frontend
+maps are excluded from the public build directory, even for ordinary builds.
+
+The integration follows Tearleads' collection policy: private clients and scopes,
+no automatic integrations, tracing, profiling, sessions, replay, logs, or
+breadcrumbs. Both the SDK callback and transport rebuild error events from an
+allowlist. Reports contain a generic error type and placeholder message,
+generated application bundle positions, release/environment, and a fixed error
+source. API reports also include a fixed operation name. Raw exception text,
+request data, URLs, query parameters, payment/order IDs, headers, cookies,
+function names, source context, and user information are excluded. Third-party
+or extension-only browser stacks are discarded. Only error envelopes can leave
+the transport, with credentials and referrer omitted. Reports are deduplicated
+and limited to five per minute and twenty per page load (per hour on each API
+isolate). API clients and their pending sends belong to a single request or
+scheduled job; only the rate-limit and deduplication state is shared.
+
+React root and recovery errors, uncaught browser errors, and unhandled rejections are
+captured. Unexpected API 5xx responses report through `waitUntil`; known
+unconfigured checkout/webhook responses and expected 4xx responses
+stay local. Scheduled cleanup reports both individual order failures and
+failures of the job itself, preserving the job's rejection.
+
+All four projects enable **Prevent Storing of IP Addresses**, **Data Scrubber**,
+and **Default Scrubbers**, and disable fetching source files from the public
+site. Keep these settings enabled. Direct browser requests still expose network
+metadata to Sentry's infrastructure; the SDK does not send a stored user identity.
+
+The browser and real workerd regression tests intercept Sentry traffic locally,
+assert the privacy policy, and verify Worker frames resolve through the generated
+map. To verify a deployed release, inspect its project in
+[Sentry](https://tearleads.sentry.io/projects/) and confirm the environment,
+commit, private source context, and absence of source-map processing errors.
+Do not add a public endpoint for deliberately triggering errors.
+
 ## Environments
 
 Both environments run entirely on Cloudflare. Each is a pair of Workers: a

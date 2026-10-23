@@ -1,3 +1,4 @@
+import {createApiDiagnostics} from './diagnostics';
 import {cancelPaymentIntent, retrievePaymentIntent} from './stripe';
 import type {Env} from './types';
 
@@ -113,6 +114,7 @@ export async function cleanupExpiredOrders(
   scheduledTime: number,
   dependencies: CleanupDependencies = defaultDependencies
 ) {
+  const diagnostics = createApiDiagnostics();
   const secretKey = env.STRIPE_SECRET_KEY?.trim();
   const now = new Date(scheduledTime).toISOString();
   const expired = await env.DB.prepare(
@@ -168,6 +170,9 @@ export async function cleanupExpiredOrders(
       await markCanceled(env, order.id, now);
     } catch (error) {
       console.error(`Failed to expire order ${order.id}:`, error);
+      diagnostics?.capture(error, 'scheduled', 'cleanup');
     }
   }
+  // Finish all orders before waiting on the diagnostics network budget.
+  await diagnostics?.flush();
 }

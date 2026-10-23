@@ -1,7 +1,9 @@
 #!/usr/bin/env bun
-import {readdir, realpath} from 'node:fs/promises';
+import {readdir, realpath, rm} from 'node:fs/promises';
 import {createRequire} from 'node:module';
 import path from 'node:path';
+import type {DiagnosticsConfig} from '../../packages/diagnostics/src/config';
+import {writeFrontendBuild} from '../../packages/frontend/tooling/build';
 import {
   cloudflareReader,
   type DeploymentEnvironment,
@@ -9,6 +11,8 @@ import {
   inspectDeployment,
   type WorkerName,
 } from './deploymentSafety';
+import {uploadSourceMaps, validateSourceMaps} from './sentryMaps';
+import {sentryConfig} from './sentryProjects';
 
 interface DeploymentOperations {
   build(): Promise<void>;
@@ -16,6 +20,7 @@ interface DeploymentOperations {
   inspect(requireDesired?: readonly WorkerName[]): Promise<string>;
   inputs(): Promise<string>;
   publish(worker: WorkerName): Promise<void>;
+  prepare?(worker: WorkerName): Promise<void>;
 }
 
 export async function guardedDeployment(
@@ -31,12 +36,24 @@ export async function guardedDeployment(
   } = {}
 ) {
   await operations.build();
+  await operations.bundle('backend');
   const inputs = await operations.inputs();
-  for (const workspace of ['backend', 'frontend'] as const)
-    await operations.bundle(workspace);
+  await operations.bundle('frontend');
+  if ((await operations.inputs()) !== inputs)
+    throw new Error('Deployment held: inputs changed during frontend preview');
   const identities = await operations.inspect();
   if (dryRun || migrationsOnly) return;
   const workers: WorkerName[] = worker ? [worker] : ['backend', 'frontend'];
+  // Complete all Sentry uploads before changing either deployed runtime.
+  for (const workspace of workers) {
+    if ((await operations.inputs()) !== inputs)
+      throw new Error('Deployment held: inputs changed after preview');
+    await operations.prepare?.(workspace);
+    if ((await operations.inputs()) !== inputs)
+      throw new Error(
+        'Deployment held: inputs changed during source map upload'
+      );
+  }
   const published: WorkerName[] = [];
   for (const workspace of workers) {
     if ((await operations.inputs()) !== inputs)
@@ -97,6 +114,21 @@ export async function deploymentInputs(root: string, committedHead?: string) {
   )
     .filter(entry => entry.isFile())
     .map(entry => path.relative(root, path.join(entry.parentPath, entry.name)));
+  const mapsRoot = path.join(root, 'build/sentry');
+  const maps = await readdir(mapsRoot, {
+    recursive: true,
+    withFileTypes: true,
+  }).catch(error => {
+    if (error.code === 'ENOENT') return [];
+    throw error;
+  });
+  generated.push(
+    ...maps
+      .filter(entry => entry.isFile())
+      .map(entry =>
+        path.relative(root, path.join(entry.parentPath, entry.name))
+      )
+  );
   // Resolve dependencies from the actual installed Wrangler package. Bun may
   // install these under its virtual store instead of the root node_modules.
   const wranglerManifest = await realpath(
@@ -215,7 +247,8 @@ export function wranglerDeployCommand(
   root: string,
   workspace: WorkerName,
   environment: DeploymentEnvironment,
-  preview: boolean
+  preview: boolean,
+  diagnostics: DiagnosticsConfig
 ) {
   return {
     args: [
@@ -227,12 +260,25 @@ export function wranglerDeployCommand(
       environment,
       '--keep-vars',
       ...(preview ? ['--dry-run'] : []),
+      ...(workspace !== 'backend'
+        ? []
+        : preview
+          ? [
+              '--upload-source-maps',
+              '--outdir',
+              path.join(root, 'build/sentry/api'),
+              '--define',
+              `globalThis.__SENTRY_API__:${JSON.stringify(diagnostics)}`,
+            ]
+          : [path.join(root, 'build/sentry/api/index.js'), '--no-bundle']),
     ],
     cwd: path.join(root, 'packages', workspace),
   };
 }
 
 if (import.meta.main) {
+  const sentryToken = process.env['SENTRY_AUTH_TOKEN'] ?? '';
+  delete process.env['SENTRY_AUTH_TOKEN'];
   const request = parseDeploymentRequest(process.argv.slice(2));
   const selected = request.environment;
   const manifest = await Bun.file(
@@ -254,8 +300,19 @@ if (import.meta.main) {
   const committedHead = previewOnly
     ? undefined
     : deploymentCommit(root, ciHead);
+  const environment = selected === 'staging' ? 'staging' : 'production';
+  const commit = committedHead ?? git(root, ['rev-parse', 'HEAD']);
+  const webDiagnostics = sentryConfig(environment, 'web', commit);
+  const apiDiagnostics = sentryConfig(environment, 'api', commit);
+  const mapsRoot = path.join(root, 'build/sentry');
+  const webMaps = path.join(mapsRoot, 'web');
+  const apiMaps = path.join(mapsRoot, 'api');
+  if (!previewOnly && !sentryToken)
+    throw new Error('Configured Sentry deployments require SENTRY_AUTH_TOKEN');
   const env = {
-    ...process.env,
+    ...Object.fromEntries(
+      Object.entries(process.env).filter(([key]) => !key.startsWith('SENTRY_'))
+    ),
     PUBLIC_ENVIRONMENT: selected === 'staging' ? 'staging' : 'production',
     STORE_API_ORIGIN:
       selected === 'staging'
@@ -280,19 +337,42 @@ if (import.meta.main) {
   );
   const target = await deploymentTarget(root, selected);
   const publish = (workspace: WorkerName, preview: boolean) => {
-    const command = wranglerDeployCommand(root, workspace, selected, preview);
+    const command = wranglerDeployCommand(
+      root,
+      workspace,
+      selected,
+      preview,
+      apiDiagnostics
+    );
     run(command.args, command.cwd);
   };
   await guardedDeployment(
     {
       build: async () => {
         run(['run', 'compile']);
-        run(['run', '--filter', '@devopsrockstars/frontend', 'build']);
+        await rm(mapsRoot, {recursive: true, force: true});
+        await writeFrontendBuild(
+          {
+            environment,
+            diagnostics: webDiagnostics,
+            storeApiOrigin: env.STORE_API_ORIGIN,
+          },
+          webMaps
+        );
       },
-      bundle: async workspace => publish(workspace, true),
+      bundle: async workspace => {
+        publish(workspace, true);
+        await validateSourceMaps(workspace === 'backend' ? apiMaps : webMaps);
+      },
       inspect: required => inspectDeployment(target, read, required),
       inputs: () => deploymentInputs(root, committedHead),
       publish: async workspace => publish(workspace, false),
+      prepare: async workspace =>
+        uploadSourceMaps(
+          workspace === 'backend' ? apiMaps : webMaps,
+          workspace === 'backend' ? apiDiagnostics : webDiagnostics,
+          sentryToken
+        ),
     },
     {
       dryRun: request.dryRun,

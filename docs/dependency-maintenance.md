@@ -40,6 +40,10 @@ a reported coverage limit, never a reason to downgrade newer installed versions.
 - Keep the store Worker's `upload_source_maps: false` explicit and checked by
   the deployment guard. [Wrangler 4.150](https://github.com/cloudflare/workers-sdk/releases/tag/wrangler%404.150.0)
   enables uploads by default; tool updates must preserve the existing policy.
+- Update `@sentry/browser` and `@sentry/core` together. Recheck the explicit
+  privacy options, allowlist and transport tests, `@sentry/core/server` import,
+  and pinned `@sentry/cli` compatibility whenever the SDK changes. Verify actual
+  browser and Worker reporting and private source-map uploads before shipping.
 - WebdriverIO 10 and expect-webdriverio 8 must move together. Use
   `setDefaultOptions` and selectors that identify a single element; strict `$`
   checks expose ambiguous selectors. Chrome does not yet implement every BiDi
@@ -127,8 +131,9 @@ does not expose the site's asset manifest; bundle dry-runs and post-deploy smoke
 checks cover asset behavior. It rejects unreviewed resource types, routes, incomplete
 API inventories, missing resources, and identity changes. It rechecks source,
 generated assets, and installed Wrangler and esbuild entrypoints plus live
-identities before each publication. The backend currently has no third-party
-runtime dependencies; adding one requires expanding this input check. This is a
+identities before each publication. The staged backend bundle and both runtimes'
+private source maps are also hashed, including the bundled Sentry dependencies.
+The backend publishes that exact bundle without rebuilding it. This is a
 targeted digest of installed entrypoints, not a checksum of all `node_modules`;
 CI's frozen install binds the package graph to `bun.lock`.
 The expected identities are intentionally fixed independently of Wrangler's
