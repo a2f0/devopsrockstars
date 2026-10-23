@@ -1,9 +1,11 @@
 {
   "$schema": "../../node_modules/wrangler/config-schema.json",
   "compatibility_date": "2026-08-31",
+  // Every route has its own document from the build, so other paths get
+  // 404.html with a real 404 status instead of the home page.
   "assets": {
     "directory": "./build",
-    "not_found_handling": "single-page-application"
+    "not_found_handling": "404-page"
   },
   "observability": {
     "enabled": true

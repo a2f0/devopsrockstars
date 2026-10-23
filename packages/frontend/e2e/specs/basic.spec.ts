@@ -30,8 +30,11 @@ describe('index page', () => {
   it('loads correctly', async () => {
     await BasePage.open('');
     await BasePage.waitForAppReady();
-    const title = await browser.getTitle();
-    assert.strictEqual(title, '\u200E');
+    assert.strictEqual(
+      await browser.getTitle(),
+      'Interactive 3D Chicago Skyline | DevOps Rockstars'
+    );
+    await expect(await browser.$('h1=DevOps Rockstars')).toExist();
     await expect(BasePage.skyline).toHaveAttribute('data-ct-app', 'skyline');
     // Production starts the interactive 3D skyline directly, without waiting
     // for a hat preview, and renders its first frame.
@@ -63,9 +66,86 @@ describe('company page', () => {
     );
     // Content scrolls beneath the sticky header away from the skyline.
     assert.strictEqual(await BasePage.headerBackground(), 'rgb(0, 0, 0)');
-    const title = await browser.getTitle();
-    assert.strictEqual(title, '\u200E');
+    assert.strictEqual(
+      await browser.getTitle(),
+      'Contact: Email, vCard, and GnuPG Key | DevOps Rockstars'
+    );
     await expectNoHatPreparation();
+  });
+
+  it('keeps the metadata in step with client-side navigation', async () => {
+    // Title, description, robots, canonical, social cards, and JSON-LD.
+    const head = () =>
+      browser.execute(() => ({
+        title: document.title,
+        description: document
+          .querySelector('meta[name="description"]')
+          ?.getAttribute('content'),
+        robots: document
+          .querySelector('meta[name="robots"]')
+          ?.getAttribute('content'),
+        canonical: document
+          .querySelector('link[rel="canonical"]')
+          ?.getAttribute('href'),
+        ogUrl: document
+          .querySelector('meta[property="og:url"]')
+          ?.getAttribute('content'),
+        structuredData: document.querySelectorAll(
+          'script[type="application/ld+json"]'
+        ).length,
+        // A full page load would read the prerendered document instead.
+        navigated: document.documentElement.dataset['navigated'],
+      }));
+    const home = {
+      title: 'Interactive 3D Chicago Skyline | DevOps Rockstars',
+      description: expect.stringContaining('Chicago skyline'),
+      robots: undefined,
+      canonical: 'https://devopsrockstars.com/',
+      ogUrl: 'https://devopsrockstars.com/',
+      structuredData: 1,
+      navigated: 'client',
+    };
+    const company = {
+      ...home,
+      title: 'Contact: Email, vCard, and GnuPG Key | DevOps Rockstars',
+      description: expect.stringContaining('vCard'),
+      canonical: 'https://devopsrockstars.com/company',
+      ogUrl: 'https://devopsrockstars.com/company',
+      structuredData: 0,
+    };
+    const markClientNavigation = () =>
+      browser.execute(() => {
+        document.documentElement.dataset['navigated'] = 'client';
+      });
+
+    await BasePage.open('');
+    await BasePage.waitForAppReady();
+    await markClientNavigation();
+    await (await browser.$('a[href="/company"]')).click();
+    await (await browser.$('h1=Contact')).waitForExist();
+    await browser.waitUntil(async () => (await head()).title === company.title);
+    expect(await head()).toEqual(company);
+    await browser.back();
+    await browser.waitUntil(async () => (await head()).title === home.title);
+    expect(await head()).toEqual(home);
+
+    // The not-found document asks crawlers to skip it; leaving it must not
+    // carry that onto a page that should rank.
+    await BasePage.open('missing');
+    await BasePage.waitForAppReady();
+    await markClientNavigation();
+    expect(await head()).toEqual({
+      title: 'Not found | DevOps Rockstars',
+      description: undefined,
+      robots: 'noindex, nofollow',
+      canonical: undefined,
+      ogUrl: undefined,
+      structuredData: 0,
+      navigated: 'client',
+    });
+    await (await browser.$('a=Return home')).click();
+    await browser.waitUntil(async () => (await head()).title === home.title);
+    expect(await head()).toEqual(home);
   });
 
   it('links the repository with logos flush to the bottom', async () => {
@@ -100,12 +180,29 @@ describe('production feature flags', () => {
       await BasePage.waitForAppReady();
       await expect(await browser.$('h1=Not found')).toExist();
       await expect(BasePage.repositoryLink).not.toExist();
+      assert.strictEqual(
+        await browser.getTitle(),
+        'Not found | DevOps Rockstars'
+      );
     }
   });
 
-  it('invites crawlers', async () => {
-    await BasePage.open('');
-    await BasePage.waitForAppReady();
-    await expect(await browser.$('meta[name="robots"]')).not.toExist();
+  it('invites crawlers to the canonical production pages', async () => {
+    for (const [path, canonical] of [
+      ['', 'https://devopsrockstars.com/'],
+      ['company', 'https://devopsrockstars.com/company'],
+    ] as const) {
+      await BasePage.open(path);
+      await BasePage.waitForAppReady();
+      await expect(await browser.$('meta[name="robots"]')).not.toExist();
+      assert.strictEqual(
+        await browser.$('link[rel="canonical"]').getAttribute('href'),
+        canonical
+      );
+      assert.strictEqual(
+        await browser.$('meta[property="og:url"]').getAttribute('content'),
+        canonical
+      );
+    }
   });
 });

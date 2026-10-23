@@ -128,6 +128,8 @@ store backend.
 - `packages/frontend/src/Map.tsx` - Full-screen Leaflet map component
 - `packages/frontend/src/admin/` - Lazily loaded store admin under `/admin`
 - `packages/frontend/src/NotFound.tsx` - Catch-all route for unmatched paths
+- `packages/frontend/src/pages.ts` - Every route's title, description, and indexing, prerendered by the build
+- `packages/frontend/src/pageHead.ts` - Each page's head tags, prerendered by the build and reapplied on navigation
 - `feature-flags.json` - Explicit production/staging rollout values
 - `packages/frontend/src/featureFlags.ts` - Typed flag registry and browser values
 - `packages/frontend/src/environment.ts` - Environment parsing and store API origin
@@ -148,9 +150,10 @@ reusable layout primitives:
 - Contact files in `packages/frontend/static/contact/`
 - Brand logo in `assets/brand/logo.svg`, a plain static SVG. The `favicons`
   target in `agent-tool.json` renders `favicon.svg`, `favicon.ico`, and
-  `apple-touch-icon.png` from it with `agent-tool images build` on every
-  development and production build, and the site serves them from its root.
-  Rendered icons are never committed.
+  `apple-touch-icon.png` from it, and the `social` target renders the
+  1200×630 share image `og-image.png`, with `agent-tool images build` on every
+  development and production build. The site serves them from its root.
+  Rendered images are never committed.
 
 ## Configuration Details
 
@@ -174,7 +177,7 @@ reusable layout primitives:
 - Source changes rebuild automatically; refresh the browser to load them
 - Static SVG URLs served directly from `/static/`
 - Copies static assets to build directory
-- Renders the brand favicons into every bundle, served at the site root
+- Renders the brand favicons and share image into every bundle, served at the site root
 - `patches/expect@30.5.2.patch` preserves Jest's named exports under Bun
   by using a namespace import for its CommonJS module
 

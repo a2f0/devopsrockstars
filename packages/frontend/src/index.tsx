@@ -9,11 +9,14 @@ import {
 } from 'react-router';
 import Company from './Company';
 import {startClickTracking} from './clickTracking';
+import {parseSiteEnvironment} from './environment';
 import Footer from './Footer';
 import {features} from './featureFlags';
 import Header from './Header';
 import FullScreenMap from './Map';
 import NotFound from './NotFound';
+import {applyPageHead, pageHeadTags} from './pageHead';
+import {pageForPath} from './pages';
 import Search from './Search';
 import Skyline from './Skyline';
 import Checkout from './store/Checkout';
@@ -48,11 +51,29 @@ function StorePrefetch() {
   return null;
 }
 
+const environment = parseSiteEnvironment(globalThis.__SITE_ENVIRONMENT__);
+
+// Crawlers read each URL's prerendered document; this keeps the title and
+// metadata in step with client-side navigation.
+function DocumentHead() {
+  const {pathname} = useLocation();
+
+  useEffect(() => {
+    applyPageHead(
+      document.head,
+      pageHeadTags(pageForPath(pathname, features), environment)
+    );
+  }, [pathname]);
+
+  return null;
+}
+
 function AppRouter() {
   useEffect(startClickTracking, []);
   return (
     <Router>
       <GlobalStyle />
+      <DocumentHead />
       <StorePrefetch />
       <FullScreenMap />
       <FlexContainerRow>

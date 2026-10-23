@@ -42,3 +42,28 @@ test('builds render the favicons from the brand logo at the site root', async ()
     await rm(destination, {recursive: true, force: true});
   }
 });
+
+test('builds render the 1200x630 social share image at the site root', async () => {
+  const destination = await mkdtemp(path.join(os.tmpdir(), 'share-build-'));
+  try {
+    await writeFrontendBuild(
+      {environment: 'production', featureFlags: disabledFeatureFlags},
+      undefined,
+      destination
+    );
+    const image = new DataView(
+      await Bun.file(path.join(destination, 'og-image.png')).arrayBuffer()
+    );
+    expect(image.getUint32(0)).toBe(0x89504e47);
+    expect([image.getUint32(16), image.getUint32(20)]).toEqual([1200, 630]);
+    // Opaque: RGB without alpha, so no viewer shows a checkerboard.
+    expect(image.getUint8(25)).toBe(2);
+    expect(
+      await Bun.file(path.join(destination, 'index.html')).text()
+    ).toContain(
+      '<meta property="og:image" content="https://devopsrockstars.com/og-image.png" />'
+    );
+  } finally {
+    await rm(destination, {recursive: true, force: true});
+  }
+});

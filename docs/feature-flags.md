@@ -36,10 +36,12 @@ resolved `flags`, so deployment checks can inspect the active configuration.
 This is a read-only build artifact. Search-engine indexing is separate:
 production remains indexable and staging remains `noindex`, regardless of flags.
 The store flag governs the frontend; the store API's deployment is separate.
-`packages/frontend/buildAssets.ts` generates `robots.txt` and `_headers`, both
-covered by unit and browser tests.
+`packages/frontend/buildAssets.ts` generates each page's metadata, `robots.txt`,
+`sitemap.xml`, and `_headers`, all covered by unit and browser tests; see
+[search engines](deployment.md#search-engines).
 
 To add a flag, register its description in
 `packages/frontend/src/featureFlags.ts`, add boolean values for both environments
-in the matrix, gate the relevant UI and build assets with that flag, and cover
-the enabled and disabled behavior in tests.
+in the matrix, gate the relevant UI, build assets, and pages in
+`packages/frontend/src/pages.ts` with that flag, and cover the enabled and
+disabled behavior in tests.

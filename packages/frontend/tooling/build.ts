@@ -7,9 +7,16 @@ import {
   type DiagnosticsConfig,
   validConfig,
 } from '@devopsrockstars/diagnostics/config';
-import {headersFile, robotsMetaTags, robotsTxt} from '../buildAssets';
+import {
+  headersFile,
+  pageFile,
+  pageHead,
+  robotsTxt,
+  sitemapXml,
+} from '../buildAssets';
 import {parseSiteEnvironment, type SiteEnvironment} from '../src/environment';
 import type {FeatureFlags} from '../src/featureFlags';
+import {notFoundPage, sitePages} from '../src/pages';
 import {loadFeatureFlagConfiguration, parseFeatureFlags} from './featureFlags';
 
 export const frontendRoot = path.resolve(import.meta.dir, '..');
@@ -45,29 +52,34 @@ async function addGeneratedAssets(
   }
 }
 
-// agent-tool renders the favicons target in agent-tool.json from
-// assets/brand/logo.svg; the site serves them from its root.
-async function renderFavicons(directory: string) {
-  const command = Bun.spawn(
-    [
-      process.execPath,
-      path.join(repositoryRoot, 'node_modules/.bin/agent-tool'),
-      '--repo',
-      repositoryRoot,
-      'images',
-      'build',
-      'favicons',
-      '--out',
-      directory,
-    ],
-    {stdin: 'ignore', stdout: 'ignore', stderr: 'pipe'}
-  );
-  const [exitCode, errors] = await Promise.all([
-    command.exited,
-    new Response(command.stderr).text(),
-  ]);
-  if (exitCode)
-    throw new Error(`Favicon rendering failed: ${errors.trim() || exitCode}`);
+// agent-tool renders an images target in agent-tool.json from
+// assets/brand/logo.svg: the favicons and the social share image, which the
+// site serves from its root.
+function renderBrandImages(target: 'favicons' | 'social') {
+  return async (directory: string) => {
+    const command = Bun.spawn(
+      [
+        process.execPath,
+        path.join(repositoryRoot, 'node_modules/.bin/agent-tool'),
+        '--repo',
+        repositoryRoot,
+        'images',
+        'build',
+        target,
+        '--out',
+        directory,
+      ],
+      {stdin: 'ignore', stdout: 'ignore', stderr: 'pipe'}
+    );
+    const [exitCode, errors] = await Promise.all([
+      command.exited,
+      new Response(command.stderr).text(),
+    ]);
+    if (exitCode)
+      throw new Error(
+        `Rendering ${target} failed: ${errors.trim() || exitCode}`
+      );
+  };
 }
 
 export interface FrontendBuildOptions {
@@ -132,22 +144,29 @@ export async function bundleFrontend({
     if (output.kind === 'entry-point') entry = url;
   }
   if (!entry) throw new Error('Frontend build did not emit an entry point');
-  const meta = Object.entries(robotsMetaTags(environment))
-    .map(([name, content]) => `<meta name="${name}" content="${content}" />`)
-    .join('\n');
   const template = await Bun.file(path.join(frontendRoot, 'index.html')).text();
-  const html = template.replace(
-    '</head>',
-    `${meta}\n<script type="module" src="${entry}"></script>\n</head>`
-  );
-  assets.set(
-    '/index.html',
-    new Blob([html], {type: 'text/html;charset=utf-8'})
-  );
+  // Each route gets the same application shell with its own metadata, so
+  // crawlers and link previews read it without running JavaScript.
+  const pages = sitePages(flags);
+  for (const page of [...pages, notFoundPage]) {
+    const html = template.replace(
+      '</head>',
+      `${pageHead(page, environment)}\n<script type="module" src="${entry}"></script>\n</head>`
+    );
+    assets.set(
+      pageFile(page),
+      new Blob([html], {type: 'text/html;charset=utf-8'})
+    );
+  }
   assets.set(
     '/robots.txt',
     new Blob([robotsTxt(environment)], {type: 'text/plain'})
   );
+  if (environment === 'production')
+    assets.set(
+      '/sitemap.xml',
+      new Blob([sitemapXml(pages)], {type: 'application/xml'})
+    );
   assets.set(
     '/_headers',
     new Blob([headersFile(environment)], {type: 'text/plain'})
@@ -159,7 +178,8 @@ export async function bundleFrontend({
     })
   );
   await addGeneratedAssets(assets, '/static/skyline/', copySkylineAssets);
-  await addGeneratedAssets(assets, '/', renderFavicons);
+  await addGeneratedAssets(assets, '/', renderBrandImages('favicons'));
+  await addGeneratedAssets(assets, '/', renderBrandImages('social'));
   return assets;
 }
 

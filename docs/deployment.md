@@ -102,15 +102,43 @@ deployments; Terraform owns the custom domains.
 
 `www.devopsrockstars.com` is a second custom domain on the production website
 Worker, serving the same content as the apex rather than redirecting to it,
-which is what CloudFront did before the move. Neither Worker is reachable on
-`workers.dev`, so the only hostnames are the ones above.
+which is what CloudFront did before the move. Its pages name the apex URLs as
+canonical. Neither Worker is reachable on `workers.dev`, so the only hostnames
+are the ones above.
 
 Disabled store/search flags hide their navigation links and routes, so those
-paths serve a not-found page. When the store is enabled in staging, it uses
-Stripe test keys. Staging builds with `PUBLIC_ENVIRONMENT=staging`, which also
-adds a `noindex, nofollow` meta tag, an `X-Robots-Tag` response header, and a
-`robots.txt` that disallows everything, so only production is offered to search
-engines.
+paths serve the not-found page with a 404 status. When the store is enabled in
+staging, it uses Stripe test keys.
+
+### Search engines
+
+`packages/frontend/src/pages.ts` lists every route the router renders for the
+build's flags, with its title, description, and whether it is indexable. The
+build writes each route its own copy of the application shell carrying that
+metadata, so crawlers and link previews read it without JavaScript:
+`company.html` serves `/company`, and `/company/` redirects there. Other paths
+receive `404.html` with a 404 status through the site Worker's
+`not_found_handling: "404-page"`; it is the same shell, so the application
+still renders its not-found page. Add a route to `pages.ts` together with the
+router, or a reload of it returns 404.
+
+Production pages name their `https://devopsrockstars.com` URL as canonical
+and carry Open Graph and Twitter large-image cards showing `/og-image.png`, and
+Home adds `Organization` and `WebSite` JSON-LD. Production also publishes `sitemap.xml` listing the
+indexable pages and names it in `robots.txt`. The admin, checkout, receipt,
+and not-found pages carry a `noindex, nofollow` robots meta tag in every
+environment, and production's admin also sends the `X-Robots-Tag` header.
+`packages/frontend/src/pageHead.ts` builds each page's tags, which the build
+writes into its document and the application reapplies on client-side
+navigation; `packages/frontend/buildAssets.ts` renders them along with
+`robots.txt`, `sitemap.xml`, and `_headers`.
+
+Staging builds with `PUBLIC_ENVIRONMENT=staging`, which puts the `noindex,
+nofollow` robots meta tag on every page and an `X-Robots-Tag` header on every
+response. Its pages name no URL, with no canonical link, social cards, or
+structured data, and it publishes no sitemap, so only production is offered to
+search engines. Staging's `robots.txt` still allows crawling:
+a crawler that may not fetch a page never sees its noindex.
 
 Home mounts the shared interactive 3D skyline from
 `@a2f0/skyline` ([a2f0/skyline](https://github.com/a2f0/skyline)) in the page
@@ -124,9 +152,10 @@ control bar also offers once the scene runs. If `store` is enabled, the viewer
 mounts after the background hat preview succeeds or fails, so the two models
 build in sequence. With the store disabled, the 3D skyline starts directly.
 
-Cloudflare prepends its own managed `robots.txt` block whose `User-agent: *`
-group merges with ours, and `Allow` wins that tie, so the header and meta tag
-are what actually keep staging out of search results.
+Cloudflare prepends its own managed `robots.txt` block, with content signals
+and AI crawler rules, to the one each build publishes. It is a zone setting;
+check that the served file still carries production's `Sitemap` line and does
+not block Googlebot or Bingbot.
 
 GitHub Actions deploys `main` to production and `staging` to staging, and
 `workflow_dispatch` defaults to read-only previews. Explicit
@@ -345,8 +374,8 @@ The configuration for the site is in the [terraform folder](../terraform).
 lists orders with their shipping addresses, and resolves Stripe alerts. It is a
 lazily loaded route of the site that calls `/api/auth/*` and `/api/admin/*` on
 the environment's store Worker, so the admin works while the `store` flag is
-off. Production pages send `X-Robots-Tag: noindex, nofollow` and the page adds
-a matching robots meta tag.
+off. Production pages send `X-Robots-Tag: noindex, nofollow` and carry a
+matching robots meta tag.
 
 Authentication follows [ct](https://github.com/a2f0/ct): Better Auth with
 email and password, sign-up disabled in the library, and only sign-in, session,
