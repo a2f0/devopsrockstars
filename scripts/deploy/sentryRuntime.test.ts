@@ -35,12 +35,19 @@ test('real workerd captures API failures, retains waitUntil, and emits mappable 
   `
   );
   const bundle = path.join(temporary, 'bundle');
+  // Run under the store Worker's own runtime date and flags.
+  const runtime = Bun.JSONC.parse(
+    await Bun.file(
+      path.resolve(import.meta.dir, '../../packages/backend/wrangler.jsonc')
+    ).text()
+  ) as {compatibility_date: string; compatibility_flags?: string[]};
   await Bun.write(
     path.join(temporary, 'wrangler.json'),
     JSON.stringify({
       main: 'src/index.ts',
       name: 'sentry-test',
-      compatibility_date: '2026-08-31',
+      compatibility_date: runtime.compatibility_date,
+      compatibility_flags: runtime.compatibility_flags ?? [],
       upload_source_maps: false,
     })
   );

@@ -5,7 +5,7 @@ import {
   adminOrderFilters,
   type StoreOrderStatus,
 } from '@devopsrockstars/shared-types';
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import styled from 'styled-components';
 import {formatMoney} from '../store/format';
 import {Button, Status} from '../store/StoreStyles';
@@ -179,23 +179,31 @@ const Orders = () => {
   const [page, setPage] = useState<AdminOrdersResponse | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  // Only the newest request may update the page, so a slow response for a
+  // previous filter or page never replaces or extends the current list.
+  const latest = useRef(0);
 
   const load = useCallback(
     async (selected: AdminOrderFilter, cursor?: string) => {
+      const request = ++latest.current;
       setBusy(true);
       setError('');
       try {
         const next = await guard(loadOrders(selected, cursor));
+        if (request !== latest.current) return;
         setPage(previous =>
           cursor && previous
             ? {...next, orders: [...previous.orders, ...next.orders]}
             : next
         );
       } catch (caught) {
-        if (!(caught instanceof AdminApiError && caught.status === 401))
+        if (
+          request === latest.current &&
+          !(caught instanceof AdminApiError && caught.status === 401)
+        )
           setError(errorMessage(caught));
       } finally {
-        setBusy(false);
+        if (request === latest.current) setBusy(false);
       }
     },
     [guard]

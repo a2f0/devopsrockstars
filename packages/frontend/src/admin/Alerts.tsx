@@ -1,5 +1,5 @@
 import type {AdminAlert} from '@devopsrockstars/shared-types';
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {formatMoney} from '../store/format';
 import {Status} from '../store/StoreStyles';
 import {AdminApiError, loadAlerts, resolveAlert} from './api';
@@ -27,6 +27,9 @@ const Alerts = () => {
   const [alerts, setAlerts] = useState<readonly AdminAlert[] | null>(null);
   const [busy, setBusy] = useState('');
   const [error, setError] = useState('');
+  // Responses for a list the administrator has since left are discarded.
+  const shown = useRef(status);
+  shown.current = status;
 
   const report = useCallback((caught: unknown) => {
     if (!(caught instanceof AdminApiError && caught.status === 401))
@@ -34,11 +37,19 @@ const Alerts = () => {
   }, []);
 
   useEffect(() => {
+    let current = true;
     setAlerts(null);
     setError('');
     guard(loadAlerts(status))
-      .then(response => setAlerts(response.alerts))
-      .catch(report);
+      .then(response => {
+        if (current) setAlerts(response.alerts);
+      })
+      .catch(caught => {
+        if (current) report(caught);
+      });
+    return () => {
+      current = false;
+    };
   }, [status, guard, report]);
 
   async function resolve(alert: AdminAlert) {
@@ -51,9 +62,11 @@ const Alerts = () => {
     setBusy(alert.eventId);
     setError('');
     try {
-      setAlerts((await guard(resolveAlert(alert.eventId))).alerts);
+      // The response lists the open alerts.
+      const response = await guard(resolveAlert(alert.eventId));
+      if (shown.current === 'open') setAlerts(response.alerts);
     } catch (caught) {
-      report(caught);
+      if (shown.current === 'open') report(caught);
     } finally {
       setBusy('');
     }
