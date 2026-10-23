@@ -32,37 +32,14 @@ describe('index page', () => {
     await BasePage.waitForAppReady();
     const title = await browser.getTitle();
     assert.strictEqual(title, '\u200E');
-    await expect(BasePage.skyline).toExist();
-    assert.strictEqual(await BasePage.skyline.getTagName(), 'img');
-    assert.strictEqual(
-      await browser.execute(() =>
-        document
-          .getElementById('skyline')
-          ?.closest('[data-ct-app]')
-          ?.getAttribute('data-ct-app')
-      ),
-      'skyline'
-    );
-    assert.strictEqual(
-      await BasePage.skyline.getAttribute('src'),
-      '/static/image/skyline.svg'
-    );
+    await expect(BasePage.skyline).toHaveAttribute('data-ct-app', 'skyline');
+    // Production mounts the interactive 3D skyline directly, without waiting
+    // for a hat preview.
     await expect(
       await browser.$(
-        '[role="region"][aria-label="Interactive Chicago skyline"]'
+        '#skyline > [role="region"][aria-label="Interactive Chicago skyline"]'
       )
-    ).not.toExist();
-    assert.deepStrictEqual(
-      await browser.execute(() =>
-        performance
-          .getEntriesByType('resource')
-          .filter(entry =>
-            new URL(entry.name).pathname.startsWith('/static/skyline/')
-          )
-          .map(entry => entry.name)
-      ),
-      []
-    );
+    ).toExist();
     assert.strictEqual(await BasePage.headerBackground(), 'rgba(0, 0, 0, 0)');
     await expectNoHatPreparation();
   });

@@ -53,7 +53,7 @@ describe('independent feature flags', () => {
                 method: 'HEAD',
               })
             ).status,
-            flags.skyline3d ? 200 : 404
+            200
           );
           await browser.url(server.url.href);
           await (await browser.$('a[href="/company"]')).waitForExist();
@@ -65,17 +65,10 @@ describe('independent feature flags', () => {
             await browser.$('nav a[href="/search"]').isExisting(),
             flags.search
           );
-          if (flags.skyline3d) {
-            await (
-              await browser.$('#skyline > [role="region"]')
-            ).waitForExist();
-            await expect(await browser.$('img#skyline')).not.toExist();
-          } else {
-            await expect(await browser.$('img#skyline')).toExist();
-            await expect(
-              await browser.$('#skyline > [role="region"]')
-            ).not.toExist();
-          }
+          // Home mounts the 3D skyline under every flag combination.
+          await (await browser.$('#skyline > [role="region"]')).waitForExist({
+            timeout: 30_000,
+          });
           if (flags.store) {
             await browser.waitUntil(() =>
               browser.execute(

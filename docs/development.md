@@ -113,7 +113,7 @@ store backend.
 ### Application Structure
 
 - **Layout**: Flexbox-based layout system using custom styled components
-- **Home**: Original SVG skyline, or shared interactive 3D skyline when `skyline3d` is enabled
+- **Home**: Shared interactive 3D skyline, with the original drawing in its control bar
 - **Responsive Design**: Component-based responsive layout with flex containers
 
 ### Key Components

@@ -170,7 +170,7 @@ async function tapInSkyline(selector: string) {
 }
 
 describe('staging 3D skyline', () => {
-  it('keeps the SVG visible until background hat preparation finishes', async () => {
+  it('waits for background hat preparation before mounting the viewer', async () => {
     const delayArtwork = await browser.addInitScript(() => {
       const artworkReady = new Promise<void>(resolve => {
         window.addEventListener('release-hat-artwork', () => resolve(), {
@@ -189,7 +189,7 @@ describe('staging 3D skyline', () => {
     try {
       await BasePage.openStaging('');
       await BasePage.waitForAppReady();
-      await expect(await browser.$('img#skyline')).toExist();
+      await expect(BasePage.skyline).toExist();
       assert.strictEqual(await browser.$$(skylineRegion).length, 0);
       await browser.execute(() =>
         window.dispatchEvent(new Event('release-hat-artwork'))
@@ -206,7 +206,6 @@ describe('staging 3D skyline', () => {
       await (await browser.$(skylineRegion)).waitForExist({
         timeout: 30_000,
       });
-      await expect(await browser.$('img#skyline')).not.toExist();
     } finally {
       await browser.execute(() =>
         window.dispatchEvent(new Event('release-hat-artwork'))
@@ -244,7 +243,7 @@ describe('staging 3D skyline', () => {
     }
   });
 
-  it('shows the original SVG when the 3D skyline cannot start', async () => {
+  it('keeps the original drawing one press away when the 3D skyline cannot start', async () => {
     const probe = await probeSkyline();
     const withoutWebgl = await browser.addInitScript(() => {
       const getContext = HTMLCanvasElement.prototype.getContext;
@@ -270,8 +269,23 @@ describe('staging 3D skyline', () => {
           timeoutMsg: 'The viewer must report that it could not start',
         }
       );
-      await expect(await browser.$(skylineRegion)).not.toExist();
-      await expect(await browser.$('img#skyline')).toExist();
+      const viewer = await browser.$(skylineRegion);
+      await expect(viewer).toExist();
+      await (await viewer.shadow$('#embedded-original')).click();
+      const drawing = await viewer.shadow$('#drawing');
+      await expect(drawing).toBeDisplayed();
+      await browser.waitUntil(() =>
+        browser.execute(selector => {
+          const image = document
+            .querySelector(selector)
+            ?.shadowRoot?.querySelector('#drawing');
+          return (
+            image instanceof HTMLImageElement &&
+            image.complete &&
+            image.naturalWidth > 0
+          );
+        }, skylineRegion)
+      );
     } finally {
       await withoutWebgl.remove();
       await probe.remove();
@@ -303,7 +317,6 @@ describe('staging 3D skyline', () => {
           'data-ct-app',
           'skyline'
         );
-        await expect(await browser.$('img#skyline')).not.toExist();
         await expect(viewer).toHaveAttribute(
           'aria-label',
           'Interactive Chicago skyline'

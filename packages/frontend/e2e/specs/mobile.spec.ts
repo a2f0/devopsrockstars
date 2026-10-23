@@ -91,19 +91,16 @@ describe('mobile layouts', () => {
         await BasePage.waitForAppReady();
         await browser.waitUntil(() =>
           browser.execute(() => {
-            const skyline = document.querySelector('#skyline');
+            const skyline = document.querySelector(
+              '#skyline > [role="region"]'
+            );
             return (
-              skyline instanceof HTMLImageElement &&
-              skyline.complete &&
-              skyline.naturalWidth > 0 &&
+              skyline !== null &&
               Math.abs(skyline.getBoundingClientRect().bottom - innerHeight) < 1
             );
           })
         );
         await expectLayout(width);
-        await expect(
-          await browser.$('#skyline > [role="region"]')
-        ).not.toExist();
         await expect(await browser.$('a[href="/store"]')).not.toExist();
         await expect(await browser.$('a[href="/search"]')).not.toExist();
       }
@@ -143,7 +140,7 @@ describe('mobile layouts', () => {
         `GitHub mark is ${repository}px up, not on the logo baseline`
       );
       await tap('footer a[href="/"]');
-      await expect(await browser.$('img#skyline')).toExist();
+      await expect(await browser.$('#skyline > [role="region"]')).toExist();
       await BasePage.open('store');
       await expect(await browser.$('h1=Not found')).toExist();
       await expectLayout(width);

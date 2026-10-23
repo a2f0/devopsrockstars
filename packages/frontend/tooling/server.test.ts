@@ -106,10 +106,10 @@ test('static assets have correct MIME types and missing files never become HTML'
   ).toBe(405);
 });
 
-test('each environment serves skyline assets only when its flag is enabled', async () => {
-  for (const [server, environment, flags] of [
-    [production, 'production', disabledFeatureFlags],
-    [staging, 'staging', enabledFeatureFlags],
+test('each environment serves the skyline viewer assets', async () => {
+  for (const [server, environment] of [
+    [production, 'production'],
+    [staging, 'staging'],
   ] as const) {
     for (const pathname of [
       '/static/skyline/index.html',
@@ -123,14 +123,12 @@ test('each environment serves skyline assets only when its flag is enabled', asy
       '/static/skyline/stars.svg',
     ]) {
       const response = await fetch(new URL(pathname, server.url));
-      expect(response.status).toBe(flags.skyline3d ? 200 : 404);
-      if (flags.skyline3d) {
-        expect(response.headers.has('X-Robots-Tag')).toBe(
-          environment === 'staging'
-        );
-        if (pathname.endsWith('.js'))
-          expect(response.headers.get('Content-Type')).toContain('javascript');
-      }
+      expect(response.status).toBe(200);
+      expect(response.headers.has('X-Robots-Tag')).toBe(
+        environment === 'staging'
+      );
+      if (pathname.endsWith('.js'))
+        expect(response.headers.get('Content-Type')).toContain('javascript');
     }
   }
   expect(
