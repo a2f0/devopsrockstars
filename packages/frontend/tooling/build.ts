@@ -20,7 +20,62 @@ import {notFoundPage, sitePages} from '../src/pages';
 import {loadFeatureFlagConfiguration, parseFeatureFlags} from './featureFlags';
 
 export const frontendRoot = path.resolve(import.meta.dir, '..');
+export const repositoryRoot = path.resolve(frontendRoot, '../..');
 const outputRoot = path.join(frontendRoot, 'build');
+
+// Adds every file a generator writes to a temporary directory to the build
+// under the URL prefix, so no generated file lands in the source tree.
+async function addGeneratedAssets(
+  assets: Map<string, Blob>,
+  prefix: string,
+  generate: (directory: string) => Promise<void>
+) {
+  const temporary = await mkdtemp(path.join(os.tmpdir(), 'frontend-assets-'));
+  try {
+    await generate(temporary);
+    for (const entry of await readdir(temporary, {
+      recursive: true,
+      withFileTypes: true,
+    })) {
+      if (!entry.isFile()) continue;
+      const filename = path.join(entry.parentPath, entry.name);
+      const url = `${prefix}${path
+        .relative(temporary, filename)
+        .split(path.sep)
+        .join('/')}`;
+      if (assets.has(url)) throw new Error(`Duplicate frontend asset ${url}`);
+      const file = Bun.file(filename);
+      assets.set(url, new Blob([await file.arrayBuffer()], {type: file.type}));
+    }
+  } finally {
+    await rm(temporary, {recursive: true, force: true});
+  }
+}
+
+// agent-tool renders the favicons target in agent-tool.json from
+// assets/brand/logo.svg; the site serves them from its root.
+async function renderFavicons(directory: string) {
+  const command = Bun.spawn(
+    [
+      process.execPath,
+      path.join(repositoryRoot, 'node_modules/.bin/agent-tool'),
+      '--repo',
+      repositoryRoot,
+      'images',
+      'build',
+      'favicons',
+      '--out',
+      directory,
+    ],
+    {stdin: 'ignore', stdout: 'ignore', stderr: 'pipe'}
+  );
+  const [exitCode, errors] = await Promise.all([
+    command.exited,
+    new Response(command.stderr).text(),
+  ]);
+  if (exitCode)
+    throw new Error(`Favicon rendering failed: ${errors.trim() || exitCode}`);
+}
 
 export interface FrontendBuildOptions {
   environment?: SiteEnvironment;
@@ -117,28 +172,8 @@ export async function bundleFrontend({
       type: 'application/json',
     })
   );
-  const temporary = await mkdtemp(path.join(os.tmpdir(), 'skyline-assets-'));
-  try {
-    await copySkylineAssets(temporary);
-    for (const entry of await readdir(temporary, {
-      recursive: true,
-      withFileTypes: true,
-    })) {
-      if (!entry.isFile()) continue;
-      const filename = path.join(entry.parentPath, entry.name);
-      const relative = path
-        .relative(temporary, filename)
-        .split(path.sep)
-        .join('/');
-      const file = Bun.file(filename);
-      assets.set(
-        `/static/skyline/${relative}`,
-        new Blob([await file.arrayBuffer()], {type: file.type})
-      );
-    }
-  } finally {
-    await rm(temporary, {recursive: true, force: true});
-  }
+  await addGeneratedAssets(assets, '/static/skyline/', copySkylineAssets);
+  await addGeneratedAssets(assets, '/', renderFavicons);
   return assets;
 }
 

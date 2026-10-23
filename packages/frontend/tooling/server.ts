@@ -2,7 +2,12 @@
 import {watch} from 'node:fs';
 import path from 'node:path';
 import {parseSiteEnvironment} from '../src/environment';
-import {bundleFrontend, type FrontendBuildOptions, frontendRoot} from './build';
+import {
+  bundleFrontend,
+  type FrontendBuildOptions,
+  frontendRoot,
+  repositoryRoot,
+} from './build';
 import {featureFlagsPath} from './featureFlags';
 
 export async function startFrontendServer({
@@ -136,12 +141,19 @@ export async function startFrontendServer({
             rebuildFrontend
           )
         ),
+        // The favicons render from the brand sources.
+        watch(
+          path.join(repositoryRoot, 'assets/brand'),
+          {recursive: true},
+          rebuildFrontend
+        ),
         // Watch the directory so editors that save by atomic rename do not
-        // detach the configuration watcher after the first edit.
+        // detach the configuration watchers after the first edit.
         watch(path.dirname(featureFlagsPath), (_event, filename) => {
           if (
             filename === null ||
-            filename === path.basename(featureFlagsPath)
+            filename === path.basename(featureFlagsPath) ||
+            filename === 'agent-tool.json'
           ) {
             rebuildFrontend();
           }
