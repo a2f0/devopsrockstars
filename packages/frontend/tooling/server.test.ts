@@ -136,6 +136,23 @@ test('each environment serves the skyline viewer assets', async () => {
   ).toBe(404);
 });
 
+test('each environment serves the linked favicons from the site root', async () => {
+  for (const server of [production, staging]) {
+    const html = await (await fetch(new URL('/company', server.url))).text();
+    for (const [pathname, type] of [
+      ['/favicon.ico', 'image/x-icon'],
+      ['/favicon.svg', 'image/svg+xml'],
+      ['/apple-touch-icon.png', 'image/png'],
+    ] as const) {
+      expect(html).toContain(`href="${pathname}"`);
+      const response = await fetch(new URL(pathname, server.url));
+      expect(response.status).toBe(200);
+      expect(response.headers.get('Content-Type')).toContain(type);
+      expect((await response.arrayBuffer()).byteLength).toBeGreaterThan(0);
+    }
+  }
+});
+
 test('build manifests expose only the flags resolved for that environment', async () => {
   const configuration = await loadFeatureFlagConfiguration();
   for (const environment of siteEnvironments) {
