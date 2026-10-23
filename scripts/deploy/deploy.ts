@@ -78,6 +78,73 @@ export function deploymentCommit(root: string, expected?: string) {
   return head;
 }
 
+async function installedPackage(root: string, from: string, name: string) {
+  // Node's resolution, bounded by the repository so nothing outside it counts.
+  for (let directory = from; ; directory = path.dirname(directory)) {
+    const manifest = path.join(directory, 'node_modules', name, 'package.json');
+    if (await Bun.file(manifest).exists())
+      return path.dirname(await realpath(manifest));
+    if (directory === root || path.dirname(directory) === directory)
+      return null;
+  }
+}
+
+// Wrangler bundles the store Worker's npm dependencies when it publishes, so
+// their installed files are inputs too: the backend's dependencies and every
+// installed transitive dependency or peer, as resolved from each package.
+export async function backendDependencyFiles(root: string) {
+  // Installed packages resolve to real paths, so compare against the real root.
+  const base = await realpath(root);
+  const backend = path.join(base, 'packages/backend');
+  const manifest = record(
+    await Bun.file(path.join(backend, 'package.json')).json()
+  );
+  const pending: {from: string; name: string; required: boolean}[] =
+    Object.entries(record(manifest['dependencies'] ?? {}))
+      .filter(([, version]) => !String(version).startsWith('workspace:'))
+      .map(([name]) => ({from: backend, name, required: true}));
+  const packages = new Set<string>();
+  while (pending.length) {
+    const dependency = pending.shift();
+    if (!dependency) break;
+    const directory = await installedPackage(
+      base,
+      dependency.from,
+      dependency.name
+    );
+    if (!directory) {
+      if (dependency.required)
+        throw new Error(
+          'Deployment held: a store Worker dependency is not installed'
+        );
+      continue;
+    }
+    if (packages.has(directory)) continue;
+    packages.add(directory);
+    const installed = record(
+      await Bun.file(path.join(directory, 'package.json')).json()
+    );
+    for (const [field, required] of [
+      ['dependencies', true],
+      ['optionalDependencies', false],
+      ['peerDependencies', false],
+    ] as const)
+      for (const name of Object.keys(record(installed[field] ?? {})))
+        pending.push({from: directory, name, required});
+  }
+  const files: string[] = [];
+  for (const directory of packages)
+    for (const entry of await readdir(directory, {
+      recursive: true,
+      withFileTypes: true,
+    }))
+      if (entry.isFile())
+        files.push(
+          path.relative(base, path.join(entry.parentPath, entry.name))
+        );
+  return files;
+}
+
 export async function deploymentInputs(root: string, committedHead?: string) {
   const head = committedHead
     ? deploymentCommit(root, committedHead)
@@ -134,6 +201,7 @@ export async function deploymentInputs(root: string, committedHead?: string) {
     ...files.stdout.toString().split('\0').filter(Boolean),
     ...generated,
     ...toolFiles.map(tool => tool.filename),
+    ...(await backendDependencyFiles(root)),
   ];
   for (const filename of inputs.sort()) {
     const file = Bun.file(path.join(root, filename));

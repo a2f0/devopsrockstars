@@ -23,11 +23,23 @@ const account = 'a'.repeat(32);
 const zone = 'b'.repeat(32);
 const otherZone = 'c'.repeat(32);
 
-test('the disabled production store retains only its existing hash secret', async () => {
+test('the disabled production store retains only its hash and admin auth secrets', async () => {
   const production = await deploymentTarget(root, 'prod');
   const staging = await deploymentTarget(root, 'staging');
-  expect(production.workers.backend.secrets).toEqual(['CHECKOUT_HASH_SECRET']);
+  expect(production.workers.backend.secrets).toEqual([
+    'BETTER_AUTH_SECRET',
+    'CHECKOUT_HASH_SECRET',
+  ]);
   expect(staging.workers.backend.secrets).toContain('STRIPE_SECRET_KEY');
+  expect(staging.workers.backend.secrets).toContain('BETTER_AUTH_SECRET');
+});
+
+test('only the store Worker runs with Node.js compatibility', async () => {
+  for (const environment of ['staging', 'prod'] as const) {
+    const target = await deploymentTarget(root, environment);
+    expect(target.workers.backend.flags).toEqual(['nodejs_compat']);
+    expect(target.workers.frontend.flags).toEqual([]);
+  }
 });
 
 test('every package remote deploy script uses the shared guard', async () => {
@@ -216,6 +228,7 @@ async function fixture(environment: 'staging' | 'prod' = 'staging') {
     const endpoint = `/workers/scripts/${worker.name}`;
     metadata[`${endpoint}/settings`] = {
       compatibility_date: worker.date,
+      compatibility_flags: worker.flags,
       observability: {enabled: true},
       bindings: [
         ...worker.bindings,
@@ -286,6 +299,48 @@ test('reviewed runtime transitions accept only the old or desired state until pu
   await expect(inspectDeployment(target, read)).rejects.toThrow(
     'reviewed transition'
   );
+});
+
+test('a reviewed flag transition accepts the old flags only until publication', async () => {
+  const fixtureValue = await fixture();
+  const {metadata, read} = fixtureValue;
+  const target = {
+    ...fixtureValue.target,
+    previousWorkers: approvedPreviousWorkers(
+      fixtureValue.target.workers,
+      {staging: {backend: {flags: []}}},
+      'staging'
+    ),
+  };
+  const backend = `/workers/scripts/${target.workers.backend.name}/settings`;
+  const settings = metadata[backend] as {compatibility_flags?: string[]};
+  delete settings.compatibility_flags;
+  await inspectDeployment(target, read);
+  await expect(inspectDeployment(target, read, ['backend'])).rejects.toThrow(
+    'reviewed transition'
+  );
+  settings.compatibility_flags = ['nodejs_compat'];
+  await inspectDeployment(target, read, ['backend']);
+  settings.compatibility_flags = ['nodejs_compat', 'unreviewed_flag'];
+  await expect(inspectDeployment(target, read)).rejects.toThrow(
+    'reviewed transition'
+  );
+  const site = `/workers/scripts/${target.workers.frontend.name}/settings`;
+  settings.compatibility_flags = ['nodejs_compat'];
+  (metadata[site] as {compatibility_flags: string[]}).compatibility_flags = [
+    'nodejs_compat',
+  ];
+  await expect(inspectDeployment(target, read)).rejects.toThrow(
+    'reviewed transition'
+  );
+  for (const flags of [['nodejs compat'], ['a', 'a'], 'nodejs_compat'])
+    expect(() =>
+      approvedPreviousWorkers(
+        target.workers,
+        {staging: {backend: {flags}}},
+        'staging'
+      )
+    ).toThrow();
 });
 
 test('planned transitions cannot change D1 or remove a bound variable', async () => {
@@ -719,6 +774,17 @@ test('generated assets and the installed Wrangler invalidate captured inputs', a
         filename.endsWith('/package.json') ? '{}' : 'previewed tool'
       );
     await Bun.write(nativeBinary, 'previewed native binary');
+    // A stand-in for the store Worker's installed npm dependency closure.
+    const dependency = path.join(
+      repository,
+      'node_modules/better-auth/dist/index.mjs'
+    );
+    await mkdir(path.dirname(dependency), {recursive: true});
+    await Bun.write(
+      path.join(repository, 'node_modules/better-auth/package.json'),
+      '{}'
+    );
+    await Bun.write(dependency, 'previewed dependency');
     const head = deploymentCommit(repository);
     const initial = await deploymentInputs(repository, head);
     await Bun.write(asset, 'changed asset');
@@ -728,6 +794,10 @@ test('generated assets and the installed Wrangler invalidate captured inputs', a
     await Bun.write(tool, 'changed CLI');
     expect(await deploymentInputs(repository, head)).not.toBe(initial);
     await Bun.write(tool, 'previewed CLI');
+    await Bun.write(dependency, 'changed dependency');
+    expect(await deploymentInputs(repository, head)).not.toBe(initial);
+    await Bun.write(dependency, 'previewed dependency');
+    expect(await deploymentInputs(repository, head)).toBe(initial);
     for (const executable of [
       path.join(repository, 'node_modules/wrangler/bin/wrangler.js'),
       nativeBinary,

@@ -125,6 +125,7 @@ store backend.
 - `packages/frontend/src/Skyline.tsx` - Main page content
 - `packages/frontend/src/Company.tsx` - Company information page
 - `packages/frontend/src/Map.tsx` - Full-screen Leaflet map component
+- `packages/frontend/src/admin/` - Lazily loaded store admin under `/admin`
 - `packages/frontend/src/NotFound.tsx` - Catch-all route for unmatched paths
 - `feature-flags.json` - Explicit production/staging rollout values
 - `packages/frontend/src/featureFlags.ts` - Typed flag registry and browser values
@@ -183,8 +184,8 @@ reusable layout primitives:
 Root package commands keep their existing names. Internal helpers are grouped by
 purpose under `scripts/`: `checks/` for repository policy and dependency checks,
 `testing/` for browser-server orchestration, `dev/` for feature-flag and Skyline
-maintenance, `release/` for the version/HTML adapter, and `deploy/` for guarded
-Worker and Terraform behavior. Tests stay beside the behavior they exercise.
+maintenance, `release/` for the version/HTML adapter, `deploy/` for guarded
+Worker and Terraform behavior, and `admin/` for the store admin account CLI. Tests stay beside the behavior they exercise.
 Workspace application build/server entrypoints remain under each package's
 `tooling/`; Terraform retains its cohesive native directory.
 

@@ -26,6 +26,7 @@
     "build": "bun run --filter @devopsrockstars/frontend build",
     "dev:cloudflare": "bun run --filter @devopsrockstars/backend dev",
     "db:migrate:local": "bun run --filter @devopsrockstars/backend db:migrate:local",
+    "admin:user": "bun scripts/admin/adminUser.ts",
     "lint": "bun run --bun biome lint --fix",
     "lint:md": "bun run --bun markdownlint-cli2",
     "compile": "bun run --bun tsc --noEmit",

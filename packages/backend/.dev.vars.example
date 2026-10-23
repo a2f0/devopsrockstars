@@ -2,3 +2,4 @@ STRIPE_PUBLISHABLE_KEY=pk_test_replace_me
 STRIPE_SECRET_KEY=sk_test_replace_me
 STRIPE_WEBHOOK_SECRET=whsec_replace_me
 CHECKOUT_HASH_SECRET=replace_with_a_long_random_value
+BETTER_AUTH_SECRET=replace_with_at_least_32_random_characters

@@ -5,10 +5,16 @@ import {headersFile, robotsMetaTags, robotsTxt} from './buildAssets';
 const production = 'production';
 const staging = 'staging';
 
-test('production invites crawlers', () => {
+test('production invites crawlers everywhere but the admin', () => {
   assert.deepEqual(robotsMetaTags(production), {});
   assert.match(robotsTxt(production), /^User-agent: \*\nAllow: \/\n$/u);
-  assert.doesNotMatch(headersFile(production), /X-Robots-Tag/u);
+  const rules = headersFile(production).trimEnd().split('\n\n');
+  assert.doesNotMatch(rules[0] ?? '', /X-Robots-Tag/u);
+  for (const path of ['/admin', '/admin/*'])
+    assert.ok(
+      rules.includes(`${path}\n  X-Robots-Tag: noindex, nofollow`),
+      path
+    );
 });
 
 test('staging refuses crawlers in the document, robots.txt, and headers', () => {

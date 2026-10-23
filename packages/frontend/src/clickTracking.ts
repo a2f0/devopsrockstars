@@ -22,7 +22,9 @@ export function trackingEnvironment(
 }
 
 // Only fixed route names reach the collector, including on unknown URLs.
+// Admin content is marked data-ct-ignore; its shared navigation reports /admin.
 export function trackingPage(pathname: string, flags: FeatureFlags): string {
+  if (matchesRoute(['/admin/*'], pathname)) return '/admin';
   const routes = [
     '/',
     '/company',

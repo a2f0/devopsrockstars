@@ -171,3 +171,22 @@ export async function cleanupExpiredOrders(
     }
   }
 }
+
+// Expired sessions and verification tokens are useless, and rate-limit rows
+// hold client IP addresses, so neither outlives a day past its last use.
+export async function cleanupExpiredAuth(env: Env, scheduledTime: number) {
+  const now = new Date(scheduledTime).toISOString();
+  try {
+    await env.DB.batch([
+      env.DB.prepare('DELETE FROM auth_session WHERE expiresAt < ?').bind(now),
+      env.DB.prepare('DELETE FROM auth_verification WHERE expiresAt < ?').bind(
+        now
+      ),
+      env.DB.prepare('DELETE FROM auth_rate_limit WHERE lastRequest < ?').bind(
+        scheduledTime - 86_400_000
+      ),
+    ]);
+  } catch (error) {
+    console.error('Failed to remove expired administrator records:', error);
+  }
+}

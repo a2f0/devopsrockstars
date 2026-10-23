@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react';
+import React, {lazy, Suspense, useEffect} from 'react';
 import ReactDOM from 'react-dom/client';
 import {
   Route,
@@ -25,6 +25,9 @@ import FlexContainerRow from './styled-components/FlexContainerRow';
 import FlexFullHeightMin from './styled-components/FlexFullHeightMin';
 import FlexMain from './styled-components/FlexMain';
 import GlobalStyle from './styled-components/GlobalStyle';
+
+// Visitors never download the admin; it loads only on its own routes.
+const Admin = lazy(() => import('./admin/Admin'));
 
 function StorePrefetch() {
   const {pathname} = useLocation();
@@ -71,6 +74,14 @@ function AppRouter() {
                         <Route path="/store/receipt" element={<Receipt />} />
                       </>
                     ) : null}
+                    <Route
+                      path="/admin/*"
+                      element={
+                        <Suspense fallback={null}>
+                          <Admin />
+                        </Suspense>
+                      }
+                    />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </HatPreviewProvider>

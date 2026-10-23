@@ -3,6 +3,8 @@
   "main": "./src/index.ts",
   "upload_source_maps": false,
   "compatibility_date": "2026-08-31",
+  // Better Auth keeps per-request state in AsyncLocalStorage (node:async_hooks).
+  "compatibility_flags": ["nodejs_compat"],
   "triggers": {
     "crons": ["* * * * *"]
   },

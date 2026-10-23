@@ -23,6 +23,7 @@ export interface RateLimit {
 }
 
 export interface Env {
+  readonly BETTER_AUTH_SECRET?: string;
   readonly CHECKOUT_RATE_LIMITER?: RateLimit;
   readonly CHECKOUT_HASH_SECRET?: string;
   readonly DB: D1Database;
