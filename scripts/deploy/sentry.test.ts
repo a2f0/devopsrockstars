@@ -20,7 +20,7 @@ test('staging and production use distinct web and API projects tied to the deplo
   expect(() => sentryConfig('production', 'api', 'main')).toThrow();
 });
 
-test('the production bundle includes only explicit public diagnostics configuration', async () => {
+test('the deployed bundle includes only explicit public diagnostics configuration', async () => {
   const token = process.env['SENTRY_AUTH_TOKEN'];
   process.env['SENTRY_AUTH_TOKEN'] = 'PRIVATE_UPLOAD_TOKEN_SENTINEL';
   try {
@@ -40,6 +40,23 @@ test('the production bundle includes only explicit public diagnostics configurat
   } finally {
     if (token === undefined) delete process.env['SENTRY_AUTH_TOKEN'];
     else process.env['SENTRY_AUTH_TOKEN'] = token;
+  }
+});
+
+test('source-map uploads reject inherited binary overrides before using credentials', async () => {
+  const previous = process.env['SENTRY_BINARY_PATH'];
+  process.env['SENTRY_BINARY_PATH'] = '/not-the-pinned-sentry-binary';
+  try {
+    await expect(
+      uploadSourceMaps(
+        '/unused',
+        sentryConfig('staging', 'web', 'a'.repeat(40)),
+        'PRIVATE_UPLOAD_TOKEN_SENTINEL'
+      )
+    ).rejects.toThrow('Sentry binary overrides are not allowed');
+  } finally {
+    if (previous === undefined) delete process.env['SENTRY_BINARY_PATH'];
+    else process.env['SENTRY_BINARY_PATH'] = previous;
   }
 });
 

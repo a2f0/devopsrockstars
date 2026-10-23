@@ -44,6 +44,9 @@ export async function uploadSourceMaps(
 ) {
   if (!token)
     throw new Error('Configured Sentry deployments require SENTRY_AUTH_TOKEN');
+  if (process.env['SENTRY_BINARY_PATH'])
+    throw new Error('Sentry binary overrides are not allowed for deployment');
+  const binary = SentryCli.getPath();
   await validateSourceMaps(directory);
   // Use the pinned binary with no inherited CLI config, environment overrides,
   // dotenv files, or shell. Only this process receives the upload credential.
@@ -53,7 +56,7 @@ export async function uploadSourceMaps(
   try {
     const result = Bun.spawnSync(
       [
-        SentryCli.getPath(),
+        binary,
         '--url',
         'https://us.sentry.io/',
         'sourcemaps',
