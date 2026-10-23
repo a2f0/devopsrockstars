@@ -2,8 +2,8 @@
 import {
   featureFlagDefinitions,
   featureFlagNames,
-} from '../packages/frontend/src/featureFlags';
-import {loadFeatureFlagConfiguration} from '../packages/frontend/tooling/featureFlags';
+} from '../../packages/frontend/src/featureFlags';
+import {loadFeatureFlagConfiguration} from '../../packages/frontend/tooling/featureFlags';
 
 const [option, ...extra] = process.argv.slice(2);
 if (extra.length || (option && !['--check', '--json'].includes(option))) {

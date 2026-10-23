@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 import path from 'node:path';
-const root = path.resolve(import.meta.dir, '..');
+const root = path.resolve(import.meta.dir, '../..');
 function git(...arguments_: string[]) {
   const result = Bun.spawnSync(['git', ...arguments_], {cwd: root});
   if (result.exitCode) throw new Error(result.stderr.toString());

@@ -1,0 +1,21 @@
+{
+  "label": "verify",
+  "steps": [
+    {
+      "label": "pre-commit",
+      "command": ["pre-commit", "run", "--all-files"]
+    },
+    {
+      "label": "flags",
+      "command": ["bun", "run", "flags:check"]
+    },
+    {
+      "label": "unit",
+      "command": ["bun", "run", "unit"]
+    },
+    {
+      "label": "browser",
+      "command": ["bun", "run", "ci-headless"]
+    }
+  ]
+}

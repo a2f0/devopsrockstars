@@ -1,11 +1,96 @@
 # Deployment operations
 
-The [README](../README.md#deployment) lists environments and normal deployment
-commands. [Dependency maintenance](dependency-maintenance.md#deployment-preview-gate)
-defines the required live preview, resource identity checks, and migration
-restrictions. Run commands below from the repository root unless they change
-directory explicitly. Provisioning and infrastructure changes require a separate
-reviewed rollout; the maintenance deploy commands cannot bootstrap resources.
+[Dependency maintenance](dependency-maintenance.md#deployment-preview-gate) defines
+the required live preview, resource identity checks, and migration restrictions.
+Run commands from the repository root unless they explicitly change directory.
+Provisioning and infrastructure changes require a separately reviewed rollout.
+
+## Click analytics
+
+The explicitly initialized `@a2f0/ct-client` tracks clicks on the deployed sites
+under `site: devopsrockstars`. Production (apex and `www`) and staging are
+separate `environment` values in [CT admin](https://ct-admin.a2f0.net).
+The build environment must match the exact HTTPS origin; local development,
+preview hosts, and browser automation do not collect clicks.
+
+The `app` dimension identifies `skyline`, `company`, `search`, and `store`;
+shared navigation uses `website`. Skyline's open shadow root inherits its host's
+app boundary. Page names come from a fixed route allowlist, never query strings,
+receipt identifiers, or unknown paths. The SDK skips inputs, editable content,
+and `data-ct-ignore` areas and never reads text, form values, or link URLs.
+Static actions on search, checkout, and receipt pages remain trackable.
+
+GPC, Do Not Track, and the CT browser extension remain effective. The SDK also
+honors an existing `ct:opt-out` preference in local storage. The collector records
+the request IP and approximate Cloudflare location, with 90-day retention. See
+[CT privacy](https://github.com/a2f0/ct/blob/main/docs/privacy.md) for the full data
+contract and opt-out behavior.
+
+## Environments
+
+Both environments run entirely on Cloudflare. Each is a pair of Workers: a
+static-assets Worker serving the Bun output, and a store Worker serving
+`/api/*` against its own D1 database. Wrangler owns the Worker and asset
+deployments; Terraform owns the custom domains.
+
+| Environment | Site | Store API | Worker names |
+| --- | --- | --- | --- |
+| Production | `devopsrockstars.com` | `store.devopsrockstars.com` | `devopsrockstars-website-prod`, `devopsrockstars-store-prod` |
+| Staging | `staging.devopsrockstars.com` | `store-staging.devopsrockstars.com` | `devopsrockstars-website-staging`, `devopsrockstars-store-staging` |
+
+`www.devopsrockstars.com` is a second custom domain on the production website
+Worker, serving the same content as the apex rather than redirecting to it,
+which is what CloudFront did before the move. Neither Worker is reachable on
+`workers.dev`, so the only hostnames are the ones above.
+
+Disabled store/search flags hide their navigation links and routes, so those
+paths serve a not-found page. When the store is enabled in staging, it uses
+Stripe test keys. Staging builds with `PUBLIC_ENVIRONMENT=staging`, which also
+adds a `noindex, nofollow` meta tag, an `X-Robots-Tag` response header, and a
+`robots.txt` that disallows everything, so only production is offered to search
+engines.
+
+With `skyline3d` enabled, Home mounts the shared interactive 3D skyline from
+`@a2f0/skyline` ([a2f0/skyline](https://github.com/a2f0/skyline)) in the page
+itself, inside a shadow root, and gives it the site's own three.js through
+`@a2f0/skyline/three`, so the skyline and the hat preview share one engine. Its
+assets are included only in builds with that flag enabled. Leaving Home
+destroys the viewer and releases its WebGL contexts. If the 3D skyline cannot
+start, as without WebGL 2, Home shows the original SVG and the browser console
+says why. If `store` is also enabled, the original SVG stays visible
+while the background hat preview prepares; the 3D skyline starts after
+preparation succeeds or fails so the two models build in sequence. With the
+store disabled, the 3D skyline starts directly. Disabling `skyline3d` keeps the original `/static/image/skyline.svg`.
+
+Cloudflare prepends its own managed `robots.txt` block whose `User-agent: *`
+group merges with ours, and `Allow` wins that tie, so the header and meta tag
+are what actually keep staging out of search results.
+
+GitHub Actions deploys `main` to production and `staging` to staging, and
+`workflow_dispatch` defaults to read-only previews. Explicit
+`operation=deploy-staging` deploys the selected branch to staging. Local deployment
+commands use the same guard:
+
+```shell
+bun run deploy:staging
+bun run deploy:prod
+bun scripts/deploy/deploy.ts staging --dry-run   # complete bundle and live-resource preview
+```
+
+Each deployment builds the site, dry-runs both Workers, and checks existing live
+identities before publishing the store and site Workers. D1 must have zero
+pending migrations; missing or incomplete resource evidence holds deployment.
+Set the verified `CLOUDFLARE_ACCOUNT_ID` and API token. CI uses the repository
+account variable, and serializes deployments per environment. See
+[dependency maintenance](dependency-maintenance.md#deployment-preview-gate)
+for exact coverage, permissions, and the migration restriction.
+
+See [Cloudflare setup](#cloudflare-setup) for Cloudflare provisioning,
+Terraform setup (state in Cloudflare R2, credentials and variables from the
+gitignored `.secrets` link to matrix-secrets), Worker identity changes, and the
+store alert queue. Resource creation, secret changes, and schema rollouts
+require separate review and a complete execution preview. Routine maintenance
+preserves existing identities and never applies remote SQL.
 
 ## Cloudflare setup
 
@@ -188,3 +273,9 @@ bun run --cwd packages/backend --bun wrangler d1 execute \
 ```
 
 The configuration for the site is in the [terraform folder](../terraform).
+
+## Reviewed preview from CI
+
+Follow the [deployment preview gate](dependency-maintenance.md#deployment-preview-gate)
+for the reviewed-branch dispatch command, both environments' required evidence,
+and the distinction between preview and an authorized staging deployment.

@@ -108,7 +108,7 @@ Every maintenance deployment must pass this guard before publication. See
 [deployment operations](deployment.md) for provisioning and infrastructure
 procedures; a successful bundle alone does not establish deployment safety.
 
-All owned remote deploy and migration commands route through `scripts/deploy.ts`,
+All owned remote deploy and migration commands route through `scripts/deploy/deploy.ts`,
 including workspace entrypoints and GitHub Actions. Set the real
 `CLOUDFLARE_ACCOUNT_ID` and API token; CI reads the account ID from the repository
 variable of that name. The account variable must be verified before shipping.
@@ -159,9 +159,12 @@ live backend and site identities, then rerun the same reviewed commit once the
 failure is resolved. Never bypass the guard or delete a Worker to recover.
 For changes to the deployment guard, verify its complete preview with the CI
 token on the exact reviewed feature-branch commit before shipping. When a
-staging deployment is authorized, manually dispatch the staging workflow; it
-must pass that preview before any upload. Ordinary feature-branch pushes do not
-receive deployment credentials.
+staging deployment is authorized, manually dispatch with `operation=deploy-staging`;
+it must pass that preview before any upload. The default manual operation is a
+read-only preview of staging and production. From the reviewed clean feature
+branch, run `gh workflow run main.yml --ref <branch> -f operation=preview` and
+verify both preview jobs on that exact commit. Ordinary feature-branch pushes
+do not receive deployment credentials.
 
 **D1 migrations must already be applied.** The gate reads only
 `SELECT name FROM d1_migrations ORDER BY id` from the existing database and checks

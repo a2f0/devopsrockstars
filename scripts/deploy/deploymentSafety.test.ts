@@ -18,7 +18,7 @@ import {
   type ReadApi,
 } from './deploymentSafety';
 
-const root = path.resolve(import.meta.dir, '..');
+const root = path.resolve(import.meta.dir, '../..');
 const account = 'a'.repeat(32);
 const zone = 'b'.repeat(32);
 const otherZone = 'c'.repeat(32);
@@ -37,17 +37,17 @@ test('every package remote deploy script uses the shared guard', async () => {
     )
   );
   expect(manifests[0].scripts['deploy:staging']).toBe(
-    'bun scripts/deploy.ts staging'
+    'bun scripts/deploy/deploy.ts staging'
   );
   expect(manifests[0].scripts['deploy:prod']).toBe(
-    'bun scripts/deploy.ts prod'
+    'bun scripts/deploy/deploy.ts prod'
   );
   for (const environment of ['staging', 'prod']) {
     expect(manifests[0].scripts[`db:check:${environment}`]).toBe(
       `bun run --filter @devopsrockstars/backend db:check:${environment}`
     );
     expect(manifests[1].scripts[`db:check:${environment}`]).toBe(
-      `bun ../../scripts/deploy.ts ${environment} --check-migrations`
+      `bun ../../scripts/deploy/deploy.ts ${environment} --check-migrations`
     );
     expect(manifests[0].scripts[`db:migrate:${environment}`]).toBeUndefined();
     expect(manifests[1].scripts[`db:migrate:${environment}`]).toBeUndefined();
@@ -57,10 +57,10 @@ test('every package remote deploy script uses the shared guard', async () => {
     [2, 'frontend'],
   ] as const) {
     expect(manifests[index].scripts['deploy:staging']).toBe(
-      `bun ../../scripts/deploy.ts staging --worker=${worker}`
+      `bun ../../scripts/deploy/deploy.ts staging --worker=${worker}`
     );
     expect(manifests[index].scripts['deploy:prod']).toBe(
-      `bun ../../scripts/deploy.ts prod --worker=${worker}`
+      `bun ../../scripts/deploy/deploy.ts prod --worker=${worker}`
     );
   }
 });

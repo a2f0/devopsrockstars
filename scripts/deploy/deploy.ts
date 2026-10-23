@@ -165,7 +165,7 @@ export function parseDeploymentRequest(arguments_: string[]) {
     flags.some(flag => !allowed.includes(flag))
   )
     throw new Error(
-      'Usage: bun scripts/deploy.ts <staging|prod> [--dry-run] [--check-migrations] [--worker=backend|frontend]'
+      'Usage: bun scripts/deploy/deploy.ts <staging|prod> [--dry-run] [--check-migrations] [--worker=backend|frontend]'
     );
   if (flags.includes('--worker=backend') && flags.includes('--worker=frontend'))
     throw new Error('Choose only one Worker');
@@ -236,12 +236,12 @@ if (import.meta.main) {
   const request = parseDeploymentRequest(process.argv.slice(2));
   const selected = request.environment;
   const manifest = await Bun.file(
-    new URL('../package.json', import.meta.url)
+    new URL('../../package.json', import.meta.url)
   ).json();
   const wrangler = await Bun.file(
-    new URL('../node_modules/wrangler/package.json', import.meta.url)
+    new URL('../../node_modules/wrangler/package.json', import.meta.url)
   ).json();
-  const root = path.resolve(import.meta.dir, '..');
+  const root = path.resolve(import.meta.dir, '../..');
   const previewOnly = request.dryRun || request.migrationsOnly;
   const ciHead = verifyDeploymentRuntime(
     manifest,

@@ -3,7 +3,7 @@ import {chmod, mkdir, mkdtemp, readFile, rm, stat} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
 
-const terraformSource = path.resolve(import.meta.dir, '../terraform');
+const terraformSource = path.resolve(import.meta.dir, '../../terraform');
 
 const sharedEnv =
   'export TF_VAR_cloudflare_api_token=fixture-cloudflare-token\n';
@@ -287,7 +287,7 @@ test('the installed agent-tool rejects a saved plan with a delete action', async
     );
     const cli = path.resolve(
       import.meta.dir,
-      '../node_modules/.bin/agent-tool'
+      '../../node_modules/.bin/agent-tool'
     );
     const result = Bun.spawnSync([
       cli,

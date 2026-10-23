@@ -3,8 +3,8 @@ import path from 'node:path';
 import {
   disabledFeatureFlags,
   enabledFeatureFlags,
-} from '../packages/frontend/src/featureFlags';
-import {startFrontendServer} from '../packages/frontend/tooling/server';
+} from '../../packages/frontend/src/featureFlags';
+import {startFrontendServer} from '../../packages/frontend/tooling/server';
 
 const production = await startFrontendServer({
   port: 8081,
@@ -40,7 +40,7 @@ try {
       process.argv.includes('--headless') ? 'test:headless' : 'test',
     ],
     {
-      cwd: path.resolve(import.meta.dir, '../packages/frontend'),
+      cwd: path.resolve(import.meta.dir, '../../packages/frontend'),
       stdin: 'inherit',
       stdout: 'inherit',
       stderr: 'inherit',
