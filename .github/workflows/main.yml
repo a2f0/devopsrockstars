@@ -63,6 +63,7 @@ jobs:
     needs: code-quality
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         environment: [staging, prod]
     steps:

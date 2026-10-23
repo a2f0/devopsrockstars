@@ -276,14 +276,6 @@ The configuration for the site is in the [terraform folder](../terraform).
 
 ## Reviewed preview from CI
 
-The manual workflow defaults to `operation=preview`. It validates the selected
-branch and runs both environments' complete guarded dry runs using CI credentials,
-without publishing or applying migrations. Dispatch the reviewed feature branch:
-
-```sh
-gh workflow run main.yml --ref <branch> -f operation=preview
-```
-
-Select `operation=deploy-staging` only for an authorized staging deployment.
-Automatic validated pushes to `staging` and `main` keep their existing deployment
-behavior.
+Follow the [deployment preview gate](dependency-maintenance.md#deployment-preview-gate)
+for the reviewed-branch dispatch command, both environments' required evidence,
+and the distinction between preview and an authorized staging deployment.

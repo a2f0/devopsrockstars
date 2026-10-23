@@ -17,6 +17,9 @@ Use `-R "$REPO"` (or `--repo "$REPO"`) on `gh` commands when ambiguity is possib
 ## Branch and Commit Rules
 
 - Do not commit or push directly to `main`; work on a branch.
+- Name feature branches `<type>/<topic>` using a Conventional Commits type.
+  Reverts use `revert/<topic>`; GitHub's generated `revert-...` names do not pass
+  the same branch policy.
 - Use conventional commits.
 - Do not force-push unless explicitly requested.
 - Do not add AI attribution/co-author footers.
