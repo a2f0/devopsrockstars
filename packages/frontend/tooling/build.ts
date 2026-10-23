@@ -52,29 +52,34 @@ async function addGeneratedAssets(
   }
 }
 
-// agent-tool renders the favicons target in agent-tool.json from
-// assets/brand/logo.svg; the site serves them from its root.
-async function renderFavicons(directory: string) {
-  const command = Bun.spawn(
-    [
-      process.execPath,
-      path.join(repositoryRoot, 'node_modules/.bin/agent-tool'),
-      '--repo',
-      repositoryRoot,
-      'images',
-      'build',
-      'favicons',
-      '--out',
-      directory,
-    ],
-    {stdin: 'ignore', stdout: 'ignore', stderr: 'pipe'}
-  );
-  const [exitCode, errors] = await Promise.all([
-    command.exited,
-    new Response(command.stderr).text(),
-  ]);
-  if (exitCode)
-    throw new Error(`Favicon rendering failed: ${errors.trim() || exitCode}`);
+// agent-tool renders an images target in agent-tool.json from
+// assets/brand/logo.svg: the favicons and the social share image, which the
+// site serves from its root.
+function renderBrandImages(target: 'favicons' | 'social') {
+  return async (directory: string) => {
+    const command = Bun.spawn(
+      [
+        process.execPath,
+        path.join(repositoryRoot, 'node_modules/.bin/agent-tool'),
+        '--repo',
+        repositoryRoot,
+        'images',
+        'build',
+        target,
+        '--out',
+        directory,
+      ],
+      {stdin: 'ignore', stdout: 'ignore', stderr: 'pipe'}
+    );
+    const [exitCode, errors] = await Promise.all([
+      command.exited,
+      new Response(command.stderr).text(),
+    ]);
+    if (exitCode)
+      throw new Error(
+        `Rendering ${target} failed: ${errors.trim() || exitCode}`
+      );
+  };
 }
 
 export interface FrontendBuildOptions {
@@ -173,7 +178,8 @@ export async function bundleFrontend({
     })
   );
   await addGeneratedAssets(assets, '/static/skyline/', copySkylineAssets);
-  await addGeneratedAssets(assets, '/', renderFavicons);
+  await addGeneratedAssets(assets, '/', renderBrandImages('favicons'));
+  await addGeneratedAssets(assets, '/', renderBrandImages('social'));
   return assets;
 }
 

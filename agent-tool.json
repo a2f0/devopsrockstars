@@ -38,6 +38,19 @@
             ]
           }
         ]
+      },
+      "social": {
+        "outputs": [
+          {
+            "path": "og-image.png",
+            "size": [1200, 630],
+            "opaque": true,
+            "layers": [
+              { "fill": "#000000" },
+              { "source": "logo", "scale": 0.6 }
+            ]
+          }
+        ]
       }
     }
   },

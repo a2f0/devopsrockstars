@@ -122,9 +122,9 @@ receive `404.html` with a 404 status through the site Worker's
 still renders its not-found page. Add a route to `pages.ts` together with the
 router, or a reload of it returns 404.
 
-Production pages name their `https://devopsrockstars.com` URL as canonical,
-carry Open Graph and Twitter summary cards, and Home adds `Organization` and
-`WebSite` JSON-LD. Production also publishes `sitemap.xml` listing the
+Production pages name their `https://devopsrockstars.com` URL as canonical
+and carry Open Graph and Twitter large-image cards showing `/og-image.png`, and
+Home adds `Organization` and `WebSite` JSON-LD. Production also publishes `sitemap.xml` listing the
 indexable pages and names it in `robots.txt`. The admin, checkout, receipt,
 and not-found pages carry a `noindex, nofollow` robots meta tag in every
 environment, and production's admin also sends the `X-Robots-Tag` header.

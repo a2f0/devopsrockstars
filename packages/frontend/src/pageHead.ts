@@ -7,6 +7,8 @@ export interface HeadTag {
   readonly text?: string;
 }
 
+const shareImageAlt = 'The DevOps Rockstars six-pointed star on black';
+
 export function pageUrl(page: Page) {
   return new URL(page.path, siteOrigin).href;
 }
@@ -19,6 +21,8 @@ const homeStructuredData = {
       '@id': `${siteOrigin}/#organization`,
       name: siteName,
       url: `${siteOrigin}/`,
+      // The favicons target's opaque 180px rendering of the brand logo.
+      logo: `${siteOrigin}/apple-touch-icon.png`,
     },
     {
       '@type': 'WebSite',
@@ -64,13 +68,17 @@ export function pageHeadTags(
     'og:title': page.name,
     ...(page.description ? {'og:description': page.description} : {}),
     'og:url': url,
+    // Rendered from assets/brand/logo.svg by the social images target.
+    'og:image': `${siteOrigin}/og-image.png`,
+    'og:image:width': '1200',
+    'og:image:height': '630',
+    'og:image:alt': shareImageAlt,
   };
   for (const [property, content] of Object.entries(social))
     tags.push({name: 'meta', attributes: {property, content}});
-  // There is no share image yet, so cards use the small summary layout.
   tags.push({
     name: 'meta',
-    attributes: {name: 'twitter:card', content: 'summary'},
+    attributes: {name: 'twitter:card', content: 'summary_large_image'},
   });
   if (page.path === '/')
     tags.push({

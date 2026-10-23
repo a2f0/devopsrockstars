@@ -91,7 +91,17 @@ test('production pages carry their canonical URL and social cards', () => {
       tagContent(head, 'property', 'og:site_name'),
       'DevOps Rockstars'
     );
-    assert.equal(tagContent(head, 'name', 'twitter:card'), 'summary');
+    assert.equal(
+      tagContent(head, 'name', 'twitter:card'),
+      'summary_large_image'
+    );
+    assert.equal(
+      tagContent(head, 'property', 'og:image'),
+      'https://devopsrockstars.com/og-image.png'
+    );
+    assert.equal(tagContent(head, 'property', 'og:image:width'), '1200');
+    assert.equal(tagContent(head, 'property', 'og:image:height'), '630');
+    assert.ok(tagContent(head, 'property', 'og:image:alt'));
   }
 });
 
