@@ -21,12 +21,12 @@ repos:
       language: system
     - id: check-for-unpinned-dependencies
       name: check-for-unpinned-dependencies
-      entry: bun scripts/check-for-unpinned-dependencies.mjs
+      entry: bun scripts/checks/check-for-unpinned-dependencies.mjs
       pass_filenames: false
       language: system
     - id: check-agent-skills-in-sync
       name: check-agent-skills-in-sync
-      entry: bun scripts/check-agent-skills-in-sync.mjs
+      entry: bun scripts/checks/check-agent-skills-in-sync.mjs
       pass_filenames: false
       language: system
     - id: check-shared-agent-skills

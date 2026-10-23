@@ -35,9 +35,11 @@ function assertOverrideParents(selectors: readonly string[], source: string) {
 }
 
 test('temporary overrides still match resolved parent versions', async () => {
-  const source = await Bun.file(new URL('../bun.lock', import.meta.url)).text();
+  const source = await Bun.file(
+    new URL('../../bun.lock', import.meta.url)
+  ).text();
   const manifest = (await Bun.file(
-    new URL('../package.json', import.meta.url)
+    new URL('../../package.json', import.meta.url)
   ).json()) as {
     overrides?: Record<string, unknown>;
   };
@@ -45,7 +47,9 @@ test('temporary overrides still match resolved parent versions', async () => {
 });
 
 test('Markdownlint resolves the fixed Smol-TOML parser', async () => {
-  const source = await Bun.file(new URL('../bun.lock', import.meta.url)).text();
+  const source = await Bun.file(
+    new URL('../../bun.lock', import.meta.url)
+  ).text();
   const lockfile = Bun.JSONC.parse(source) as {
     packages: Record<string, [string, ...unknown[]]>;
   };

@@ -3,7 +3,7 @@
 import path from 'node:path';
 
 const packageName = '@a2f0/skyline';
-const frontend = path.resolve(import.meta.dir, '../packages/frontend');
+const frontend = path.resolve(import.meta.dir, '../../packages/frontend');
 
 type Run = (command: string[]) => string;
 

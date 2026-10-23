@@ -26,8 +26,8 @@ Use `-R "$REPO"` (or `--repo "$REPO"`) on `gh` commands when ambiguity is possib
 Fix valid findings from pull request review comments, scoped to the feedback,
 and run the relevant validation (`bun run compile`, `bun run unit`,
 `bun run ci-headless` as needed) before committing and pushing. Then reply in
-each original review thread through
-`POST /repos/{owner}/{repo}/pulls/{pull_number}/comments/{comment_id}/replies`,
+each original review thread with
+`agent-tool pr threads reply <comment-id> --body-file <reply-file>`,
 saying what changed and naming the fixing commit. Never reply with top-level PR
 comments or `gh pr review`. Resolve a thread only when its finding is fully
 addressed.
@@ -42,7 +42,7 @@ required CI policy. Dependency maintenance follows the shared
 [deployment preview policy](docs/dependency-maintenance.md). Update installed
 skills with `bun run agents:sync` after changing the dependency pin, and check
 them with `bun run agents:check`. Do not edit managed skills locally.
-`scripts/check-agent-skills-in-sync.mjs` keeps skills present in both
+`scripts/checks/check-agent-skills-in-sync.mjs` keeps skills present in both
 `.agents/skills` and `.claude/skills` identical through the pre-commit hook.
 
 Capture noisy finite commands with the pinned harness, for example
@@ -127,208 +127,12 @@ Markdown lint is enforced in CI and hooks:
 
 Do not create GitHub issues unless the user explicitly requests it.
 
-## Development Commands
+## Development and operations guides
 
-### Setup and Installation
-
-```bash
-mise install
-pip install pre-commit==4.7.0
-pre-commit install
-bun install
-```
-
-### Development Server
-
-```bash
-bun run start-server           # Development server (default port)
-bun run start-test-server      # Test server on port 8081 (production features)
-bun run start-staging-server   # Test server on port 8082 (staging features)
-bun run dev:cloudflare         # Store API Worker on port 8787
-```
-
-The Bun dev server proxies `/api` to `http://127.0.0.1:8787`, so the site
-and the store API stay same-origin in development.
-
-### Build and Production
-
-```bash
-bun run build                 # Production Bun build
-bun run compile              # TypeScript 7 type checking (without emitting JavaScript)
-```
-
-### Code Quality
-
-```bash
-bun run lint                 # Biome linting with auto-fix
-bun run format              # Biome formatting
-```
-
-### Testing
-
-```bash
-bun run test                 # Run e2e tests (requires test server running)
-bun run test-headless       # Run e2e tests in headless mode
-bun run ci                  # Full CI: start server + run tests
-bun run ci-headless        # Full CI in headless mode
-
-# Run specific test spec
-bun run --cwd packages/frontend test \
-  --test-name-pattern="loads correctly"
-```
-
-## Package Management
-
-This project uses **Bun 1.4.3** for package management, TypeScript execution,
-bundling, development servers, and unit/browser test execution. The version is
-pinned in `.mise.toml` and `package.json`; CI installs it with `mise-action`.
-When mise is not activated, agent shells using its default data directory should
-put `~/.local/share/mise/installs/bun/1.4.3/bin` first on `PATH`.
-
-Use `bun install`, `bun add --exact <package>`, and `bun run <script>`.
-Commit `bun.lock` with dependency changes. JavaScript CLIs run with
-`bun run --bun <command>` so their Node hashbangs also execute under Bun.
-Third-party lifecycle scripts are disabled with `trustedDependencies: []`.
-
-## Architecture Overview
-
-This is a Bun monorepo for the DevOps Rockstars React site and Cloudflare
-store backend.
-
-### Workspace packages
-
-- `packages/frontend` — React application, assets, Bun tooling, and browser tests
-- `packages/backend` — Cloudflare Worker, D1 migrations, and Wrangler config
-- `packages/shared-types` — shared API request and response types
-
-### Core Stack
-
-- **Frontend**: React 19+ with TypeScript in strict mode
-- **Styling**: styled-components with CSS-in-JS architecture
-- **Routing**: react-router with `/` and `/company` plus flag-controlled store/search routes
-- **Build**: Bun bundler with ES modules output
-- **Testing**: WebDriverIO (WDIO) for end-to-end testing
-- **Package Manager**: Bun for dependency management
-
-### Application Structure
-
-- **Layout**: Flexbox-based layout system using custom styled components
-- **Home**: Original SVG skyline, or shared interactive 3D skyline when `skyline3d` is enabled
-- **Responsive Design**: Component-based responsive layout with flex containers
-
-### Key Components
-
-- `packages/frontend/src/index.tsx` - Main router and app entry point
-- `packages/frontend/src/clickTracking.ts` - Click tracker lifecycle, origin/environment guard, and safe route names
-- `packages/frontend/src/Header.tsx` - Navigation header with company link
-- `packages/frontend/src/Footer.tsx` - Footer (hidden on main page)
-- `packages/frontend/src/Skyline.tsx` - Main page content
-- `packages/frontend/src/Company.tsx` - Company information page
-- `packages/frontend/src/Map.tsx` - Full-screen Leaflet map component
-- `packages/frontend/src/NotFound.tsx` - Catch-all route for unmatched paths
-- `feature-flags.json` - Explicit production/staging rollout values
-- `packages/frontend/src/featureFlags.ts` - Typed flag registry and browser values
-- `packages/frontend/src/environment.ts` - Environment parsing and store API origin
-
-### Styled Components System
-
-Located in `packages/frontend/src/styled-components/`, these files provide
-reusable layout primitives:
-
-- Flex container components for different alignments
-- Header/Footer/Main layout components
-- Menu item components
-- Global styling with CSS custom properties
-
-### Static Assets
-
-- SVG icons and logos in `packages/frontend/static/image/`
-- Contact files in `packages/frontend/static/contact/`
-- Favicon in `packages/frontend/static/favicon/`
-
-## Configuration Details
-
-### TypeScript
-
-- Extends `@tsconfig/strictest` for maximum type safety
-- Configured for ESNext modules with React JSX
-- Bun types included for scripts and test execution
-- WebdriverIO browser types come from its standalone API
-
-### Code Quality (Biome)
-
-- Replaces ESLint/Prettier with single tool
-- 2-space indentation, single quotes, 80-character line width
-- Auto-organizes imports and fixes lint issues
-
-### Bun bundler
-
-- ES module output format
-- Content hashing for production builds
-- Source changes rebuild automatically; refresh the browser to load them
-- Static SVG URLs served directly from `/static/`
-- Copies static assets to build directory
-- `patches/expect@30.5.2.patch` preserves Jest's named exports under Bun
-  by using a namespace import for its CommonJS module
-
-### Testing
-
-- Bun test runner with WebdriverIO standalone browser automation
-- Chrome browser automation
-- Page object model in `packages/frontend/e2e/pageObjects/`
-- Tests validate page loading and component visibility
-
-## Deployment
-
-Everything runs on Cloudflare. Each environment is a pair of Workers: a
-static-assets Worker for the site and a store Worker for `/api/*` with its own
-D1 database.
-
-| Environment | Site | Store API |
-| --- | --- | --- |
-| Production | `devopsrockstars.com` | `store.devopsrockstars.com` |
-| Staging | `staging.devopsrockstars.com` | `store-staging.devopsrockstars.com` |
-
-- `bun run deploy:staging` and `bun run deploy:prod` wrap `scripts/deploy.ts`,
-  which builds the site, dry-runs both Workers, verifies live resource identities
-  and zero pending D1 migrations, then publishes the store and site Workers
-- `patches/miniflare@5.20261019.0-beta.patch` resolves Miniflare's installed
-  Undici transport to avoid Bun's incomplete built-in dispatcher
-- Wrangler owns Worker and asset deployments; Terraform (`terraform/`) owns the
-  custom domains, including `www` (which serves the production site)
-- GitHub Actions deploys the `main` branch to production and the
-  `staging` branch to staging; `workflow_dispatch` deploys any branch to staging
-- Frontend build artifacts are generated in `packages/frontend/build/`
-- Terraform manages Cloudflare only; the AWS website stack (S3, CloudFront,
-  ACM, Route 53) is destroyed. Its state is in the Cloudflare R2 bucket
-  `devopsrockstars-com-terraform-state`, and the `terraform/` scripts read the
-  Cloudflare token, R2 state key, and `main.tfvars` variables from the gitignored
-  `.secrets` link to matrix-secrets (see
-  [deployment operations](docs/deployment.md#infrastructure)), so no AWS
-  credentials or encrypted files are involved
-
-### Environment feature flags
-
-`feature-flags.json` is the versioned rollout matrix. `PUBLIC_ENVIRONMENT`
-selects the row during the build; Bun injects the validated booleans into the
-browser. `bun run flags` shows the matrix and `bun run flags:check` validates it.
-Flag changes require a new deployment. See README's Feature flags section for
-the update workflow and registry conventions.
-
-- Store/search flags control their links and routes. The `skyline3d` flag
-  controls the 3D viewer and asset inclusion, with the SVG used when off or when
-  the viewer cannot start. Each flag is
-  independent; do not couple a flag's value to whether the environment is staging
-- When `store` and `skyline3d` are both on, hat preparation finishes before the
-  skyline starts to avoid competing model builds; the SVG stays visible meanwhile
-- **Staging** adds a `noindex` meta tag, an `X-Robots-Tag` header, and a
-  disallow-all `robots.txt`, so only production is indexable
-- Disabling the store removes its links and routes; its implementation JavaScript
-  can still be present in the bundle
-- `packages/frontend/buildAssets.ts` generates `robots.txt` and `_headers`;
-  both are covered by unit and e2e tests
-- Indexing stays tied to the environment, outside the feature flag registry
-- Each deployment publishes its resolved settings at `/feature-flags.json`;
-  verify that manifest along with the live UI after a rollout
-- CI exercises fixed all-off/all-on browser profiles plus each flag independently
-  in both environments, so coverage survives future changes to the rollout matrix
+Follow [development](docs/development.md) for setup, hook installation, architecture,
+and script locations. Use the pinned Bun on PATH in agent shells; do not run
+`mise trust`. Keep public package command names stable when moving helpers.
+[Feature flags](docs/feature-flags.md) owns rollout configuration and independent
+flag coverage. [Deployment operations](docs/deployment.md) owns environments,
+analytics, provisioning, and guarded publication. Keep procedures in these guides
+and policy here.

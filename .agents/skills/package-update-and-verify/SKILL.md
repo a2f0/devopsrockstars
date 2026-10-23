@@ -25,7 +25,7 @@ targeted search. Keep audit decisions, review verdicts, and complete deployment
 preview evidence visible. Do not capture interactive commands or persistent
 servers.
 
-Deployment always uses `scripts/deploy.ts`, including workspace and CI commands.
+Deployment always uses `scripts/deploy/deploy.ts`, including workspace and CI commands.
 Both Worker bundle previews and the real account-scoped resource inspection must
 succeed before publication. Pending D1 migrations hold deployment; never use
 remote migration list/apply as a read-only test. Never delete, replace, recreate,

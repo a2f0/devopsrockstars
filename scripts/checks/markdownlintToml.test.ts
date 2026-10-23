@@ -5,7 +5,7 @@ import {join, resolve} from 'node:path';
 
 const cli = resolve(
   import.meta.dir,
-  '../node_modules/markdownlint-cli2/markdownlint-cli2-bin.mjs'
+  '../../node_modules/markdownlint-cli2/markdownlint-cli2-bin.mjs'
 );
 
 function lint(config: string, markdown: string, ignored = false) {

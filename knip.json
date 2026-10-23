@@ -3,9 +3,9 @@
   "workspaces": {
     ".": {
       "entry": [
-        "scripts/check-for-unpinned-dependencies.mjs",
-        "scripts/check-agent-skills-in-sync.mjs",
-        "scripts/*.ts"
+        "scripts/checks/check-for-unpinned-dependencies.mjs",
+        "scripts/checks/check-agent-skills-in-sync.mjs",
+        "scripts/**/*.ts"
       ],
       "project": ["scripts/**/*.mjs", "scripts/**/*.ts"]
     },
