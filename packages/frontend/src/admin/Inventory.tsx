@@ -4,7 +4,13 @@ import type {
   AdminVariant,
   AdminVariantUpdateRequest,
 } from '@devopsrockstars/shared-types';
-import React, {type FormEvent, useCallback, useEffect, useState} from 'react';
+import React, {
+  type FormEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import styled from 'styled-components';
 import {features} from '../featureFlags';
 import {formatMoney} from '../store/format';
@@ -26,6 +32,7 @@ import {
   SmallButton,
 } from './AdminStyles';
 import {errorMessage, useAdmin} from './context';
+import {inRequestOrder} from './ordered';
 
 const columns =
   'minmax(110px, 1.3fr) minmax(90px, 1fr) minmax(80px, 0.9fr) 70px 55px 70px 72px';
@@ -111,12 +118,16 @@ function parseQuantity(value: string) {
   return /^\s*\d{1,6}\s*$/u.test(value) ? Number(value) : null;
 }
 
+type ApplyInventory = (
+  request: Promise<AdminInventoryResponse>
+) => Promise<void>;
+
 const VariantRow = ({
   variant,
-  onSaved,
+  apply,
 }: {
   variant: AdminVariant;
-  onSaved: (inventory: AdminInventoryResponse) => void;
+  apply: ApplyInventory;
 }) => {
   const {guard} = useAdmin();
   const [quantity, setQuantity] = useState(String(variant.inventoryQuantity));
@@ -163,14 +174,12 @@ const VariantRow = ({
     setBusy(true);
     setError('');
     try {
-      onSaved(await guard(updateVariant(variant.id, update)));
+      await apply(guard(updateVariant(variant.id, update)));
     } catch (caught) {
       if (caught instanceof AdminApiError && caught.status === 409) {
         // Show the current quantity so the administrator can decide again.
         setError(caught.message);
-        void guard(loadInventory())
-          .then(onSaved)
-          .catch(() => {});
+        void apply(guard(loadInventory())).catch(() => {});
       } else if (!(caught instanceof AdminApiError && caught.status === 401)) {
         setError(errorMessage(caught));
       }
@@ -249,10 +258,10 @@ const VariantRow = ({
 
 const ProductPanel = ({
   product,
-  onSaved,
+  apply,
 }: {
   product: AdminProduct;
-  onSaved: (inventory: AdminInventoryResponse) => void;
+  apply: ApplyInventory;
 }) => {
   const {guard} = useAdmin();
   const [busy, setBusy] = useState(false);
@@ -279,7 +288,7 @@ const ProductPanel = ({
     setBusy(true);
     setError('');
     try {
-      onSaved(await guard(updateProduct(product.id, {active: next})));
+      await apply(guard(updateProduct(product.id, {active: next})));
     } catch (caught) {
       if (!(caught instanceof AdminApiError && caught.status === 401))
         setError(errorMessage(caught));
@@ -322,7 +331,7 @@ const ProductPanel = ({
         <span />
       </HeaderRow>
       {product.variants.map(variant => (
-        <VariantRow key={variant.id} variant={variant} onSaved={onSaved} />
+        <VariantRow key={variant.id} variant={variant} apply={apply} />
       ))}
       <Totals>
         {total('inventoryQuantity')} available · {total('reservedQuantity')}{' '}
@@ -338,16 +347,16 @@ const Inventory = () => {
     null
   );
   const [error, setError] = useState('');
+  // Every save and reload returns the whole inventory.
+  const apply = useMemo<ApplyInventory>(() => inRequestOrder(setInventory), []);
 
   const refresh = useCallback(() => {
     setError('');
-    guard(loadInventory())
-      .then(setInventory)
-      .catch(caught => {
-        if (!(caught instanceof AdminApiError && caught.status === 401))
-          setError(errorMessage(caught));
-      });
-  }, [guard]);
+    apply(guard(loadInventory())).catch(caught => {
+      if (!(caught instanceof AdminApiError && caught.status === 401))
+        setError(errorMessage(caught));
+    });
+  }, [apply, guard]);
 
   useEffect(refresh, [refresh]);
 
@@ -371,11 +380,7 @@ const Inventory = () => {
       {inventory ? (
         inventory.products.length ? (
           inventory.products.map(product => (
-            <ProductPanel
-              key={product.id}
-              product={product}
-              onSaved={setInventory}
-            />
+            <ProductPanel key={product.id} product={product} apply={apply} />
           ))
         ) : (
           <p>No products yet.</p>
