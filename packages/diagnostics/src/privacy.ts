@@ -13,6 +13,8 @@ export type Operation =
   | 'order'
   | 'cancel-order'
   | 'stripe-webhook'
+  | 'admin'
+  | 'admin-auth'
   | 'cleanup'
   | 'unknown';
 const sources = new Set([
@@ -28,6 +30,8 @@ const operations = new Set([
   'order',
   'cancel-order',
   'stripe-webhook',
+  'admin',
+  'admin-auth',
   'cleanup',
   'unknown',
 ]);

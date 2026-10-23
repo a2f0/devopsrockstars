@@ -1,11 +1,13 @@
+import {handleAdmin} from './admin';
 import {loadCatalog} from './catalog';
 import {CheckoutCreationError, startCheckout} from './checkout';
-import {cleanupExpiredOrders} from './cleanup';
+import {cleanupExpiredAuth, cleanupExpiredOrders} from './cleanup';
 import {sha256} from './crypto';
 import {reportApiError, requestOperation} from './diagnostics';
 import {
   apiError,
   corsPreflight,
+  credentialedPath,
   hasAllowedOrigin,
   json,
   RequestBodyError,
@@ -23,6 +25,9 @@ const CHECKOUT_CLIENT_PATTERN =
 
 export async function route(request: Request, env: Env) {
   const url = new URL(request.url);
+  if (credentialedPath(url.pathname)) {
+    return handleAdmin(request, env);
+  }
   if (request.method === 'GET' && url.pathname === '/api/storefront') {
     return json(await loadCatalog(env));
   }
@@ -195,5 +200,14 @@ export default {
         throw error;
       })
     );
+    // The store cron runs every minute; administrator records need an hourly sweep.
+    if (new Date(controller.scheduledTime).getUTCMinutes() === 0) {
+      context.waitUntil(
+        cleanupExpiredAuth(env, controller.scheduledTime).catch(async error => {
+          await reportApiError(error, 'scheduled', 'cleanup');
+          throw error;
+        })
+      );
+    }
   },
 };

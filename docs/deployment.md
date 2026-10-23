@@ -185,14 +185,16 @@ need a separately reviewed execution preview before any mutation.
    bun run db:check:prod
    ```
 
-4. Add the Stripe test keys and checkout hash secret to the staging Worker.
-   Set only the checkout hash secret in production for the current disabled
-   store configuration.
+4. Add the Stripe test keys, checkout hash secret, and admin auth secret to the
+   staging Worker. Set only the checkout hash and admin auth secrets in
+   production for the current disabled store configuration.
 
-   The maintenance guard expects only `CHECKOUT_HASH_SECRET` in production while
-   its committed store flag is off. Provisioning live Stripe secrets and enabling that flag
+   The maintenance guard expects only `BETTER_AUTH_SECRET` and
+   `CHECKOUT_HASH_SECRET` in production while its committed store flag is off.
+   Provisioning live Stripe secrets and enabling that flag
    require a separate reviewed rollout; dependency maintenance preserves the
-   current secret set.
+   current secret set. `BETTER_AUTH_SECRET` is provisioned as described under
+   [store admin](#store-admin).
 
    ```shell
    for secret in STRIPE_PUBLISHABLE_KEY STRIPE_SECRET_KEY \
@@ -326,7 +328,8 @@ duplicates for the same resumable browser session.
 Signed Stripe events without the store's source metadata are acknowledged and
 ignored. Store events that cannot be applied safely are recorded in
 `stripe_event_alerts`; entries with `action = 'refund'` require operator action.
-Check the open queue with:
+Review and resolve the open queue in the [store admin](#store-admin), or
+check it with:
 
 ```shell
 bun run --cwd packages/backend --bun wrangler d1 execute \
@@ -335,6 +338,59 @@ bun run --cwd packages/backend --bun wrangler d1 execute \
 ```
 
 The configuration for the site is in the [terraform folder](../terraform).
+
+## Store admin
+
+`/admin` on each site manages inventory, prices, and product and size listings,
+lists orders with their shipping addresses, and resolves Stripe alerts. It is a
+lazily loaded route of the site that calls `/api/auth/*` and `/api/admin/*` on
+the environment's store Worker, so the admin works while the `store` flag is
+off. Production pages send `X-Robots-Tag: noindex, nofollow` and the page adds
+a matching robots meta tag.
+
+Authentication follows [ct](https://github.com/a2f0/ct): Better Auth with
+email and password, sign-up disabled in the library, and only sign-in, session,
+sign-out, and password-change routes reachable. Sessions last eight hours in a
+host-only `Secure`, `HttpOnly`, `SameSite=Lax` cookie on the store API host,
+which the site and API share as one site. Credentialed CORS is limited to the
+configured storefront origins on the admin and auth routes, and every mutation
+requires one of those origins and a JSON body. Sign-in and password changes are
+limited to five attempts a minute per address. Expired sessions,
+verifications, and day-old rate-limit records are removed hourly by the store
+cron. Admin changes are logged as `admin.*` events with the administrator's
+email in Workers observability.
+
+Stock edits send the quantity they replace. If a checkout reserved or released
+units meanwhile, the change is refused and the page shows the current stock.
+
+Each store Worker needs a `BETTER_AUTH_SECRET` of at least 32 characters, and
+the D1 database needs the `auth_*` tables from
+`packages/backend/migrations/0006_admin_auth.sql`. Neither is reachable without
+the other: a missing secret makes every admin and auth route return 503 while
+the storefront keeps working. Generate the secret without displaying it:
+
+```shell
+openssl rand -base64 48 | bun run --cwd packages/backend --bun wrangler \
+  secret put BETTER_AUTH_SECRET --env <staging|prod>
+```
+
+Rotating it signs every administrator out.
+
+Provision or recover an administrator. The command prompts twice for the
+password without echoing it, or reads one line with `--password-stdin`; it
+never accepts a password argument. Reset replaces the password and revokes
+every session:
+
+```shell
+bun run admin:user create --env prod --email <email>
+bun run admin:user reset --env prod --email <email>
+```
+
+Signed-in administrators change their own password under **Account**, which
+signs out their other sessions. The sign-in and password forms use standard
+`username`, `current-password`, and `new-password` autocomplete fields and
+finish with a navigation or form removal, so browsers and password managers
+offer to save or update the password.
 
 ## Reviewed preview from CI
 

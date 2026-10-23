@@ -56,6 +56,10 @@ describe('click tracking configuration', () => {
       expect(trackingPage(pathname, enabledFeatureFlags)).toBe(pathname);
       expect(trackingPage(pathname, disabledFeatureFlags)).toBe('/not-found');
     }
+    for (const pathname of ['/admin', '/admin/orders', '/admin/account/']) {
+      expect(trackingPage(pathname, enabledFeatureFlags)).toBe('/admin');
+      expect(trackingPage(pathname, disabledFeatureFlags)).toBe('/admin');
+    }
     for (const pathname of [
       '/customer/alice@example.com',
       '/store/receipt/order-token',

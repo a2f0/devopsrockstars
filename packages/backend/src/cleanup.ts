@@ -176,3 +176,18 @@ export async function cleanupExpiredOrders(
   // Finish all orders before waiting on the diagnostics network budget.
   await diagnostics?.flush();
 }
+
+// Expired sessions and verification tokens are useless, and rate-limit rows
+// hold client IP addresses, so neither outlives a day past its last use.
+export async function cleanupExpiredAuth(env: Env, scheduledTime: number) {
+  const now = new Date(scheduledTime).toISOString();
+  await env.DB.batch([
+    env.DB.prepare('DELETE FROM auth_session WHERE expiresAt < ?').bind(now),
+    env.DB.prepare('DELETE FROM auth_verification WHERE expiresAt < ?').bind(
+      now
+    ),
+    env.DB.prepare('DELETE FROM auth_rate_limit WHERE lastRequest < ?').bind(
+      scheduledTime - 86_400_000
+    ),
+  ]);
+}

@@ -29,5 +29,14 @@ export function headersFile(environment: SiteEnvironment) {
     '  ! Cache-Control',
     '  Cache-Control: public, max-age=31536000, immutable',
     '',
+    // Staging already refuses crawlers everywhere; production keeps only
+    // the admin out of search results.
+    ...(environment === 'production'
+      ? ['/admin', '/admin/*'].flatMap(path => [
+          path,
+          '  X-Robots-Tag: noindex, nofollow',
+          '',
+        ])
+      : []),
   ].join('\n');
 }

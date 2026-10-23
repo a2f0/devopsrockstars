@@ -59,7 +59,7 @@ export async function readJson(request: Request): Promise<unknown> {
   }
 }
 
-function configuredOrigins(allowedOrigins?: string) {
+export function configuredOrigins(allowedOrigins?: string) {
   return new Set(
     allowedOrigins
       ?.split(',')
@@ -78,6 +78,14 @@ export function hasAllowedOrigin(request: Request, allowedOrigins?: string) {
   );
 }
 
+// Administrator routes send the session cookie from the site to the store
+// API's own subdomain, so only they let the browser include credentials.
+export function credentialedPath(pathname: string) {
+  return (
+    pathname.startsWith('/api/admin/') || pathname.startsWith('/api/auth/')
+  );
+}
+
 export function withCors(
   request: Request,
   allowedOrigins: string | undefined,
@@ -90,6 +98,10 @@ export function withCors(
   const headers = new Headers(response.headers);
   headers.set('Access-Control-Allow-Origin', origin);
   headers.set('Vary', 'Origin');
+  if (credentialedPath(new URL(request.url).pathname)) {
+    headers.set('Access-Control-Allow-Credentials', 'true');
+    headers.append('Vary', 'Cookie');
+  }
   return new Response(response.body, {
     headers,
     status: response.status,

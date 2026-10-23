@@ -28,6 +28,8 @@ export function requestOperation(request: Request): Operation {
   if (pathname === '/api/storefront') return 'storefront';
   if (pathname === '/api/checkouts') return 'checkout';
   if (pathname === '/api/webhooks/stripe') return 'stripe-webhook';
+  if (pathname.startsWith('/api/admin/')) return 'admin';
+  if (pathname.startsWith('/api/auth/')) return 'admin-auth';
   if (/^\/api\/orders\/[0-9a-f-]{36}\/cancel$/iu.test(pathname))
     return 'cancel-order';
   if (/^\/api\/orders\/[0-9a-f-]{36}$/iu.test(pathname)) return 'order';

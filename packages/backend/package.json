@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@devopsrockstars/diagnostics": "workspace:*",
-    "@devopsrockstars/shared-types": "workspace:*"
+    "@devopsrockstars/shared-types": "workspace:*",
+    "better-auth": "1.7.12"
   }
 }

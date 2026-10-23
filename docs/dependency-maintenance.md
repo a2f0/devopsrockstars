@@ -132,7 +132,8 @@ checks cover asset behavior. It rejects unreviewed resource types, routes, incom
 API inventories, missing resources, and identity changes. It rechecks source,
 generated assets, and installed Wrangler and esbuild entrypoints plus live
 identities before each publication. The staged backend bundle and both runtimes'
-private source maps are also hashed, including the bundled Sentry dependencies.
+private source maps are also hashed, including the bundled Sentry and Better Auth
+dependencies.
 The backend publishes that exact bundle without rebuilding it. The guard also
 dry-runs the staged publication command with the workspace's explicit
 `--config` path: Wrangler otherwise discovers config relative to the staged
@@ -151,9 +152,11 @@ The guard requires complete `result_info` pagination from the Workers Domains
 API. A different or incomplete page holds deployment. Zone route pagination is
 also checked when the API supplies `result_info`.
 The committed production store flag is off. The guard expects only
-`CHECKOUT_HASH_SECRET` in production and the three Stripe secrets as well in
-staging, verifying those exact sets during each live preview. A production store
-launch needs a separate reviewed secret and flag rollout.
+`BETTER_AUTH_SECRET` and `CHECKOUT_HASH_SECRET` in production and the three
+Stripe secrets as well in staging, verifying those exact sets during each live
+preview. A production store launch needs a separate reviewed secret and flag
+rollout. The store Worker runs with exactly the `nodejs_compat` compatibility
+flag, which Better Auth needs for `AsyncLocalStorage`; the site Worker has none.
 Publishing also requires a clean committed tree without assume-unchanged or
 skip-worktree flags. The captured commit must match GitHub Actions' validated
 checkout SHA in CI and remain unchanged before each upload. Preview-only modes
@@ -191,10 +194,11 @@ Check migration state afresh for each deployment. Blocking publication until a
 schema rollout is independently reviewed is intentional; an unscoped remote
 apply command is not an approved path.
 
-For a planned runtime date or plain-text variable change, edit the fixed desired
-values in `deploymentSafety.ts` and the matching Wrangler configuration in the
-same PR. Commit `deployment-transition.json` with the previously observed date
-or bindings for each affected Worker, grouped under `staging` and `prod`. The
+For a planned runtime date, compatibility flag, or plain-text variable change,
+edit the fixed desired values in `deploymentSafety.ts` and the matching Wrangler
+configuration in the same PR. Commit `deployment-transition.json` with the
+previously observed date, flags, or bindings for each affected Worker, grouped
+under `staging` and `prod`. The
 guard accepts only that exact old or desired live state during the transition,
 requires the desired state after each Worker upload, and still forbids D1,
 rate-limit, secret, cron, domain, or Worker identity changes. For example:

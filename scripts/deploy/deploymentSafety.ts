@@ -44,6 +44,7 @@ function keys(value: ObjectValue, allowed: string[]) {
 interface WorkerTarget {
   name: string;
   date: string;
+  flags: string[];
   bindings: ObjectValue[];
   secrets: string[];
   crons: string[];
@@ -70,11 +71,18 @@ export function approvedPreviousWorkers(
   for (const workspace of ['backend', 'frontend'] as const) {
     if (selected[workspace] === undefined) continue;
     const before = object(selected[workspace]);
-    keys(before, ['date', 'bindings']);
+    keys(before, ['date', 'flags', 'bindings']);
     const desired = workers[workspace];
     const date = before['date'] ?? desired.date;
     if (typeof date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/u.test(date))
       throw new Error('Deployment held: invalid planned runtime date');
+    const flags =
+      before['flags'] === undefined ? desired.flags : array(before['flags']);
+    if (
+      flags.some(flag => typeof flag !== 'string' || !/^\w+$/u.test(flag)) ||
+      new Set(flags).size !== flags.length
+    )
+      throw new Error('Deployment held: invalid planned runtime flags');
     const bindings =
       before['bindings'] === undefined
         ? desired.bindings
@@ -108,7 +116,12 @@ export function approvedPreviousWorkers(
       throw new Error(
         'Deployment held: planned variables are invalid or removed'
       );
-    previous[workspace] = {...desired, date, bindings};
+    previous[workspace] = {
+      ...desired,
+      date,
+      flags: flags as string[],
+      bindings,
+    };
   }
   return previous;
 }
@@ -135,6 +148,7 @@ export async function deploymentTarget(
       'main',
       'upload_source_maps',
       'compatibility_date',
+      'compatibility_flags',
       'triggers',
       'observability',
       'env',
@@ -219,6 +233,12 @@ export async function deploymentTarget(
         namespace_id: namespace,
         simple: {limit: 2, period: 60},
       });
+      // Better Auth needs AsyncLocalStorage from Node.js compatibility.
+      equal(
+        config['compatibility_flags'],
+        ['nodejs_compat'],
+        'store runtime flags'
+      );
       equal(config['main'], './src/index.ts', 'store entrypoint');
       equal(config['triggers'], {crons: ['* * * * *']}, 'store cron');
       equal(config['assets'], undefined, 'store asset configuration');
@@ -230,18 +250,21 @@ export async function deploymentTarget(
       );
       for (const key of ['vars', 'd1_databases', 'ratelimits'])
         equal(selected[key], undefined, `site ${key}`);
+      equal(config['compatibility_flags'], undefined, 'site runtime flags');
       equal(config['main'], undefined, 'site entrypoint');
       equal(config['triggers'], undefined, 'site triggers');
     }
     configurations[workspace] = {
       name,
       date: '2026-08-31',
+      flags: workspace === 'backend' ? ['nodejs_compat'] : [],
       bindings,
       secrets:
         workspace === 'backend'
           ? environment === 'prod'
-            ? ['CHECKOUT_HASH_SECRET']
+            ? ['BETTER_AUTH_SECRET', 'CHECKOUT_HASH_SECRET']
             : [
+                'BETTER_AUTH_SECRET',
                 'CHECKOUT_HASH_SECRET',
                 'STRIPE_PUBLISHABLE_KEY',
                 'STRIPE_SECRET_KEY',
@@ -351,7 +374,6 @@ export async function inspectDeployment(
     const worker = target.workers[workspace];
     const endpoint = `/workers/scripts/${worker.name}`;
     const settings = object(await read(`${endpoint}/settings`));
-    equal(settings['compatibility_flags'] ?? [], [], 'live runtime flags');
     equal(
       object(settings['observability'])['enabled'],
       true,
@@ -367,10 +389,12 @@ export async function inspectDeployment(
         expected =>
           canonical({
             date: settings['compatibility_date'],
+            flags: array(settings['compatibility_flags'] ?? []).toSorted(),
             bindings: sortedBindings(bindings),
           }) ===
           canonical({
             date: expected.date,
+            flags: expected.flags.toSorted(),
             bindings: sortedBindings([
               ...expected.bindings,
               ...expected.secrets.map(name => ({name, type: 'secret_text'})),
@@ -379,7 +403,7 @@ export async function inspectDeployment(
       )
     )
       throw new Error(
-        'Deployment held: live runtime, bindings, or secrets differ from the reviewed transition'
+        'Deployment held: live runtime, flags, bindings, or secrets differ from the reviewed transition'
       );
     const subdomain = object(await read(`${endpoint}/subdomain`));
     equal(subdomain['enabled'], false, 'live workers.dev policy');
