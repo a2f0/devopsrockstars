@@ -1,7 +1,7 @@
 import {afterAll, beforeAll, describe, it} from 'bun:test';
 import assert from 'node:assert';
 import {browser, expect, startBrowser, stopBrowser} from '../browser';
-import {BasePage} from '../pageObjects/base';
+import {Base, BasePage} from '../pageObjects/base';
 
 beforeAll(startBrowser, 60000);
 afterAll(stopBrowser, 60000);
@@ -33,13 +33,13 @@ describe('index page', () => {
     const title = await browser.getTitle();
     assert.strictEqual(title, '\u200E');
     await expect(BasePage.skyline).toHaveAttribute('data-ct-app', 'skyline');
-    // Production mounts the interactive 3D skyline directly, without waiting
-    // for a hat preview.
-    await expect(
-      await browser.$(
-        '#skyline > [role="region"][aria-label="Interactive Chicago skyline"]'
-      )
-    ).toExist();
+    // Production starts the interactive 3D skyline directly, without waiting
+    // for a hat preview, and renders its first frame.
+    await expect(await browser.$(Base.skylineRegion)).toHaveAttribute(
+      'aria-label',
+      'Interactive Chicago skyline'
+    );
+    await BasePage.waitForSkylineFrame();
     assert.strictEqual(await BasePage.headerBackground(), 'rgba(0, 0, 0, 0)');
     await expectNoHatPreparation();
   });

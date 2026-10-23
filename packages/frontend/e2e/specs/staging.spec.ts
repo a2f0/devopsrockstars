@@ -74,7 +74,7 @@ describe('staging environment', () => {
   });
 });
 
-const skylineRegion = '#skyline > [role="region"]';
+const {skylineRegion} = Base;
 
 type SkylineProbe = Window & {
   __skylineProbe?: {
@@ -120,27 +120,6 @@ function probeSkyline() {
 function probedMessages() {
   return browser.execute(
     () => (window as SkylineProbe).__skylineProbe?.messages ?? []
-  );
-}
-
-async function waitForSkylineFrame() {
-  // The region is aria-busy until `ready` settles, and the scene hides its
-  // loading indicator at the first frame.
-  await browser.waitUntil(
-    () =>
-      browser.execute(selector => {
-        const region = document.querySelector(selector);
-        const loading = region?.shadowRoot?.querySelector('#loading');
-        return (
-          region?.hasAttribute('aria-busy') === false &&
-          loading instanceof HTMLElement &&
-          loading.hidden
-        );
-      }, skylineRegion),
-    {
-      timeout: 30000,
-      timeoutMsg: 'The shared 3D skyline must render its first frame',
-    }
   );
 }
 
@@ -321,7 +300,7 @@ describe('staging 3D skyline', () => {
           'aria-label',
           'Interactive Chicago skyline'
         );
-        await waitForSkylineFrame();
+        await BasePage.waitForSkylineFrame();
         // The viewer renders in the page, without frames, fills the viewport,
         // shows its sky through the transparent header, and receives presses
         // outside the header.
@@ -436,7 +415,7 @@ describe('staging 3D skyline', () => {
         await (await browser.$('footer a[href="/"]')).click();
         await (await browser.$(skylineRegion)).waitForExist();
         assert.strictEqual(await browser.$$(skylineRegion).length, 1);
-        await waitForSkylineFrame();
+        await BasePage.waitForSkylineFrame();
         // The hat preview and the viewer share the page's three.js: the
         // viewer never loads its own copy, and three.js logs no warnings,
         // such as a second instance or a removed shadow map type.
