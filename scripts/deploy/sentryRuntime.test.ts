@@ -3,6 +3,7 @@ import {mkdtemp, rm} from 'node:fs/promises';
 import {SourceMap} from 'node:module';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
+import {validateSourceMaps} from './sentryMaps';
 import {sentryConfig} from './sentryProjects';
 
 test('real workerd captures API failures, retains waitUntil, and emits mappable private frames', async () => {
@@ -65,6 +66,7 @@ test('real workerd captures API failures, retains waitUntil, and emits mappable 
     }
   );
   if (result.exitCode) throw new Error(result.stderr.toString());
+  await validateSourceMaps(bundle);
   const received: string[] = [];
   const collector = Bun.serve({
     hostname: '127.0.0.1',

@@ -63,6 +63,24 @@ test('thrown client errors and known unconfigured responses do not report', asyn
         )
       ).status
     ).toBe(409);
+    cancellation.mockRejectedValue(
+      new orders.OrderCancellationError(
+        'checkout_unavailable',
+        'Unconfigured',
+        503
+      )
+    );
+    expect(
+      (
+        await fetchHandler(
+          new Request(
+            'https://store.devopsrockstars.com/api/orders/12345678-1234-4234-8234-123456789abc/cancel',
+            {method: 'POST'}
+          ),
+          requestEnvironment
+        )
+      ).status
+    ).toBe(503);
     expect(
       (await fetchHandler(checkoutRequest(checkoutBody), requestEnvironment))
         .status
@@ -90,8 +108,8 @@ test('thrown client errors and known unconfigured responses do not report', asyn
 
 test('unexpected handled 503s still report and a missing context awaits delivery', async () => {
   const failure = new checkout.CheckoutCreationError(
-    'stripe_unavailable',
-    'Private',
+    'checkout_unavailable',
+    'The store is busy',
     503
   );
   const start = spyOn(checkout, 'startCheckout').mockRejectedValue(failure);
@@ -102,10 +120,11 @@ test('unexpected handled 503s still report and a missing context awaits delivery
   const report = spyOn(diagnostics, 'reportApiError').mockReturnValue(delivery);
   let completed = false;
   try {
-    const response = fetchHandler(
-      checkoutRequest(checkoutBody),
-      requestEnvironment
-    ).then(value => {
+    const response = fetchHandler(checkoutRequest(checkoutBody), {
+      ...requestEnvironment,
+      STRIPE_SECRET_KEY: 'test-only',
+      STRIPE_PUBLISHABLE_KEY: 'test-only',
+    }).then(value => {
       completed = true;
       return value;
     });

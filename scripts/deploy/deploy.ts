@@ -277,6 +277,8 @@ export function wranglerDeployCommand(
 }
 
 if (import.meta.main) {
+  const sentryToken = process.env['SENTRY_AUTH_TOKEN'] ?? '';
+  delete process.env['SENTRY_AUTH_TOKEN'];
   const request = parseDeploymentRequest(process.argv.slice(2));
   const selected = request.environment;
   const manifest = await Bun.file(
@@ -305,8 +307,6 @@ if (import.meta.main) {
   const mapsRoot = path.join(root, 'build/sentry');
   const webMaps = path.join(mapsRoot, 'web');
   const apiMaps = path.join(mapsRoot, 'api');
-  const sentryToken = process.env['SENTRY_AUTH_TOKEN'] ?? '';
-  delete process.env['SENTRY_AUTH_TOKEN'];
   if (!previewOnly && !sentryToken)
     throw new Error('Configured Sentry deployments require SENTRY_AUTH_TOKEN');
   const env = {

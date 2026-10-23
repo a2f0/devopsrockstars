@@ -154,10 +154,17 @@ export async function fetchHandler(
     response.status === 503 &&
     ((operation === 'checkout' &&
       ((failure instanceof CheckoutCreationError &&
-        failure.code === 'checkout_unavailable') ||
+        failure.code === 'checkout_unavailable' &&
+        (!env.STRIPE_SECRET_KEY?.trim() ||
+          !env.STRIPE_PUBLISHABLE_KEY?.trim() ||
+          !env.CHECKOUT_HASH_SECRET?.trim())) ||
         (!failure &&
           (!env.CHECKOUT_RATE_LIMITER ||
             !env.CHECKOUT_HASH_SECRET?.trim())))) ||
+      (operation === 'cancel-order' &&
+        failure instanceof OrderCancellationError &&
+        failure.code === 'checkout_unavailable' &&
+        !env.STRIPE_SECRET_KEY?.trim()) ||
       (operation === 'stripe-webhook' &&
         !failure &&
         !env.STRIPE_WEBHOOK_SECRET?.trim()));
