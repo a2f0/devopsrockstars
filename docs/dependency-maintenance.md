@@ -134,7 +134,10 @@ generated assets, and installed Wrangler and esbuild entrypoints plus live
 identities before each publication. The staged backend bundle and both runtimes'
 private source maps are also hashed, including the bundled Sentry and Better Auth
 dependencies.
-The backend publishes that exact bundle without rebuilding it. This is a
+The backend publishes that exact bundle without rebuilding it. The guard also
+dry-runs the staged publication command with the workspace's explicit
+`--config` path: Wrangler otherwise discovers config relative to the staged
+entry instead of the workspace. This is a
 targeted digest of installed entrypoints, not a checksum of all `node_modules`;
 CI's frozen install binds the package graph to `bun.lock`.
 The expected identities are intentionally fixed independently of Wrangler's
@@ -180,7 +183,8 @@ the complete local filename set. A missing table, failed read, pending migration
 or unknown applied migration holds deployment. It never initializes schema or
 applies remote SQL. `--skip-migrations` is rejected; remote
 `db:check:*` scripts perform the same full compile, frontend build, two Worker
-bundle dry-runs, and live-resource preview before reporting zero pending
+bundle dry-runs, the staged API publication dry-run, and live-resource preview
+before reporting zero pending
 migrations. They are deliberately full deployment checks, not quick metadata
 queries. They do not apply SQL. New migrations need a separate reviewed rollout with a
 scoped apply command and meaningful execution preview before

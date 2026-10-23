@@ -3,6 +3,7 @@ import {mkdtemp, rm} from 'node:fs/promises';
 import {SourceMap} from 'node:module';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
+import {wranglerDeployCommand} from './deploy';
 import {validateSourceMaps} from './sentryMaps';
 import {sentryConfig} from './sentryProjects';
 
@@ -74,6 +75,41 @@ test('real workerd captures API failures, retains waitUntil, and emits mappable 
   );
   if (result.exitCode) throw new Error(result.stderr.toString());
   await validateSourceMaps(bundle);
+  const root = path.resolve(import.meta.dir, '../..');
+  const staged = path.join(bundle, 'index.js');
+  const stagedContents = await Bun.file(staged).text();
+  for (const environment of ['prod', 'staging'] as const) {
+    const command = wranglerDeployCommand(
+      root,
+      'backend',
+      environment,
+      false,
+      configuration
+    );
+    // Exercise the production command against an off-workspace fixture bundle.
+    const entry = command.args.indexOf(
+      path.join(root, 'build/sentry/api/index.js')
+    );
+    expect(entry).toBeGreaterThan(-1);
+    command.args[entry] = staged;
+    const preview = Bun.spawnSync(
+      [process.execPath, ...command.args, '--dry-run'],
+      {
+        cwd: command.cwd,
+        env: {...process.env, WRANGLER_SEND_METRICS: 'false'},
+      }
+    );
+    expect(preview.exitCode).toBe(0);
+    const output = preview.stdout.toString() + preview.stderr.toString();
+    expect(output).not.toContain('No environment found');
+    expect(output).toContain('env.CHECKOUT_RATE_LIMITER');
+    expect(output).toContain(
+      environment === 'prod'
+        ? '(devopsrockstars-store)'
+        : '(devopsrockstars-store-staging)'
+    );
+    expect(await Bun.file(staged).text()).toBe(stagedContents);
+  }
   const received: string[] = [];
   const collector = Bun.serve({
     hostname: '127.0.0.1',
