@@ -20,6 +20,7 @@ const Account = () => {
   const [busy, setBusy] = useState(false);
   const [changed, setChanged] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+  const [signOutError, setSignOutError] = useState('');
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -53,11 +54,21 @@ const Account = () => {
 
   async function leave() {
     setSigningOut(true);
+    setSignOutError('');
     try {
       await signOut();
-    } finally {
-      window.location.assign('/admin');
+    } catch (caught) {
+      // Only an expired session is already signed out; otherwise the session
+      // is still active, so stay here and say so.
+      if (!(caught instanceof AdminApiError && caught.status === 401)) {
+        setSignOutError(
+          'Sign-out failed, so this session is still active. Try again.'
+        );
+        setSigningOut(false);
+        return;
+      }
     }
+    window.location.assign('/admin');
   }
 
   return (
@@ -70,6 +81,11 @@ const Account = () => {
           </LinkButton>
         </PanelHeader>
         <p>{user.email}</p>
+        {signOutError ? (
+          <Status $error role="alert">
+            {signOutError}
+          </Status>
+        ) : null}
       </Panel>
       <Panel>
         <PanelTitle>Change password</PanelTitle>

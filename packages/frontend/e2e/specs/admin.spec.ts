@@ -120,6 +120,15 @@ describe('store admin', () => {
           sessionStorage.setItem('__admin_signed_in', '1');
           return Response.json({user: fixtures.user});
         }
+        if (url.pathname === '/api/auth/sign-out') {
+          if (sessionStorage.getItem('__admin_sign_out_fails'))
+            return Response.json(
+              {error: {code: 'auth_unavailable', message: ''}},
+              {status: 503}
+            );
+          sessionStorage.removeItem('__admin_signed_in');
+          return Response.json({success: true});
+        }
         if (!signedIn)
           return Response.json(
             {error: {code: 'authentication_required', message: ''}},
@@ -245,6 +254,23 @@ describe('store admin', () => {
           ['confirm-password', 'new-password', false],
         ]
       );
+
+      // A failed sign-out keeps the page and says the session is active.
+      await browser.execute(() =>
+        sessionStorage.setItem('__admin_sign_out_fails', '1')
+      );
+      const signOut = await browser.$('button=Sign out');
+      await signOut.click();
+      const signOutAlert = await browser.$('[role="alert"]');
+      await signOutAlert.waitForExist();
+      assert.match(await signOutAlert.getText(), /still active/u);
+      assert.match(await browser.getUrl(), /\/admin\/account$/u);
+      await browser.execute(() =>
+        sessionStorage.removeItem('__admin_sign_out_fails')
+      );
+      await signOut.click();
+      await browser.$('#admin-email').waitForExist();
+      assert.match(await browser.getUrl(), /\/admin$/u);
 
       const requests = JSON.parse(
         await browser.execute(
