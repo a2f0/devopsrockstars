@@ -95,6 +95,8 @@ test('Wrangler previews and publications use the expected Worker directory and f
         '--bun',
         'wrangler',
         'deploy',
+        '--config',
+        path.join(root, 'packages', worker, 'wrangler.jsonc'),
         '--env',
         environment,
         '--keep-vars',
@@ -114,6 +116,8 @@ test('Wrangler previews and publications use the expected Worker directory and f
         '--bun',
         'wrangler',
         'deploy',
+        '--config',
+        path.join(root, 'packages', worker, 'wrangler.jsonc'),
         '--env',
         environment,
         '--keep-vars',
@@ -124,6 +128,47 @@ test('Wrangler previews and publications use the expected Worker directory and f
     }
   }
 });
+
+test('the staged backend publication resolves its Worker configuration', async () => {
+  // Wrangler resolves configuration from an explicit script's directory, so
+  // only a real run proves the staged bundle is published as the store Worker.
+  const temporary = await mkdtemp(path.join(tmpdir(), 'staged-worker-'));
+  try {
+    const script = path.join(temporary, 'index.js');
+    await Bun.write(
+      script,
+      'export default {fetch() {return new Response("ok");}};\n'
+    );
+    const publish = wranglerDeployCommand(
+      root,
+      'backend',
+      'staging',
+      false,
+      sentryConfig('staging', 'api', 'a'.repeat(40))
+    );
+    const result = Bun.spawnSync(
+      [
+        process.execPath,
+        ...publish.args.map(argument =>
+          argument === path.join(root, 'build/sentry/api/index.js')
+            ? script
+            : argument
+        ),
+        '--dry-run',
+      ],
+      {
+        cwd: publish.cwd,
+        env: {...process.env, CI: 'true', WRANGLER_SEND_METRICS: 'false'},
+      }
+    );
+    const output = `${result.stdout}${result.stderr}`;
+    expect(result.exitCode, output).toBe(0);
+    expect(output).toContain('devopsrockstars-store-staging');
+    expect(output).toContain('CHECKOUT_RATE_LIMITER');
+  } finally {
+    await rm(temporary, {recursive: true, force: true});
+  }
+}, 60000);
 
 test('deployment arguments reject bypasses and select preview or publication', async () => {
   expect(() => parseDeploymentRequest(['prod', '--skip-migrations'])).toThrow(

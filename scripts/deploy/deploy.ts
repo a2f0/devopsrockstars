@@ -250,12 +250,17 @@ export function wranglerDeployCommand(
   preview: boolean,
   diagnostics: DiagnosticsConfig
 ) {
+  const cwd = path.join(root, 'packages', workspace);
   return {
     args: [
       'run',
       '--bun',
       'wrangler',
       'deploy',
+      // Wrangler looks for configuration beside an explicit script, so the
+      // staged backend bundle would otherwise publish without a Worker name.
+      '--config',
+      path.join(cwd, 'wrangler.jsonc'),
       '--env',
       environment,
       '--keep-vars',
@@ -272,7 +277,7 @@ export function wranglerDeployCommand(
             ]
           : [path.join(root, 'build/sentry/api/index.js'), '--no-bundle']),
     ],
-    cwd: path.join(root, 'packages', workspace),
+    cwd,
   };
 }
 
