@@ -1,5 +1,5 @@
 import {expect, test} from 'bun:test';
-import {mkdtemp, readdir, rm} from 'node:fs/promises';
+import {access, mkdtemp, readdir, rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
 import {
@@ -58,6 +58,16 @@ test('source map validation rejects missing maps and uploads require credentials
       })
     );
     await expect(validateSourceMaps(directory)).rejects.toThrow('incomplete');
+    await Bun.write(
+      path.join(directory, 'index.js.map'),
+      JSON.stringify({
+        version: 3,
+        sources: [],
+        sourcesContent: [],
+        mappings: '',
+      })
+    );
+    await expect(validateSourceMaps(directory)).rejects.toThrow('incomplete');
     await expect(
       uploadSourceMaps(
         directory,
@@ -90,6 +100,14 @@ test('real frontend builds keep complete source maps private and remove stale pu
       )
     ).toBe(false);
     await validateSourceMaps(maps);
+    const scripts = (await readdir(output, {recursive: true})).filter(
+      name => !name.startsWith('static/') && name.endsWith('.js')
+    );
+    expect(scripts.some(name => name.startsWith('assets/chunk-'))).toBe(true);
+    for (const script of scripts) {
+      expect(script.startsWith('assets/')).toBe(true);
+      await access(path.join(maps, `${path.basename(script)}.map`));
+    }
     expect((await readdir(maps)).some(name => name.endsWith('.js.map'))).toBe(
       true
     );
@@ -107,7 +125,7 @@ test('upload failure and artifact changes prevent publication; previews never up
     bundle: async () => {},
     inspect: async () => 'identities',
     inputs: async () => inputs,
-    prepare: async (): Promise<void> => {
+    prepare: async (_worker: 'backend' | 'frontend'): Promise<void> => {
       uploads++;
       throw new Error('upload failed');
     },
@@ -134,6 +152,14 @@ test('upload failure and artifact changes prevent publication; previews never up
   };
   await expect(guardedDeployment(operations)).rejects.toThrow(
     'live resource identities changed'
+  );
+  expect(published).toBe(false);
+  operations.inspect = async () => 'stable';
+  operations.prepare = async worker => {
+    if (worker === 'frontend') throw new Error('web upload failed');
+  };
+  await expect(guardedDeployment(operations)).rejects.toThrow(
+    'web upload failed'
   );
   expect(published).toBe(false);
 });

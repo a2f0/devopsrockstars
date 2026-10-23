@@ -86,8 +86,11 @@ function AppRouter() {
 }
 
 const diagnostics = configureBrowserDiagnostics(globalThis.__SENTRY_WEB__);
-const reportReactError = (error: unknown) => {
-  console.error(error);
+const reportReactError = (
+  error: unknown,
+  info: {componentStack?: string | undefined}
+) => {
+  console.error(error, info.componentStack);
   diagnostics?.capture(error, 'react');
 };
 const rootElement = document.getElementById('©');

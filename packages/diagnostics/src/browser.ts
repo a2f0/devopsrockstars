@@ -55,7 +55,7 @@ export function configureBrowserDiagnostics(
       capture(event.error, 'unhandled-error');
     const onRejection = (event: PromiseRejectionEvent) =>
       capture(event.reason, 'unhandled-rejection');
-    const flush = () => Promise.resolve(client.flush(2000)).catch(() => false);
+    const flush = () => Promise.resolve(client.flush(6000)).catch(() => false);
     const onPageHide = () => {
       void flush();
     };
@@ -69,7 +69,7 @@ export function configureBrowserDiagnostics(
         window.removeEventListener('error', onError);
         window.removeEventListener('unhandledrejection', onRejection);
         window.removeEventListener('pagehide', onPageHide);
-        return client.close(2000);
+        return client.close(6000);
       },
     };
   } catch {

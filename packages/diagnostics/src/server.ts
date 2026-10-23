@@ -49,6 +49,7 @@ export function configureServerDiagnostics(
         /* Preserve the original response or scheduled failure. */
       }
     },
-    flush: () => Promise.resolve(client.flush(2000)).catch(() => false),
+    // Outlast the transport deadline so workerd waits for completion or abort.
+    flush: () => Promise.resolve(client.flush(6000)).catch(() => false),
   };
 }

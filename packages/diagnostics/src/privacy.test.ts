@@ -154,6 +154,7 @@ test('transport sends only scrubbed errors, omits credentials, and bounds duplic
     expect(sent).toHaveLength(5);
     for (const request of sent) {
       expect(request.credentials).toBe('omit');
+      expect(request.keepalive).toBe(true);
       expect(request.referrerPolicy).toBe('no-referrer');
       expect(String(request.body)).not.toContain(secret);
       expect(String(request.body)).not.toContain('attachment');

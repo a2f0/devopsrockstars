@@ -16,6 +16,7 @@ export function privateTransport(
         body: typeof body === 'string' ? body : new Uint8Array(body),
         credentials: 'omit',
         referrerPolicy: 'no-referrer',
+        ...(config.runtime === 'web' ? {keepalive: true} : {}),
         signal: AbortSignal.timeout(5000),
       });
       return {

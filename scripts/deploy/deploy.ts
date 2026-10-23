@@ -42,7 +42,7 @@ export async function guardedDeployment(
   const identities = await operations.inspect();
   if (dryRun || migrationsOnly) return;
   const workers: WorkerName[] = worker ? [worker] : ['backend', 'frontend'];
-  const published: WorkerName[] = [];
+  // Complete all Sentry uploads before changing either deployed runtime.
   for (const workspace of workers) {
     if ((await operations.inputs()) !== inputs)
       throw new Error('Deployment held: inputs changed after preview');
@@ -51,6 +51,11 @@ export async function guardedDeployment(
       throw new Error(
         'Deployment held: inputs changed during source map upload'
       );
+  }
+  const published: WorkerName[] = [];
+  for (const workspace of workers) {
+    if ((await operations.inputs()) !== inputs)
+      throw new Error('Deployment held: inputs changed after preview');
     if ((await operations.inspect(published)) !== identities)
       throw new Error(
         'Deployment held: live resource identities changed after preview'

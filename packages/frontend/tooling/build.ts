@@ -47,7 +47,11 @@ export async function bundleFrontend({
     splitting: true,
     sourcemap: 'external',
     minify,
-    naming: 'assets/[name]-[hash].[ext]',
+    naming: {
+      entry: 'assets/[name]-[hash].[ext]',
+      chunk: 'assets/chunk-[hash].[ext]',
+      asset: 'assets/[name]-[hash].[ext]',
+    },
     define: {
       'globalThis.__FEATURE_FLAGS__': JSON.stringify(flags),
       'globalThis.__SITE_ENVIRONMENT__': JSON.stringify(environment),

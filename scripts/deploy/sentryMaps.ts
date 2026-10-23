@@ -11,17 +11,27 @@ export async function validateSourceMaps(directory: string) {
     throw new Error('Sentry source maps: no JavaScript bundles');
   for (const script of scripts) {
     const map = await Bun.file(path.join(directory, `${script}.map`)).json();
+    // Bun emits an unmapped import/export-only facade for the shared Three.js
+    // module. It contains no executable application code; every other bundle
+    // must retain its original sources and mappings.
+    const code = (await Bun.file(path.join(directory, script)).text())
+      .replace(/\/\/# debugId=[a-f0-9-]+/giu, '')
+      .trim();
+    const facade =
+      /^import\s*\{[\w,$\s]+\}\s*from\s*["']\.\/chunk-[a-z0-9]+\.js["'];\s*export\s*\{[\w,$\s]+\};$/u.test(
+        code
+      );
     if (
       map.version !== 3 ||
       !Array.isArray(map.sources) ||
-      !map.sources.length ||
+      (!map.sources.length && !facade) ||
       !Array.isArray(map.sourcesContent) ||
       map.sourcesContent.length !== map.sources.length ||
       map.sourcesContent.some(
         (source: unknown) => typeof source !== 'string'
       ) ||
       typeof map.mappings !== 'string' ||
-      !map.mappings
+      (!map.mappings && !facade)
     )
       throw new Error(`Sentry source maps: incomplete ${script}.map`);
   }
