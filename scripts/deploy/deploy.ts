@@ -2,6 +2,7 @@
 import {readdir, realpath, rm} from 'node:fs/promises';
 import {createRequire} from 'node:module';
 import path from 'node:path';
+import type {DiagnosticsConfig} from '../../packages/diagnostics/src/config';
 import {writeFrontendBuild} from '../../packages/frontend/tooling/build';
 import {
   cloudflareReader,
@@ -45,17 +46,17 @@ export async function guardedDeployment(
   for (const workspace of workers) {
     if ((await operations.inputs()) !== inputs)
       throw new Error('Deployment held: inputs changed after preview');
+    await operations.prepare?.(workspace);
+    if ((await operations.inputs()) !== inputs)
+      throw new Error(
+        'Deployment held: inputs changed during source map upload'
+      );
     if ((await operations.inspect(published)) !== identities)
       throw new Error(
         'Deployment held: live resource identities changed after preview'
       );
     if ((await operations.inputs()) !== inputs)
       throw new Error('Deployment held: inputs changed during live inspection');
-    await operations.prepare?.(workspace);
-    if ((await operations.inputs()) !== inputs)
-      throw new Error(
-        'Deployment held: inputs changed during source map upload'
-      );
     await operations.publish(workspace);
     published.push(workspace);
     if ((await operations.inspect(published)) !== identities)
@@ -239,7 +240,8 @@ export function wranglerDeployCommand(
   root: string,
   workspace: WorkerName,
   environment: DeploymentEnvironment,
-  preview: boolean
+  preview: boolean,
+  diagnostics: DiagnosticsConfig
 ) {
   return {
     args: [
@@ -251,6 +253,17 @@ export function wranglerDeployCommand(
       environment,
       '--keep-vars',
       ...(preview ? ['--dry-run'] : []),
+      ...(workspace !== 'backend'
+        ? []
+        : preview
+          ? [
+              '--upload-source-maps',
+              '--outdir',
+              path.join(root, 'build/sentry/api'),
+              '--define',
+              `globalThis.__SENTRY_API__:${JSON.stringify(diagnostics)}`,
+            ]
+          : [path.join(root, 'build/sentry/api/index.js'), '--no-bundle']),
     ],
     cwd: path.join(root, 'packages', workspace),
   };
@@ -286,6 +299,7 @@ if (import.meta.main) {
   const webMaps = path.join(mapsRoot, 'web');
   const apiMaps = path.join(mapsRoot, 'api');
   const sentryToken = process.env['SENTRY_AUTH_TOKEN'] ?? '';
+  delete process.env['SENTRY_AUTH_TOKEN'];
   if (!previewOnly && !sentryToken)
     throw new Error('Configured Sentry deployments require SENTRY_AUTH_TOKEN');
   const env = {
@@ -316,18 +330,13 @@ if (import.meta.main) {
   );
   const target = await deploymentTarget(root, selected);
   const publish = (workspace: WorkerName, preview: boolean) => {
-    const command = wranglerDeployCommand(root, workspace, selected, preview);
-    if (workspace === 'backend') {
-      if (preview)
-        command.args.push(
-          '--upload-source-maps',
-          '--outdir',
-          apiMaps,
-          '--define',
-          `globalThis.__SENTRY_API__:${JSON.stringify(apiDiagnostics)}`
-        );
-      else command.args.push(path.join(apiMaps, 'index.js'), '--no-bundle');
-    }
+    const command = wranglerDeployCommand(
+      root,
+      workspace,
+      selected,
+      preview,
+      apiDiagnostics
+    );
     run(command.args, command.cwd);
   };
   await guardedDeployment(

@@ -22,6 +22,7 @@
   "dependencies": {
     "@a2f0/ct-client": "0.1.4",
     "@a2f0/skyline": "0.2.44",
+    "@devopsrockstars/diagnostics": "workspace:*",
     "@devopsrockstars/shared-types": "workspace:*",
     "@stripe/stripe-js": "10.1.0",
     "leaflet": "1.9.4",
@@ -31,7 +32,6 @@
     "react-router": "8.5.0",
     "react-svg": "19.2.3",
     "styled-components": "6.6.0",
-    "three": "0.186.1",
-    "@devopsrockstars/diagnostics": "workspace:*"
+    "three": "0.186.1"
   }
 }

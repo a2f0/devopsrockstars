@@ -1,8 +1,11 @@
 import {expect, test} from 'bun:test';
-import {mkdtemp, rm} from 'node:fs/promises';
+import {mkdtemp, readdir, rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
-import {bundleFrontend} from '../../packages/frontend/tooling/build';
+import {
+  bundleFrontend,
+  writeFrontendBuild,
+} from '../../packages/frontend/tooling/build';
 import {guardedDeployment} from './deploy';
 import {uploadSourceMaps, validateSourceMaps} from './sentryMaps';
 import {sentryConfig} from './sentryProjects';
@@ -67,6 +70,34 @@ test('source map validation rejects missing maps and uploads require credentials
   }
 });
 
+test('real frontend builds keep complete source maps private and remove stale public maps', async () => {
+  const directory = await mkdtemp(path.join(tmpdir(), 'sentry-build-'));
+  const output = path.join(directory, 'public');
+  const maps = path.join(directory, 'private');
+  try {
+    await Bun.write(path.join(output, 'stale.js.map'), 'private source');
+    await writeFrontendBuild(
+      {
+        environment: 'staging',
+        diagnostics: sentryConfig('staging', 'web', 'a'.repeat(40)),
+      },
+      maps,
+      output
+    );
+    expect(
+      (await readdir(output, {recursive: true})).some(name =>
+        name.endsWith('.map')
+      )
+    ).toBe(false);
+    await validateSourceMaps(maps);
+    expect((await readdir(maps)).some(name => name.endsWith('.js.map'))).toBe(
+      true
+    );
+  } finally {
+    await rm(directory, {recursive: true, force: true});
+  }
+});
+
 test('upload failure and artifact changes prevent publication; previews never upload', async () => {
   let published = false;
   let uploads = 0;
@@ -93,6 +124,16 @@ test('upload failure and artifact changes prevent publication; previews never up
   };
   await expect(guardedDeployment(operations)).rejects.toThrow(
     'inputs changed during source map upload'
+  );
+  expect(published).toBe(false);
+  inputs = 'original';
+  let identities = 'original';
+  operations.inspect = async () => identities;
+  operations.prepare = async () => {
+    identities = 'changed during upload';
+  };
+  await expect(guardedDeployment(operations)).rejects.toThrow(
+    'live resource identities changed'
   );
   expect(published).toBe(false);
 });

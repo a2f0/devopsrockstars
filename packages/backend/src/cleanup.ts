@@ -1,4 +1,4 @@
-import {reportApiError} from './diagnostics';
+import {captureApiError, flushApiErrors} from './diagnostics';
 import {cancelPaymentIntent, retrievePaymentIntent} from './stripe';
 import type {Env} from './types';
 
@@ -169,7 +169,9 @@ export async function cleanupExpiredOrders(
       await markCanceled(env, order.id, now);
     } catch (error) {
       console.error(`Failed to expire order ${order.id}:`, error);
-      await reportApiError(error, 'scheduled', 'cleanup');
+      captureApiError(error, 'scheduled', 'cleanup');
     }
   }
+  // Finish all orders before waiting on the diagnostics network budget.
+  await flushApiErrors();
 }

@@ -7,17 +7,34 @@ declare global {
 }
 let diagnostics: ReturnType<typeof configureServerDiagnostics>;
 
-export async function reportApiError(
+export function captureApiError(
   error: unknown,
   source: 'request' | 'scheduled',
   operation: Operation
 ) {
   try {
     diagnostics ??= configureServerDiagnostics(globalThis.__SENTRY_API__);
-    await diagnostics?.capture(error, source, operation);
+    diagnostics?.capture(error, source, operation);
   } catch {
     /* Error reporting cannot affect the store response. */
   }
+}
+
+export async function flushApiErrors() {
+  try {
+    await diagnostics?.flush();
+  } catch {
+    /* Reporting is best effort. */
+  }
+}
+
+export async function reportApiError(
+  error: unknown,
+  source: 'request' | 'scheduled',
+  operation: Operation
+) {
+  captureApiError(error, source, operation);
+  await flushApiErrors();
 }
 
 export function requestOperation(request: Request): Operation {

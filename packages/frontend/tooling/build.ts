@@ -126,13 +126,14 @@ export async function bundleFrontend({
 
 export async function writeFrontendBuild(
   options: FrontendBuildOptions = {},
-  sourceMapsDirectory?: string
+  sourceMapsDirectory?: string,
+  destination = outputRoot
 ) {
   const assets = await bundleFrontend(options);
   // Wrangler uploads this entire directory. Remove every stale environment's
   // bundle before writing the successful build and copying static files.
-  await rm(outputRoot, {recursive: true, force: true});
-  await mkdir(outputRoot, {recursive: true});
+  await rm(destination, {recursive: true, force: true});
+  await mkdir(destination, {recursive: true});
   for (const [url, contents] of assets) {
     if (
       sourceMapsDirectory &&
@@ -145,12 +146,16 @@ export async function writeFrontendBuild(
       );
     // Source maps are deployment artifacts, never public static assets.
     if (!url.endsWith('.map'))
-      await Bun.write(path.join(outputRoot, url.slice(1)), contents);
+      await Bun.write(path.join(destination, url.slice(1)), contents);
   }
-  await cp(path.join(frontendRoot, 'static'), path.join(outputRoot, 'static'), {
-    recursive: true,
-  });
-  console.log(`Built ${assets.size} frontend assets in ${outputRoot}`);
+  await cp(
+    path.join(frontendRoot, 'static'),
+    path.join(destination, 'static'),
+    {
+      recursive: true,
+    }
+  );
+  console.log(`Built ${assets.size} frontend assets in ${destination}`);
   console.log(
     `Feature flags: ${await assets.get('/feature-flags.json')?.text()}`
   );

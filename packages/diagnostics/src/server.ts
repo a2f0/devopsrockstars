@@ -33,7 +33,7 @@ export function configureServerDiagnostics(
   });
   client.init();
   return {
-    async capture(
+    capture(
       error: unknown,
       source: 'request' | 'scheduled',
       operation: Operation
@@ -45,10 +45,10 @@ export function configureServerDiagnostics(
           error instanceof Error ? error : new Error('Application failure'),
           {captureContext: {tags: {diagnostic_source: source, operation}}}
         );
-        await client.flush(2000);
       } catch {
         /* Preserve the original response or scheduled failure. */
       }
     },
+    flush: () => Promise.resolve(client.flush(2000)).catch(() => false),
   };
 }

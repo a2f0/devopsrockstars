@@ -17,6 +17,7 @@ import {
   inspectDeployment,
   type ReadApi,
 } from './deploymentSafety';
+import {sentryConfig} from './sentryProjects';
 
 const root = path.resolve(import.meta.dir, '../..');
 const account = 'a'.repeat(32);
@@ -68,8 +69,25 @@ test('every package remote deploy script uses the shared guard', async () => {
 test('Wrangler previews and publications use the expected Worker directory and flags', () => {
   for (const environment of ['staging', 'prod'] as const) {
     for (const worker of ['backend', 'frontend'] as const) {
-      const preview = wranglerDeployCommand(root, worker, environment, true);
-      const publish = wranglerDeployCommand(root, worker, environment, false);
+      const diagnostics = sentryConfig(
+        environment === 'prod' ? 'production' : 'staging',
+        'api',
+        'a'.repeat(40)
+      );
+      const preview = wranglerDeployCommand(
+        root,
+        worker,
+        environment,
+        true,
+        diagnostics
+      );
+      const publish = wranglerDeployCommand(
+        root,
+        worker,
+        environment,
+        false,
+        diagnostics
+      );
       expect(preview.cwd).toBe(path.join(root, 'packages', worker));
       expect(publish.cwd).toBe(preview.cwd);
       expect(preview.args).toEqual([
@@ -81,6 +99,15 @@ test('Wrangler previews and publications use the expected Worker directory and f
         environment,
         '--keep-vars',
         '--dry-run',
+        ...(worker === 'backend'
+          ? [
+              '--upload-source-maps',
+              '--outdir',
+              path.join(root, 'build/sentry/api'),
+              '--define',
+              `globalThis.__SENTRY_API__:${JSON.stringify(diagnostics)}`,
+            ]
+          : []),
       ]);
       expect(publish.args).toEqual([
         'run',
@@ -90,6 +117,9 @@ test('Wrangler previews and publications use the expected Worker directory and f
         '--env',
         environment,
         '--keep-vars',
+        ...(worker === 'backend'
+          ? [path.join(root, 'build/sentry/api/index.js'), '--no-bundle']
+          : []),
       ]);
     }
   }
