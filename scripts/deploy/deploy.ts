@@ -256,6 +256,8 @@ export function wranglerDeployCommand(
       '--bun',
       'wrangler',
       'deploy',
+      '--config',
+      path.join(root, 'packages', workspace, 'wrangler.jsonc'),
       '--env',
       environment,
       '--keep-vars',
@@ -363,6 +365,18 @@ if (import.meta.main) {
       bundle: async workspace => {
         publish(workspace, true);
         await validateSourceMaps(workspace === 'backend' ? apiMaps : webMaps);
+        if (workspace === 'backend') {
+          // A staged entry lives outside the workspace. Validate the exact
+          // no-bundle publication command and its explicit config before uploads.
+          const command = wranglerDeployCommand(
+            root,
+            workspace,
+            selected,
+            false,
+            apiDiagnostics
+          );
+          run([...command.args, '--dry-run'], command.cwd);
+        }
       },
       inspect: required => inspectDeployment(target, read, required),
       inputs: () => deploymentInputs(root, committedHead),
