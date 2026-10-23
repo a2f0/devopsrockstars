@@ -74,7 +74,7 @@ describe('staging environment', () => {
   });
 });
 
-const skylineRegion = '#skyline > [role="region"]';
+const {skylineRegion} = Base;
 
 type SkylineProbe = Window & {
   __skylineProbe?: {
@@ -123,27 +123,6 @@ function probedMessages() {
   );
 }
 
-async function waitForSkylineFrame() {
-  // The region is aria-busy until `ready` settles, and the scene hides its
-  // loading indicator at the first frame.
-  await browser.waitUntil(
-    () =>
-      browser.execute(selector => {
-        const region = document.querySelector(selector);
-        const loading = region?.shadowRoot?.querySelector('#loading');
-        return (
-          region?.hasAttribute('aria-busy') === false &&
-          loading instanceof HTMLElement &&
-          loading.hidden
-        );
-      }, skylineRegion),
-    {
-      timeout: 30000,
-      timeoutMsg: 'The shared 3D skyline must render its first frame',
-    }
-  );
-}
-
 async function tapInSkyline(selector: string) {
   const point = await browser.execute(
     (region, target) => {
@@ -170,7 +149,7 @@ async function tapInSkyline(selector: string) {
 }
 
 describe('staging 3D skyline', () => {
-  it('keeps the SVG visible until background hat preparation finishes', async () => {
+  it('waits for background hat preparation before mounting the viewer', async () => {
     const delayArtwork = await browser.addInitScript(() => {
       const artworkReady = new Promise<void>(resolve => {
         window.addEventListener('release-hat-artwork', () => resolve(), {
@@ -189,7 +168,7 @@ describe('staging 3D skyline', () => {
     try {
       await BasePage.openStaging('');
       await BasePage.waitForAppReady();
-      await expect(await browser.$('img#skyline')).toExist();
+      await expect(BasePage.skyline).toExist();
       assert.strictEqual(await browser.$$(skylineRegion).length, 0);
       await browser.execute(() =>
         window.dispatchEvent(new Event('release-hat-artwork'))
@@ -206,7 +185,6 @@ describe('staging 3D skyline', () => {
       await (await browser.$(skylineRegion)).waitForExist({
         timeout: 30_000,
       });
-      await expect(await browser.$('img#skyline')).not.toExist();
     } finally {
       await browser.execute(() =>
         window.dispatchEvent(new Event('release-hat-artwork'))
@@ -244,7 +222,7 @@ describe('staging 3D skyline', () => {
     }
   });
 
-  it('shows the original SVG when the 3D skyline cannot start', async () => {
+  it('keeps the original drawing one press away when the 3D skyline cannot start', async () => {
     const probe = await probeSkyline();
     const withoutWebgl = await browser.addInitScript(() => {
       const getContext = HTMLCanvasElement.prototype.getContext;
@@ -270,8 +248,23 @@ describe('staging 3D skyline', () => {
           timeoutMsg: 'The viewer must report that it could not start',
         }
       );
-      await expect(await browser.$(skylineRegion)).not.toExist();
-      await expect(await browser.$('img#skyline')).toExist();
+      const viewer = await browser.$(skylineRegion);
+      await expect(viewer).toExist();
+      await (await viewer.shadow$('#embedded-original')).click();
+      const drawing = await viewer.shadow$('#drawing');
+      await expect(drawing).toBeDisplayed();
+      await browser.waitUntil(() =>
+        browser.execute(selector => {
+          const image = document
+            .querySelector(selector)
+            ?.shadowRoot?.querySelector('#drawing');
+          return (
+            image instanceof HTMLImageElement &&
+            image.complete &&
+            image.naturalWidth > 0
+          );
+        }, skylineRegion)
+      );
     } finally {
       await withoutWebgl.remove();
       await probe.remove();
@@ -303,12 +296,11 @@ describe('staging 3D skyline', () => {
           'data-ct-app',
           'skyline'
         );
-        await expect(await browser.$('img#skyline')).not.toExist();
         await expect(viewer).toHaveAttribute(
           'aria-label',
           'Interactive Chicago skyline'
         );
-        await waitForSkylineFrame();
+        await BasePage.waitForSkylineFrame();
         // The viewer renders in the page, without frames, fills the viewport,
         // shows its sky through the transparent header, and receives presses
         // outside the header.
@@ -423,7 +415,7 @@ describe('staging 3D skyline', () => {
         await (await browser.$('footer a[href="/"]')).click();
         await (await browser.$(skylineRegion)).waitForExist();
         assert.strictEqual(await browser.$$(skylineRegion).length, 1);
-        await waitForSkylineFrame();
+        await BasePage.waitForSkylineFrame();
         // The hat preview and the viewer share the page's three.js: the
         // viewer never loads its own copy, and three.js logs no warnings,
         // such as a second instance or a removed shadow map type.

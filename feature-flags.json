@@ -1,12 +1,10 @@
 {
   "production": {
     "store": false,
-    "search": false,
-    "skyline3d": false
+    "search": false
   },
   "staging": {
     "store": true,
-    "search": true,
-    "skyline3d": true
+    "search": true
   }
 }

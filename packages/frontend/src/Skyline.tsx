@@ -1,10 +1,7 @@
 import {mountSkyline} from '@a2f0/skyline';
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useEffect, useRef} from 'react';
 import styled from 'styled-components';
-import {features} from './featureFlags';
 import {useHatPreviewPreparing} from './store/PreparedHatPreview';
-
-const skyline = '/static/image/skyline.svg';
 
 const FullScreenSkyline = styled.div`
   z-index: -1337;
@@ -13,30 +10,16 @@ const FullScreenSkyline = styled.div`
   width: 100%;
   height: 100vh;
   height: 100dvh;
-  align-items: flex-end;
-  display: flex;
-`;
-
-const FillContainerImg = styled.img`
-  width: 100%;
-  max-height: 100%;
-  object-fit: contain;
-  object-position: bottom;
-  display: block;
-`;
-
-const InteractiveSkyline = styled(FullScreenSkyline)`
   pointer-events: auto;
 `;
 
-function Skyline3d() {
+const Skyline = React.memo(() => {
   const container = useRef<HTMLDivElement>(null);
   const preparingHat = useHatPreviewPreparing();
-  const [unavailable, setUnavailable] = useState(false);
   useEffect(() => {
     // Avoid two expensive model builds competing for CPU/GPU startup time.
-    // The SVG stays visible until the parked hat settles, including failure.
-    if (preparingHat || unavailable || !container.current) return;
+    // The viewer mounts once the parked hat settles, including failure.
+    if (preparingHat || !container.current) return;
     const viewer = mountSkyline(container.current, {
       assetsUrl: '/static/skyline/',
       // Match the site's dark backdrop while the scene assets load.
@@ -44,27 +27,13 @@ function Skyline3d() {
       // Share the hat preview's three.js instead of loading a second engine.
       three: import('@a2f0/skyline/three'),
     });
-    // The viewer logs why it could not start. Show the original SVG instead
-    // of its in-place error. A destroyed viewer's promise never settles.
-    viewer.ready.catch(() => setUnavailable(true));
+    // A viewer that can't start says why in its place, logs the error, and
+    // keeps the original drawing one press away.
     return () => viewer.destroy();
-  }, [preparingHat, unavailable]);
-  if (preparingHat || unavailable) return <OriginalSkyline />;
+  }, [preparingHat]);
   return (
-    <InteractiveSkyline id="skyline" ref={container} data-ct-app="skyline" />
+    <FullScreenSkyline id="skyline" ref={container} data-ct-app="skyline" />
   );
-}
-
-function OriginalSkyline() {
-  return (
-    <FullScreenSkyline data-ct-app="skyline">
-      <FillContainerImg src={skyline} alt="skyline" id="skyline" />
-    </FullScreenSkyline>
-  );
-}
-
-const Skyline = React.memo(() =>
-  features.skyline3d ? <Skyline3d /> : <OriginalSkyline />
-);
+});
 
 export default Skyline;

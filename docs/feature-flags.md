@@ -8,7 +8,6 @@ to see the current values; this file is the source of truth for rollout state.
 | --- | --- |
 | `store` | Store navigation, routes, inventory prefetch, and hat preparation |
 | `search` | Search navigation and route |
-| `skyline3d` | Interactive Home skyline and bundled viewer assets |
 
 ```shell
 bun run flags          # Show the matrix and descriptions
@@ -18,9 +17,8 @@ bun run flags:check    # Validate without building or deploying
 
 To release or disable a feature, change only its boolean in the target
 environment's row in `feature-flags.json`, review the change, and redeploy that
-environment through the normal shipping workflow. For example, a later 3D
-skyline release would change `production.skyline3d` to `true`, leaving the store
-and search settings alone.
+environment through the normal shipping workflow. For example, a later store
+release would change `production.store` to `true`, leaving search alone.
 
 Keep each flag independent; never derive a flag's value from whether the
 environment is staging. Disabling the store removes its links and routes, but

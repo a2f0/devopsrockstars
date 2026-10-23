@@ -83,29 +83,27 @@ export async function bundleFrontend({
       type: 'application/json',
     })
   );
-  if (flags.skyline3d) {
-    const temporary = await mkdtemp(path.join(os.tmpdir(), 'skyline-assets-'));
-    try {
-      await copySkylineAssets(temporary);
-      for (const entry of await readdir(temporary, {
-        recursive: true,
-        withFileTypes: true,
-      })) {
-        if (!entry.isFile()) continue;
-        const filename = path.join(entry.parentPath, entry.name);
-        const relative = path
-          .relative(temporary, filename)
-          .split(path.sep)
-          .join('/');
-        const file = Bun.file(filename);
-        assets.set(
-          `/static/skyline/${relative}`,
-          new Blob([await file.arrayBuffer()], {type: file.type})
-        );
-      }
-    } finally {
-      await rm(temporary, {recursive: true, force: true});
+  const temporary = await mkdtemp(path.join(os.tmpdir(), 'skyline-assets-'));
+  try {
+    await copySkylineAssets(temporary);
+    for (const entry of await readdir(temporary, {
+      recursive: true,
+      withFileTypes: true,
+    })) {
+      if (!entry.isFile()) continue;
+      const filename = path.join(entry.parentPath, entry.name);
+      const relative = path
+        .relative(temporary, filename)
+        .split(path.sep)
+        .join('/');
+      const file = Bun.file(filename);
+      assets.set(
+        `/static/skyline/${relative}`,
+        new Blob([await file.arrayBuffer()], {type: file.type})
+      );
     }
+  } finally {
+    await rm(temporary, {recursive: true, force: true});
   }
   return assets;
 }

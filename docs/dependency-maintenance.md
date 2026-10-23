@@ -24,7 +24,7 @@ a reported coverage limit, never a reason to downgrade newer installed versions.
   Agent-tool's installer generates both harnesses' skills and
   `.agent-tool-skills.json`; commit them with its manifest and `bun.lock`.
 - Skyline mounts a region in an open shadow root. The React
-  effect handles `ready`, shares the host's Three.js through
+  effect leaves startup failures to the viewer, shares the host's Three.js through
   `@a2f0/skyline/three`, and always destroys the viewer on cleanup. Browser tests
   use the region/shadow DOM and verify readiness, controls, and navigation cleanup.
   The asset build uses a fresh dedicated temporary directory and removes

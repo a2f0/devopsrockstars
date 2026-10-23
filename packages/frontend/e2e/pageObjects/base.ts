@@ -21,6 +21,26 @@ class Base {
   openStaging(path: string) {
     return browser.url(`${Base.stagingOrigin}/${path}`);
   }
+  async waitForSkylineFrame() {
+    // The region is aria-busy until the viewer's `ready` settles, and the
+    // scene hides its loading indicator at the first frame, not on failure.
+    await browser.waitUntil(
+      () =>
+        browser.execute(selector => {
+          const region = document.querySelector(selector);
+          const loading = region?.shadowRoot?.querySelector('#loading');
+          return (
+            region?.hasAttribute('aria-busy') === false &&
+            loading instanceof HTMLElement &&
+            loading.hidden
+          );
+        }, Base.skylineRegion),
+      {
+        timeout: 30000,
+        timeoutMsg: 'The shared 3D skyline must render its first frame',
+      }
+    );
+  }
   async waitForAppReady() {
     const companyLink = await browser.$('a[href="/company"]');
     await companyLink.waitForExist({timeout: 30000});
@@ -59,6 +79,7 @@ class Base {
     });
   }
 
+  static readonly skylineRegion = '#skyline > [role="region"]';
   static readonly productionOrigin = 'http://localhost:8081';
   static readonly stagingOrigin = 'http://localhost:8082';
 }

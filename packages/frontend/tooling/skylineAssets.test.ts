@@ -4,10 +4,10 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {bundleFrontend} from './build';
 
-test('enabled skyline builds copy every published viewer asset together', async () => {
+test('builds copy every published viewer asset together', async () => {
   const assets = await bundleFrontend({
-    environment: 'staging',
-    featureFlags: {store: false, search: false, skyline3d: true},
+    environment: 'production',
+    featureFlags: {store: false, search: false},
   });
   const site = path.join(
     path.dirname(
@@ -32,14 +32,4 @@ test('enabled skyline builds copy every published viewer asset together', async 
       (await assets.get(`/static/skyline/${name}`)?.text())?.length
     ).toBeGreaterThan(0);
   }
-});
-
-test('disabled skyline bundles omit viewer assets', async () => {
-  const assets = await bundleFrontend({
-    environment: 'production',
-    featureFlags: {store: false, search: false, skyline3d: false},
-  });
-  expect(
-    [...assets.keys()].some(name => name.startsWith('/static/skyline/'))
-  ).toBe(false);
 });

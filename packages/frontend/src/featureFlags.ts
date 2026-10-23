@@ -5,7 +5,6 @@ import type {SiteEnvironment} from './environment';
 export const featureFlagDefinitions = {
   store: 'Store navigation, routes, inventory prefetch, and hat preview',
   search: 'Search navigation and page',
-  skyline3d: 'Interactive 3D skyline and its viewer assets',
 } as const;
 
 type FeatureFlagName = keyof typeof featureFlagDefinitions;
