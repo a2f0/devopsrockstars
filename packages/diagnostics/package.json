@@ -1,0 +1,17 @@
+{
+  "name": "@devopsrockstars/diagnostics",
+  "version": "0.1.0",
+  "private": true,
+  "license": "UNLICENSED",
+  "type": "module",
+  "exports": {
+    "./config": "./src/config.ts",
+    "./privacy": "./src/privacy.ts",
+    "./browser": "./src/browser.ts",
+    "./server": "./src/server.ts"
+  },
+  "dependencies": {
+    "@sentry/browser": "11.9.0",
+    "@sentry/core": "11.9.0"
+  }
+}

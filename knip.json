@@ -25,6 +25,10 @@
     },
     "packages/shared-types": {
       "project": ["src/**/*.ts"]
+    },
+    "packages/diagnostics": {
+      "entry": ["src/**/*.test.ts"],
+      "project": ["src/**/*.ts"]
     }
   },
   "ignoreDependencies": ["@biomejs/biome", "markdownlint-cli2"]

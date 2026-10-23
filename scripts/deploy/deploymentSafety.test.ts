@@ -725,6 +725,14 @@ test('generated assets and the installed Wrangler invalidate captured inputs', a
     expect(await deploymentInputs(repository, head)).not.toBe(initial);
     await Bun.write(asset, 'previewed asset');
     expect(await deploymentInputs(repository, head)).toBe(initial);
+    const map = path.join(repository, 'build/sentry/api/index.js.map');
+    await Bun.write(map, 'private map');
+    const mappedInputs = await deploymentInputs(repository, head);
+    expect(mappedInputs).not.toBe(initial);
+    await Bun.write(map, 'changed private map');
+    expect(await deploymentInputs(repository, head)).not.toBe(mappedInputs);
+    await rm(map);
+    expect(await deploymentInputs(repository, head)).toBe(initial);
     await Bun.write(tool, 'changed CLI');
     expect(await deploymentInputs(repository, head)).not.toBe(initial);
     await Bun.write(tool, 'previewed CLI');

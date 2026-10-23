@@ -127,8 +127,9 @@ does not expose the site's asset manifest; bundle dry-runs and post-deploy smoke
 checks cover asset behavior. It rejects unreviewed resource types, routes, incomplete
 API inventories, missing resources, and identity changes. It rechecks source,
 generated assets, and installed Wrangler and esbuild entrypoints plus live
-identities before each publication. The backend currently has no third-party
-runtime dependencies; adding one requires expanding this input check. This is a
+identities before each publication. The staged backend bundle and both runtimes'
+private source maps are also hashed, including the bundled Sentry dependencies.
+The backend publishes that exact bundle without rebuilding it. This is a
 targeted digest of installed entrypoints, not a checksum of all `node_modules`;
 CI's frozen install binds the package graph to `bun.lock`.
 The expected identities are intentionally fixed independently of Wrangler's

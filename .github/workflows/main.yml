@@ -102,6 +102,8 @@ jobs:
       - name: bun install
         run: bun install --frozen-lockfile
       - name: Deploy staging to Cloudflare
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         run: bun run deploy:staging
 
   deploy-production:
@@ -124,4 +126,6 @@ jobs:
       - name: bun install
         run: bun install --frozen-lockfile
       - name: Deploy production to Cloudflare
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         run: bun run deploy:prod

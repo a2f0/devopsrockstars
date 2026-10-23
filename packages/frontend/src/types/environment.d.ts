@@ -3,3 +3,4 @@
 declare var __FEATURE_FLAGS__: import('../featureFlags').FeatureFlags | undefined;
 declare var __STORE_API_ORIGIN__: string | undefined;
 declare var __SITE_ENVIRONMENT__: import('../environment').SiteEnvironment | undefined;
+declare var __SENTRY_WEB__: import('@devopsrockstars/diagnostics/config').DiagnosticsConfig | undefined;
