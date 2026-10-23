@@ -7,6 +7,7 @@ import {
   useLocation,
 } from 'react-router';
 import Company from './Company';
+import {startClickTracking} from './clickTracking';
 import {features} from './featureFlags';
 import Footer from './Footer';
 import Header from './Header';
@@ -44,6 +45,7 @@ function StorePrefetch() {
 }
 
 function AppRouter() {
+  useEffect(startClickTracking, []);
   return (
     <Router>
       <GlobalStyle />

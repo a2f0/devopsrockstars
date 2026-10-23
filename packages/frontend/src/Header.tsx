@@ -34,6 +34,7 @@ const NavItem = ({to, routes, children}: INavItemProps) => {
   const {pathname} = useLocation();
   return (
     <MenuLink
+      data-ct={`nav.${to.slice(1)}`}
       to={to}
       aria-current={matchesRoute(routes, pathname) ? 'page' : undefined}
     >

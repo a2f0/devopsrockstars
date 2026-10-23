@@ -1,6 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import ContactRow from './ContactRow';
+import FlexContainerColumn from './styled-components/FlexContainerColumn';
 
 const ContactRowContainer = styled.div`
   margin-top: 10px;
@@ -8,7 +9,7 @@ const ContactRowContainer = styled.div`
 
 const Company = React.memo(() => {
   return (
-    <>
+    <FlexContainerColumn data-ct-app="company">
       <h1>Contact</h1>
       <ContactRowContainer>
         <ContactRow
@@ -33,7 +34,7 @@ const Company = React.memo(() => {
           rowDescription={'GnuPG'}
         />
       </ContactRowContainer>
-    </>
+    </FlexContainerColumn>
   );
 });
 

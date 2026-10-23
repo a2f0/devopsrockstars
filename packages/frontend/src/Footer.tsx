@@ -32,7 +32,7 @@ const Footer = React.memo(() => {
       <FlexContainerRow>
         <FlexContainerLeft>
           <MenuItemLeft>
-            <Link to="/" aria-label="Home">
+            <Link to="/" aria-label="Home" data-ct="nav.home">
               <div
                 style={{
                   cursor: 'pointer',
@@ -50,7 +50,11 @@ const Footer = React.memo(() => {
         <FlexContainerRight>
           <MenuItemRight>
             {matchesRoute(repositoryLinkRoutes, location.pathname) ? (
-              <a href={repositoryUrl} aria-label="GitHub repository">
+              <a
+                href={repositoryUrl}
+                aria-label="GitHub repository"
+                data-ct="nav.repository"
+              >
                 {/* Sized and raised to sit on the LLC logo's text baseline */}
                 <div
                   style={{

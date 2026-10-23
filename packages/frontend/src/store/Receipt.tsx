@@ -65,7 +65,7 @@ const Receipt = React.memo(() => {
   }, [cart.clear, orderId, orderToken]);
 
   return (
-    <StoreShell>
+    <StoreShell data-ct-app="store">
       <StoreHeading>order</StoreHeading>
       <ReceiptPanel>
         {order?.status === 'paid' ? (
@@ -94,7 +94,9 @@ const Receipt = React.memo(() => {
         {error ? <Status $error>{error}</Status> : null}
       </ReceiptPanel>
       <FormActions>
-        <ActionLink to="/store">Back to store</ActionLink>
+        <ActionLink to="/store" data-ct="store.back">
+          Back to store
+        </ActionLink>
       </FormActions>
     </StoreShell>
   );

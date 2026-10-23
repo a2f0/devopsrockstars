@@ -50,12 +50,14 @@ function Skyline3d() {
     return () => viewer.destroy();
   }, [preparingHat, unavailable]);
   if (preparingHat || unavailable) return <OriginalSkyline />;
-  return <InteractiveSkyline id="skyline" ref={container} />;
+  return (
+    <InteractiveSkyline id="skyline" ref={container} data-ct-app="skyline" />
+  );
 }
 
 function OriginalSkyline() {
   return (
-    <FullScreenSkyline>
+    <FullScreenSkyline data-ct-app="skyline">
       <FillContainerImg src={skyline} alt="skyline" id="skyline" />
     </FullScreenSkyline>
   );

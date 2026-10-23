@@ -66,7 +66,7 @@ const Search = React.memo(() => {
   };
 
   return (
-    <SearchForm autoComplete="off" onSubmit={handleSubmit}>
+    <SearchForm autoComplete="off" onSubmit={handleSubmit} data-ct-app="search">
       <SearchLogo>
         <img
           src="/static/image/devopsrockstars-solr.svg"

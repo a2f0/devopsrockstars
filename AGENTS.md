@@ -219,6 +219,7 @@ store backend.
 ### Key Components
 
 - `packages/frontend/src/index.tsx` - Main router and app entry point
+- `packages/frontend/src/clickTracking.ts` - Click tracker lifecycle, origin/environment guard, and safe route names
 - `packages/frontend/src/Header.tsx` - Navigation header with company link
 - `packages/frontend/src/Footer.tsx` - Footer (hidden on main page)
 - `packages/frontend/src/Skyline.tsx` - Main page content

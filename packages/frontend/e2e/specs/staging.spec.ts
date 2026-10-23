@@ -299,6 +299,10 @@ describe('staging 3D skyline', () => {
         await BasePage.waitForAppReady();
         const viewer = await browser.$(skylineRegion);
         await viewer.waitForExist({timeout: 30000});
+        await expect(await browser.$('#skyline')).toHaveAttribute(
+          'data-ct-app',
+          'skyline'
+        );
         await expect(await browser.$('img#skyline')).not.toExist();
         await expect(viewer).toHaveAttribute(
           'aria-label',
@@ -463,6 +467,10 @@ describe('search page', () => {
     );
     await expect(logo).toBeDisplayed();
 
+    await expect(await browser.$('form')).toHaveAttribute(
+      'data-ct-app',
+      'search'
+    );
     const searchInput = await browser.$('input[aria-label="Search"]');
     await searchInput.setValue('continuous delivery');
     await browser.keys('Enter');
@@ -704,6 +712,15 @@ describe('store page', () => {
       await browser.keys(['ArrowDown', 'ArrowDown', ' ']);
       await expect(sizes).not.toBeDisplayed();
       await expect(size).toHaveText('7 1/4');
+      assert.strictEqual(
+        await browser.execute(() =>
+          document
+            .querySelector('[data-ct="store.add-to-cart"]')
+            ?.closest('[data-ct-app]')
+            ?.getAttribute('data-ct-app')
+        ),
+        'store'
+      );
       await (await browser.$('button=Add to cart')).click();
       await expect(
         await browser.$('aside[aria-label="Shopping cart"]')
