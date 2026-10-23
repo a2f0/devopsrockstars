@@ -17,8 +17,13 @@ test('real workerd captures API failures, retains waitUntil, and emits mappable 
     `
     import worker from ${JSON.stringify(path.resolve(import.meta.dir, '../../packages/backend/src/index.ts'))};
     const reports = [];
-    globalThis.fetch = async (_url, init) => { reports.push(String(init.body)); return new Response(''); };
-    export default {async fetch(request) {
+    const networkFetch = globalThis.fetch;
+    export default {async fetch(request, bindings) {
+      globalThis.fetch = async (_url, init) => {
+        const outbound = new Request(bindings.COLLECTOR_URL, init);
+        const response = await networkFetch(bindings.COLLECTOR_URL, init);
+        reports.push(await outbound.text()); return response;
+      };
       const promises = [];
       const context = {waitUntil(promise) { promises.push(promise); }};
       const env = {DB: {prepare() { throw new Error('PRIVATE_DATABASE_QUERY_AND_TOKEN'); }}};
@@ -60,6 +65,15 @@ test('real workerd captures API failures, retains waitUntil, and emits mappable 
     }
   );
   if (result.exitCode) throw new Error(result.stderr.toString());
+  const received: string[] = [];
+  const collector = Bun.serve({
+    hostname: '127.0.0.1',
+    port: 0,
+    async fetch(request) {
+      received.push(await request.text());
+      return new Response('');
+    },
+  });
   const reservation = Bun.serve({
     hostname: '127.0.0.1',
     port: 0,
@@ -80,6 +94,8 @@ test('real workerd captures API failures, retains waitUntil, and emits mappable 
       path.join(temporary, 'wrangler.json'),
       '--local',
       '--no-bundle',
+      '--var',
+      `COLLECTOR_URL:${collector.url.href}`,
       '--port',
       url.port,
       '--inspector-port',
@@ -120,6 +136,7 @@ test('real workerd captures API failures, retains waitUntil, and emits mappable 
     expect(response.status).toBe(500);
     expect(response.waitUntilCount).toBe(1);
     expect(response.reports).toHaveLength(1);
+    expect(received).toEqual(response.reports);
     expect(response.reports[0]).not.toContain('PRIVATE_');
     const event = JSON.parse(response.reports[0].split('\n')[2]);
     expect(event.tags.operation).toBe('storefront');
@@ -142,6 +159,7 @@ test('real workerd captures API failures, retains waitUntil, and emits mappable 
       )
     ).toBe(true);
   } finally {
+    collector.stop(true);
     worker.kill('SIGTERM');
     const timer = setTimeout(() => worker.kill('SIGKILL'), 5000);
     await worker.exited;

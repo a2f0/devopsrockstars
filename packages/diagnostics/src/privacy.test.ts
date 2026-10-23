@@ -163,3 +163,44 @@ test('transport sends only scrubbed errors, omits credentials, and bounds duplic
     globalThis.fetch = original;
   }
 });
+
+test('API transports share quota state while omitting browser-only request options', async () => {
+  const original = globalThis.fetch;
+  const sent: RequestInit[] = [];
+  globalThis.fetch = (async (_input, init) => {
+    sent.push(init ?? {});
+    return new Response('');
+  }) as typeof fetch;
+  try {
+    const api = {
+      ...config,
+      runtime: 'api' as const,
+      release: `devopsrockstars-api@${'b'.repeat(40)}`,
+    };
+    const first = privateTransport(api)({
+      url: 'https://o1.ingest.us.sentry.io/api/1/envelope/',
+      recordDroppedEvent() {},
+    });
+    const second = privateTransport(api)({
+      url: 'https://o1.ingest.us.sentry.io/api/1/envelope/',
+      recordDroppedEvent() {},
+    });
+    const event = {
+      ...errorEvent(),
+      tags: {diagnostic_source: 'request', operation: 'storefront'},
+    };
+    const header = {
+      event_id: 'a'.repeat(32),
+      sent_at: new Date().toISOString(),
+    };
+    await first.send([header, [[{type: 'event'}, event]]]);
+    await second.send([header, [[{type: 'event'}, event]]]);
+    await Promise.all([first.flush(1000), second.flush(1000)]);
+    expect(sent).toHaveLength(1);
+    expect(sent[0]?.credentials).toBeUndefined();
+    expect(sent[0]?.referrerPolicy).toBeUndefined();
+    expect(sent[0]?.keepalive).toBeUndefined();
+  } finally {
+    globalThis.fetch = original;
+  }
+});

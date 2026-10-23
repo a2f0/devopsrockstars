@@ -50,6 +50,12 @@ export function configureServerDiagnostics(
       }
     },
     // Outlast the transport deadline so workerd waits for completion or abort.
-    flush: () => Promise.resolve(client.flush(6000)).catch(() => false),
+    async flush() {
+      try {
+        return await client.flush(6000);
+      } catch {
+        return false;
+      }
+    },
   };
 }

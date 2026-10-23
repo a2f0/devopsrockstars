@@ -5,26 +5,11 @@ import {configureServerDiagnostics} from '@devopsrockstars/diagnostics/server';
 declare global {
   var __SENTRY_API__: DiagnosticsConfig | undefined;
 }
-let diagnostics: ReturnType<typeof configureServerDiagnostics>;
-
-export function captureApiError(
-  error: unknown,
-  source: 'request' | 'scheduled',
-  operation: Operation
-) {
+export function createApiDiagnostics() {
   try {
-    diagnostics ??= configureServerDiagnostics(globalThis.__SENTRY_API__);
-    diagnostics?.capture(error, source, operation);
+    return configureServerDiagnostics(globalThis.__SENTRY_API__);
   } catch {
-    /* Error reporting cannot affect the store response. */
-  }
-}
-
-export async function flushApiErrors() {
-  try {
-    await diagnostics?.flush();
-  } catch {
-    /* Reporting is best effort. */
+    return undefined;
   }
 }
 
@@ -33,8 +18,9 @@ export async function reportApiError(
   source: 'request' | 'scheduled',
   operation: Operation
 ) {
-  captureApiError(error, source, operation);
-  await flushApiErrors();
+  const diagnostics = createApiDiagnostics();
+  diagnostics?.capture(error, source, operation);
+  await diagnostics?.flush();
 }
 
 export function requestOperation(request: Request): Operation {

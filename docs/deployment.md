@@ -67,9 +67,10 @@ function names, source context, and user information are excluded. Third-party
 or extension-only browser stacks are discarded. Only error envelopes can leave
 the transport, with credentials and referrer omitted. Reports are deduplicated
 and limited to five per minute and twenty per page load (per hour on each API
-isolate).
+isolate). API clients and their pending sends belong to a single request or
+scheduled job; only the rate-limit and deduplication state is shared.
 
-React root failures, uncaught browser errors, and unhandled rejections are
+React root and recovery errors, uncaught browser errors, and unhandled rejections are
 captured. API 5xx responses report through `waitUntil`; expected 4xx responses
 stay local. Scheduled cleanup reports both individual order failures and
 failures of the job itself, preserving the job's rejection.

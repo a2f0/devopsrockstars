@@ -1,8 +1,45 @@
-import {expect, spyOn, test} from 'bun:test';
+import {expect, mock, spyOn, test} from 'bun:test';
+import * as sentry from '@devopsrockstars/diagnostics/server';
 import {cleanupExpiredOrders} from './cleanup';
 import * as diagnostics from './diagnostics';
 import worker from './index';
 import type {D1Database} from './types';
+
+test('concurrent request reports own separate clients and flush queues', async () => {
+  const clients: {
+    capture: ReturnType<typeof mock>;
+    flush: ReturnType<typeof mock>;
+  }[] = [];
+  const factory = spyOn(
+    sentry,
+    'configureServerDiagnostics'
+  ).mockImplementation(() => {
+    const client = {capture: mock(() => {}), flush: mock(async () => true)};
+    clients.push(client);
+    return client;
+  });
+  try {
+    await Promise.all([
+      diagnostics.reportApiError(
+        new Error('first request'),
+        'request',
+        'storefront'
+      ),
+      diagnostics.reportApiError(
+        new Error('second request'),
+        'request',
+        'checkout'
+      ),
+    ]);
+    expect(clients).toHaveLength(2);
+    for (const client of clients) {
+      expect(client.capture).toHaveBeenCalledTimes(1);
+      expect(client.flush).toHaveBeenCalledTimes(1);
+    }
+  } finally {
+    factory.mockRestore();
+  }
+});
 
 test('a scheduled job failure reports the original error and preserves its rejection', async () => {
   const failure = new Error('private database details');
@@ -39,14 +76,15 @@ test('a scheduled job failure reports the original error and preserves its rejec
 test('cleanup captures each failed order, continues processing, and flushes only once at the end', async () => {
   const failure = new Error('private order details');
   let attempted = 0;
-  const capture = spyOn(diagnostics, 'captureApiError').mockImplementation(
-    () => {}
-  );
-  const flush = spyOn(diagnostics, 'flushApiErrors').mockImplementation(
-    async () => {
-      expect(attempted).toBe(3);
-    }
-  );
+  const capture = mock(() => {});
+  const flush = mock(async () => {
+    expect(attempted).toBe(3);
+    return true;
+  });
+  const factory = spyOn(diagnostics, 'createApiDiagnostics').mockReturnValue({
+    capture,
+    flush,
+  });
   const logging = spyOn(console, 'error').mockImplementation(() => {});
   const DB: D1Database = {
     async batch() {
@@ -82,9 +120,9 @@ test('cleanup captures each failed order, continues processing, and flushes only
     expect(capture).toHaveBeenCalledTimes(3);
     expect(capture).toHaveBeenCalledWith(failure, 'scheduled', 'cleanup');
     expect(flush).toHaveBeenCalledTimes(1);
+    expect(factory).toHaveBeenCalledTimes(1);
   } finally {
-    capture.mockRestore();
-    flush.mockRestore();
+    factory.mockRestore();
     logging.mockRestore();
   }
 });
