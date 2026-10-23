@@ -138,6 +138,8 @@ export async function writeFrontendBuild(
   // bundle before writing the successful build and copying static files.
   await rm(destination, {recursive: true, force: true});
   await mkdir(destination, {recursive: true});
+  if (sourceMapsDirectory)
+    await rm(sourceMapsDirectory, {recursive: true, force: true});
   for (const [url, contents] of assets) {
     if (
       sourceMapsDirectory &&

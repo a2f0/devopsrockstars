@@ -488,6 +488,23 @@ test('both previews and fresh inspection precede each publication', async () => 
   ]);
 });
 
+test('frontend preview cannot change the captured bundles, including in dry runs', async () => {
+  for (const options of [{}, {dryRun: true}]) {
+    const {value, events} = operations();
+    let inputs: 'reviewed' | 'changed' = 'reviewed';
+    value.inputs = async () => inputs;
+    const bundle = value.bundle;
+    value.bundle = async worker => {
+      await bundle(worker);
+      if (worker === 'frontend') inputs = 'changed';
+    };
+    await expect(guardedDeployment(value, options)).rejects.toThrow(
+      'inputs changed during frontend preview'
+    );
+    expect(events.some(event => event.startsWith('publish:'))).toBe(false);
+  }
+});
+
 test.each([
   'preview:backend',
   'preview:frontend',

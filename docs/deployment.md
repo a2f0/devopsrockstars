@@ -71,7 +71,8 @@ isolate). API clients and their pending sends belong to a single request or
 scheduled job; only the rate-limit and deduplication state is shared.
 
 React root and recovery errors, uncaught browser errors, and unhandled rejections are
-captured. API 5xx responses report through `waitUntil`; expected 4xx responses
+captured. Unexpected API 5xx responses report through `waitUntil`; known
+unconfigured checkout/webhook responses and expected 4xx responses
 stay local. Scheduled cleanup reports both individual order failures and
 failures of the job itself, preserving the job's rejection.
 

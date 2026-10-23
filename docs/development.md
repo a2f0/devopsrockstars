@@ -100,6 +100,7 @@ store backend.
 - `packages/frontend` — React application, assets, Bun tooling, and browser tests
 - `packages/backend` — Cloudflare Worker, D1 migrations, and Wrangler config
 - `packages/shared-types` — shared API request and response types
+- `packages/diagnostics` — private browser and Worker Sentry error reporting
 
 ### Core Stack
 

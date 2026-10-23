@@ -1,9 +1,126 @@
 import {expect, mock, spyOn, test} from 'bun:test';
 import * as sentry from '@devopsrockstars/diagnostics/server';
+import * as checkout from './checkout';
 import {cleanupExpiredOrders} from './cleanup';
 import * as diagnostics from './diagnostics';
-import worker from './index';
-import type {D1Database} from './types';
+import worker, {fetchHandler} from './index';
+import * as orders from './orders';
+import type {D1Database, Env} from './types';
+
+const failureDatabase: D1Database = {
+  prepare() {
+    throw new Error('private database failure');
+  },
+  async batch() {
+    return [];
+  },
+};
+const requestEnvironment: Env = {
+  DB: failureDatabase,
+  CHECKOUT_HASH_SECRET: 'test-only',
+  CHECKOUT_RATE_LIMITER: {limit: async () => ({success: true})},
+};
+function checkoutRequest(body: string) {
+  return new Request('https://store.devopsrockstars.com/api/checkouts', {
+    method: 'POST',
+    headers: {'X-Checkout-Client': '12345678-1234-4234-8234-123456789abc'},
+    body,
+  });
+}
+const checkoutBody = JSON.stringify({
+  items: [{variantId: 'hat-5950-7-1-4', quantity: 1}],
+  shipping: {
+    name: 'Test',
+    email: 'test@example.com',
+    addressLine1: '1 Test St',
+    city: 'New York',
+    state: 'NY',
+    postalCode: '10001',
+    country: 'US',
+  },
+});
+
+test('thrown client errors and known unconfigured responses do not report', async () => {
+  const report = spyOn(diagnostics, 'reportApiError').mockResolvedValue(
+    undefined
+  );
+  const cancellation = spyOn(orders, 'cancelOrder').mockRejectedValue(
+    new orders.OrderCancellationError('order_expired', 'Expired', 409)
+  );
+  try {
+    for (const body of ['{', '{}'])
+      expect(
+        (await fetchHandler(checkoutRequest(body), requestEnvironment)).status
+      ).toBe(400);
+    expect(
+      (
+        await fetchHandler(
+          new Request(
+            'https://store.devopsrockstars.com/api/orders/12345678-1234-4234-8234-123456789abc/cancel',
+            {method: 'POST'}
+          ),
+          requestEnvironment
+        )
+      ).status
+    ).toBe(409);
+    expect(
+      (await fetchHandler(checkoutRequest(checkoutBody), requestEnvironment))
+        .status
+    ).toBe(503);
+    expect(
+      (await fetchHandler(checkoutRequest(checkoutBody), {DB: failureDatabase}))
+        .status
+    ).toBe(503);
+    expect(
+      (
+        await fetchHandler(
+          new Request('https://store.devopsrockstars.com/api/webhooks/stripe', {
+            method: 'POST',
+          }),
+          requestEnvironment
+        )
+      ).status
+    ).toBe(503);
+    expect(report).not.toHaveBeenCalled();
+  } finally {
+    cancellation.mockRestore();
+    report.mockRestore();
+  }
+});
+
+test('unexpected handled 503s still report and a missing context awaits delivery', async () => {
+  const failure = new checkout.CheckoutCreationError(
+    'stripe_unavailable',
+    'Private',
+    503
+  );
+  const start = spyOn(checkout, 'startCheckout').mockRejectedValue(failure);
+  let finish!: () => void;
+  const delivery = new Promise<void>(resolve => {
+    finish = resolve;
+  });
+  const report = spyOn(diagnostics, 'reportApiError').mockReturnValue(delivery);
+  let completed = false;
+  try {
+    const response = fetchHandler(
+      checkoutRequest(checkoutBody),
+      requestEnvironment
+    ).then(value => {
+      completed = true;
+      return value;
+    });
+    for (let attempt = 0; attempt < 100 && !report.mock.calls.length; attempt++)
+      await Bun.sleep(1);
+    expect(report).toHaveBeenCalledWith(failure, 'request', 'checkout');
+    expect(completed).toBe(false);
+    finish();
+    expect((await response).status).toBe(503);
+  } finally {
+    finish();
+    start.mockRestore();
+    report.mockRestore();
+  }
+});
 
 test('concurrent request reports own separate clients and flush queues', async () => {
   const clients: {

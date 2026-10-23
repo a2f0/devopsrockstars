@@ -36,9 +36,11 @@ export async function guardedDeployment(
   } = {}
 ) {
   await operations.build();
-  for (const workspace of ['backend', 'frontend'] as const)
-    await operations.bundle(workspace);
+  await operations.bundle('backend');
   const inputs = await operations.inputs();
+  await operations.bundle('frontend');
+  if ((await operations.inputs()) !== inputs)
+    throw new Error('Deployment held: inputs changed during frontend preview');
   const identities = await operations.inspect();
   if (dryRun || migrationsOnly) return;
   const workers: WorkerName[] = worker ? [worker] : ['backend', 'frontend'];

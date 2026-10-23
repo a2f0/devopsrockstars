@@ -36,7 +36,10 @@ export function configureBrowserDiagnostics(
     const scope = new Scope();
     scope.setClient(client);
     client.init();
-    const capture = (error: unknown, source: ErrorSource) => {
+    const capture = (
+      error: unknown,
+      source: Exclude<ErrorSource, 'request' | 'scheduled'>
+    ) => {
       try {
         if (error instanceof Error)
           scope.captureException(error, {

@@ -149,11 +149,23 @@ export async function fetchHandler(
       );
     }
   }
-  if (response.status >= 500) {
+  const operation = requestOperation(request);
+  const unconfigured =
+    response.status === 503 &&
+    ((operation === 'checkout' &&
+      ((failure instanceof CheckoutCreationError &&
+        failure.code === 'checkout_unavailable') ||
+        (!failure &&
+          (!env.CHECKOUT_RATE_LIMITER ||
+            !env.CHECKOUT_HASH_SECRET?.trim())))) ||
+      (operation === 'stripe-webhook' &&
+        !failure &&
+        !env.STRIPE_WEBHOOK_SECRET?.trim()));
+  if (response.status >= 500 && !unconfigured) {
     const reporting = reportApiError(
       failure ?? new Error('Store API failure'),
       'request',
-      requestOperation(request)
+      operation
     );
     if (context) context.waitUntil(reporting);
     else await reporting;

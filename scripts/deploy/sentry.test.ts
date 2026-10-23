@@ -86,6 +86,7 @@ test('real frontend builds keep complete source maps private and remove stale pu
   const maps = path.join(directory, 'private');
   try {
     await Bun.write(path.join(output, 'stale.js.map'), 'private source');
+    await Bun.write(path.join(maps, 'stale.js.map'), 'stale source');
     await writeFrontendBuild(
       {
         environment: 'staging',
@@ -100,12 +101,16 @@ test('real frontend builds keep complete source maps private and remove stale pu
       )
     ).toBe(false);
     await validateSourceMaps(maps);
+    expect(await Bun.file(path.join(maps, 'stale.js.map')).exists()).toBe(
+      false
+    );
     const scripts = (await readdir(output, {recursive: true})).filter(
       name => !name.startsWith('static/') && name.endsWith('.js')
     );
     expect(scripts.some(name => name.startsWith('assets/chunk-'))).toBe(true);
     for (const script of scripts) {
       expect(script.startsWith('assets/')).toBe(true);
+      expect(script).toMatch(/^assets\/[\w-]+-[a-z0-9]+\.js$/u);
       await access(path.join(maps, `${path.basename(script)}.map`));
     }
     expect((await readdir(maps)).some(name => name.endsWith('.js.map'))).toBe(
