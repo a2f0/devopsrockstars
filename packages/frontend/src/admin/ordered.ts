@@ -1,13 +1,11 @@
-// Requests that each return the whole view can finish out of order. Show a
-// response only when no later request's response is already shown.
-export function inRequestOrder<T>(show: (value: T) => void) {
-  let issued = 0;
-  let shown = 0;
-  return async (request: Promise<T>) => {
-    const sequence = ++issued;
-    const value = await request;
-    if (sequence < shown) return;
-    shown = sequence;
-    show(value);
+// Inventory saves and reloads each return the whole inventory. Running them
+// one at a time makes the server apply them in the order they were made, so
+// each response shown is at least as new as the one before it.
+export function serialized<T>(show: (value: T) => void) {
+  let previous: Promise<unknown> = Promise.resolve();
+  return (start: () => Promise<T>): Promise<void> => {
+    const run = previous.then(start).then(show);
+    previous = run.catch(() => {});
+    return run;
   };
 }

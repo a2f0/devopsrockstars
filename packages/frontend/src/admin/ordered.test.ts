@@ -1,30 +1,47 @@
 import {expect, test} from 'bun:test';
-import {inRequestOrder} from './ordered';
+import {serialized} from './ordered';
 
 function deferred<T>() {
   let resolve: (value: T) => void = () => {};
-  const promise = new Promise<T>(done => {
+  let reject: (error: Error) => void = () => {};
+  const promise = new Promise<T>((done, fail) => {
     resolve = done;
+    reject = fail;
   });
-  return {promise, resolve};
+  return {promise, resolve, reject};
 }
 
-test('a slower earlier response never replaces a newer one', async () => {
+test('a request starts only after the previous one finishes, failed or not', async () => {
   const shown: string[] = [];
-  const apply = inRequestOrder<string>(value => shown.push(value));
+  const started: string[] = [];
+  const apply = serialized<string>(value => shown.push(value));
   const first = deferred<string>();
   const second = deferred<string>();
-  const applyingFirst = apply(first.promise);
-  const applyingSecond = apply(second.promise);
-  second.resolve('second save');
-  await applyingSecond;
-  first.resolve('first save');
-  await applyingFirst;
-  expect(shown).toEqual(['second save']);
-
   const third = deferred<string>();
-  const applyingThird = apply(third.promise);
+  const runs = [
+    apply(() => {
+      started.push('first');
+      return first.promise;
+    }),
+    apply(() => {
+      started.push('second');
+      return second.promise;
+    }),
+    apply(() => {
+      started.push('third');
+      return third.promise;
+    }),
+  ];
+  await Bun.sleep(0);
+  expect(started).toEqual(['first']);
+  first.reject(new Error('conflict'));
+  await expect(runs[0]).rejects.toThrow('conflict');
+  await Bun.sleep(0);
+  expect(started).toEqual(['first', 'second']);
+  second.resolve('second save');
+  await runs[1];
   third.resolve('reload');
-  await applyingThird;
+  await runs[2];
+  expect(started).toEqual(['first', 'second', 'third']);
   expect(shown).toEqual(['second save', 'reload']);
 });

@@ -32,7 +32,7 @@ import {
   SmallButton,
 } from './AdminStyles';
 import {errorMessage, useAdmin} from './context';
-import {inRequestOrder} from './ordered';
+import {serialized} from './ordered';
 
 const columns =
   'minmax(110px, 1.3fr) minmax(90px, 1fr) minmax(80px, 0.9fr) 70px 55px 70px 72px';
@@ -119,7 +119,7 @@ function parseQuantity(value: string) {
 }
 
 type ApplyInventory = (
-  request: Promise<AdminInventoryResponse>
+  start: () => Promise<AdminInventoryResponse>
 ) => Promise<void>;
 
 const VariantRow = ({
@@ -174,12 +174,12 @@ const VariantRow = ({
     setBusy(true);
     setError('');
     try {
-      await apply(guard(updateVariant(variant.id, update)));
+      await apply(() => guard(updateVariant(variant.id, update)));
     } catch (caught) {
       if (caught instanceof AdminApiError && caught.status === 409) {
         // Show the current quantity so the administrator can decide again.
         setError(caught.message);
-        void apply(guard(loadInventory())).catch(() => {});
+        void apply(() => guard(loadInventory())).catch(() => {});
       } else if (!(caught instanceof AdminApiError && caught.status === 401)) {
         setError(errorMessage(caught));
       }
@@ -288,7 +288,7 @@ const ProductPanel = ({
     setBusy(true);
     setError('');
     try {
-      await apply(guard(updateProduct(product.id, {active: next})));
+      await apply(() => guard(updateProduct(product.id, {active: next})));
     } catch (caught) {
       if (!(caught instanceof AdminApiError && caught.status === 401))
         setError(errorMessage(caught));
@@ -348,11 +348,11 @@ const Inventory = () => {
   );
   const [error, setError] = useState('');
   // Every save and reload returns the whole inventory.
-  const apply = useMemo<ApplyInventory>(() => inRequestOrder(setInventory), []);
+  const apply = useMemo<ApplyInventory>(() => serialized(setInventory), []);
 
   const refresh = useCallback(() => {
     setError('');
-    apply(guard(loadInventory())).catch(caught => {
+    apply(() => guard(loadInventory())).catch(caught => {
       if (!(caught instanceof AdminApiError && caught.status === 401))
         setError(errorMessage(caught));
     });
