@@ -68,8 +68,8 @@ are what actually keep staging out of search results.
 
 GitHub Actions deploys `main` to production and `staging` to staging, and
 `workflow_dispatch` defaults to read-only previews. Explicit
-`operation=deploy-staging` deploys the selected branch to staging. Deployments run locally the
-same way:
+`operation=deploy-staging` deploys the selected branch to staging. Local deployment
+commands use the same guard:
 
 ```shell
 bun run deploy:staging

@@ -22,6 +22,10 @@ environment through the normal shipping workflow. For example, a later 3D
 skyline release would change `production.skyline3d` to `true`, leaving the store
 and search settings alone.
 
+Keep each flag independent; never derive a flag's value from whether the
+environment is staging. Disabling the store removes its links and routes, but
+its implementation JavaScript can still be present in the bundle.
+
 The build validates the complete matrix and embeds only the selected
 environment's values in the browser bundle. Missing flags or environments,
 unknown names, and non-boolean values fail the build and pre-commit checks.
@@ -34,6 +38,8 @@ resolved `flags`, so deployment checks can inspect the active configuration.
 This is a read-only build artifact. Search-engine indexing is separate:
 production remains indexable and staging remains `noindex`, regardless of flags.
 The store flag governs the frontend; the store API's deployment is separate.
+`packages/frontend/buildAssets.ts` generates `robots.txt` and `_headers`, both
+covered by unit and browser tests.
 
 To add a flag, register its description in
 `packages/frontend/src/featureFlags.ts`, add boolean values for both environments
