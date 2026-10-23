@@ -136,13 +136,14 @@ const VariantRow = ({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
-  // Reset the draft only when this variant's saved values change, so saving
-  // one row keeps unsaved edits in the others.
-  useEffect(() => {
-    setQuantity(String(variant.inventoryQuantity));
-    setPrice(dollars(variant.unitAmount));
-    setActive(variant.active);
-  }, [variant.inventoryQuantity, variant.unitAmount, variant.active]);
+  // Each field follows only its own saved value, so a checkout changing the
+  // stock, or a save in another row, keeps unsaved edits to the rest.
+  useEffect(
+    () => setQuantity(String(variant.inventoryQuantity)),
+    [variant.inventoryQuantity]
+  );
+  useEffect(() => setPrice(dollars(variant.unitAmount)), [variant.unitAmount]);
+  useEffect(() => setActive(variant.active), [variant.active]);
 
   const nextQuantity = parseQuantity(quantity);
   const nextAmount = parseCents(price);
