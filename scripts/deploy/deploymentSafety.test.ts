@@ -17,6 +17,7 @@ import {
   inspectDeployment,
   type ReadApi,
 } from './deploymentSafety';
+import {sentryConfig} from './sentryProjects';
 
 const root = path.resolve(import.meta.dir, '../..');
 const account = 'a'.repeat(32);
@@ -80,8 +81,25 @@ test('every package remote deploy script uses the shared guard', async () => {
 test('Wrangler previews and publications use the expected Worker directory and flags', () => {
   for (const environment of ['staging', 'prod'] as const) {
     for (const worker of ['backend', 'frontend'] as const) {
-      const preview = wranglerDeployCommand(root, worker, environment, true);
-      const publish = wranglerDeployCommand(root, worker, environment, false);
+      const diagnostics = sentryConfig(
+        environment === 'prod' ? 'production' : 'staging',
+        'api',
+        'a'.repeat(40)
+      );
+      const preview = wranglerDeployCommand(
+        root,
+        worker,
+        environment,
+        true,
+        diagnostics
+      );
+      const publish = wranglerDeployCommand(
+        root,
+        worker,
+        environment,
+        false,
+        diagnostics
+      );
       expect(preview.cwd).toBe(path.join(root, 'packages', worker));
       expect(publish.cwd).toBe(preview.cwd);
       expect(preview.args).toEqual([
@@ -93,6 +111,15 @@ test('Wrangler previews and publications use the expected Worker directory and f
         environment,
         '--keep-vars',
         '--dry-run',
+        ...(worker === 'backend'
+          ? [
+              '--upload-source-maps',
+              '--outdir',
+              path.join(root, 'build/sentry/api'),
+              '--define',
+              `globalThis.__SENTRY_API__:${JSON.stringify(diagnostics)}`,
+            ]
+          : []),
       ]);
       expect(publish.args).toEqual([
         'run',
@@ -102,6 +129,9 @@ test('Wrangler previews and publications use the expected Worker directory and f
         '--env',
         environment,
         '--keep-vars',
+        ...(worker === 'backend'
+          ? [path.join(root, 'build/sentry/api/index.js'), '--no-bundle']
+          : []),
       ]);
     }
   }
@@ -513,6 +543,23 @@ test('both previews and fresh inspection precede each publication', async () => 
   ]);
 });
 
+test('frontend preview cannot change the captured bundles, including in dry runs', async () => {
+  for (const options of [{}, {dryRun: true}]) {
+    const {value, events} = operations();
+    let inputs: 'reviewed' | 'changed' = 'reviewed';
+    value.inputs = async () => inputs;
+    const bundle = value.bundle;
+    value.bundle = async worker => {
+      await bundle(worker);
+      if (worker === 'frontend') inputs = 'changed';
+    };
+    await expect(guardedDeployment(value, options)).rejects.toThrow(
+      'inputs changed during frontend preview'
+    );
+    expect(events.some(event => event.startsWith('publish:'))).toBe(false);
+  }
+});
+
 test.each([
   'preview:backend',
   'preview:frontend',
@@ -774,30 +821,23 @@ test('generated assets and the installed Wrangler invalidate captured inputs', a
         filename.endsWith('/package.json') ? '{}' : 'previewed tool'
       );
     await Bun.write(nativeBinary, 'previewed native binary');
-    // A stand-in for the store Worker's installed npm dependency closure.
-    const dependency = path.join(
-      repository,
-      'node_modules/better-auth/dist/index.mjs'
-    );
-    await mkdir(path.dirname(dependency), {recursive: true});
-    await Bun.write(
-      path.join(repository, 'node_modules/better-auth/package.json'),
-      '{}'
-    );
-    await Bun.write(dependency, 'previewed dependency');
     const head = deploymentCommit(repository);
     const initial = await deploymentInputs(repository, head);
     await Bun.write(asset, 'changed asset');
     expect(await deploymentInputs(repository, head)).not.toBe(initial);
     await Bun.write(asset, 'previewed asset');
     expect(await deploymentInputs(repository, head)).toBe(initial);
+    const map = path.join(repository, 'build/sentry/api/index.js.map');
+    await Bun.write(map, 'private map');
+    const mappedInputs = await deploymentInputs(repository, head);
+    expect(mappedInputs).not.toBe(initial);
+    await Bun.write(map, 'changed private map');
+    expect(await deploymentInputs(repository, head)).not.toBe(mappedInputs);
+    await rm(map);
+    expect(await deploymentInputs(repository, head)).toBe(initial);
     await Bun.write(tool, 'changed CLI');
     expect(await deploymentInputs(repository, head)).not.toBe(initial);
     await Bun.write(tool, 'previewed CLI');
-    await Bun.write(dependency, 'changed dependency');
-    expect(await deploymentInputs(repository, head)).not.toBe(initial);
-    await Bun.write(dependency, 'previewed dependency');
-    expect(await deploymentInputs(repository, head)).toBe(initial);
     for (const executable of [
       path.join(repository, 'node_modules/wrangler/bin/wrangler.js'),
       nativeBinary,

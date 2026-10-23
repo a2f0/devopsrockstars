@@ -1,3 +1,4 @@
+import {createApiDiagnostics} from './diagnostics';
 import {cancelPaymentIntent, retrievePaymentIntent} from './stripe';
 import type {Env} from './types';
 
@@ -113,6 +114,7 @@ export async function cleanupExpiredOrders(
   scheduledTime: number,
   dependencies: CleanupDependencies = defaultDependencies
 ) {
+  const diagnostics = createApiDiagnostics();
   const secretKey = env.STRIPE_SECRET_KEY?.trim();
   const now = new Date(scheduledTime).toISOString();
   const expired = await env.DB.prepare(
@@ -168,25 +170,24 @@ export async function cleanupExpiredOrders(
       await markCanceled(env, order.id, now);
     } catch (error) {
       console.error(`Failed to expire order ${order.id}:`, error);
+      diagnostics?.capture(error, 'scheduled', 'cleanup');
     }
   }
+  // Finish all orders before waiting on the diagnostics network budget.
+  await diagnostics?.flush();
 }
 
 // Expired sessions and verification tokens are useless, and rate-limit rows
 // hold client IP addresses, so neither outlives a day past its last use.
 export async function cleanupExpiredAuth(env: Env, scheduledTime: number) {
   const now = new Date(scheduledTime).toISOString();
-  try {
-    await env.DB.batch([
-      env.DB.prepare('DELETE FROM auth_session WHERE expiresAt < ?').bind(now),
-      env.DB.prepare('DELETE FROM auth_verification WHERE expiresAt < ?').bind(
-        now
-      ),
-      env.DB.prepare('DELETE FROM auth_rate_limit WHERE lastRequest < ?').bind(
-        scheduledTime - 86_400_000
-      ),
-    ]);
-  } catch (error) {
-    console.error('Failed to remove expired administrator records:', error);
-  }
+  await env.DB.batch([
+    env.DB.prepare('DELETE FROM auth_session WHERE expiresAt < ?').bind(now),
+    env.DB.prepare('DELETE FROM auth_verification WHERE expiresAt < ?').bind(
+      now
+    ),
+    env.DB.prepare('DELETE FROM auth_rate_limit WHERE lastRequest < ?').bind(
+      scheduledTime - 86_400_000
+    ),
+  ]);
 }

@@ -13,6 +13,7 @@
     "dev": "bun run --bun wrangler dev --env staging --local --var STOREFRONT_ORIGINS:http://localhost:8080,http://127.0.0.1:8080,http://localhost:8081,http://127.0.0.1:8081,http://localhost:8082,http://127.0.0.1:8082"
   },
   "dependencies": {
+    "@devopsrockstars/diagnostics": "workspace:*",
     "@devopsrockstars/shared-types": "workspace:*",
     "better-auth": "1.7.12"
   }

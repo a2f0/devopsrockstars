@@ -3,6 +3,7 @@ import {loadCatalog} from './catalog';
 import {CheckoutCreationError, startCheckout} from './checkout';
 import {cleanupExpiredAuth, cleanupExpiredOrders} from './cleanup';
 import {sha256} from './crypto';
+import {reportApiError, requestOperation} from './diagnostics';
 import {
   apiError,
   corsPreflight,
@@ -115,7 +116,11 @@ export async function route(request: Request, env: Env) {
   return apiError('not_found', 'The API route was not found.', 404);
 }
 
-export async function fetchHandler(request: Request, env: Env) {
+export async function fetchHandler(
+  request: Request,
+  env: Env,
+  context?: ExecutionContextLike
+) {
   if (
     request.method === 'OPTIONS' &&
     new URL(request.url).pathname.startsWith('/api/')
@@ -123,9 +128,11 @@ export async function fetchHandler(request: Request, env: Env) {
     return corsPreflight(request, env.STOREFRONT_ORIGINS);
   }
   let response: Response;
+  let failure: unknown;
   try {
     response = await route(request, env);
   } catch (error) {
+    failure = error;
     if (error instanceof RequestBodyError) {
       const message =
         error.code === 'request_too_large'
@@ -147,22 +154,60 @@ export async function fetchHandler(request: Request, env: Env) {
       );
     }
   }
+  const operation = requestOperation(request);
+  const unconfigured =
+    response.status === 503 &&
+    ((operation === 'checkout' &&
+      ((failure instanceof CheckoutCreationError &&
+        failure.code === 'checkout_unavailable' &&
+        (!env.STRIPE_SECRET_KEY?.trim() ||
+          !env.STRIPE_PUBLISHABLE_KEY?.trim() ||
+          !env.CHECKOUT_HASH_SECRET?.trim())) ||
+        (!failure &&
+          (!env.CHECKOUT_RATE_LIMITER ||
+            !env.CHECKOUT_HASH_SECRET?.trim())))) ||
+      (operation === 'cancel-order' &&
+        failure instanceof OrderCancellationError &&
+        failure.code === 'checkout_unavailable' &&
+        !env.STRIPE_SECRET_KEY?.trim()) ||
+      (operation === 'stripe-webhook' &&
+        !failure &&
+        !env.STRIPE_WEBHOOK_SECRET?.trim()));
+  if (response.status >= 500 && !unconfigured) {
+    const reporting = reportApiError(
+      failure ?? new Error('Store API failure'),
+      'request',
+      operation
+    );
+    if (context) context.waitUntil(reporting);
+    else await reporting;
+  }
   return withCors(request, env.STOREFRONT_ORIGINS, response);
 }
 
 export default {
-  fetch(request: Request, env: Env, _context: ExecutionContextLike) {
-    return fetchHandler(request, env);
+  fetch(request: Request, env: Env, context: ExecutionContextLike) {
+    return fetchHandler(request, env, context);
   },
   scheduled(
     controller: ScheduledControllerLike,
     env: Env,
     context: ExecutionContextLike
   ) {
-    context.waitUntil(cleanupExpiredOrders(env, controller.scheduledTime));
+    context.waitUntil(
+      cleanupExpiredOrders(env, controller.scheduledTime).catch(async error => {
+        await reportApiError(error, 'scheduled', 'cleanup');
+        throw error;
+      })
+    );
     // The store cron runs every minute; administrator records need an hourly sweep.
     if (new Date(controller.scheduledTime).getUTCMinutes() === 0) {
-      context.waitUntil(cleanupExpiredAuth(env, controller.scheduledTime));
+      context.waitUntil(
+        cleanupExpiredAuth(env, controller.scheduledTime).catch(async error => {
+          await reportApiError(error, 'scheduled', 'cleanup');
+          throw error;
+        })
+      );
     }
   },
 };
