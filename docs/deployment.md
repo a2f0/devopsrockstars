@@ -8,8 +8,8 @@ Provisioning and infrastructure changes require a separately reviewed rollout.
 ## Click analytics
 
 The explicitly initialized `@a2f0/ct-client` tracks clicks on the deployed sites
-under `site: devopsrockstars`. Production (apex and `www`) and staging are
-separate `environment` values in [CT admin](https://ct-admin.a2f0.net).
+under `site: devopsrockstars`. Production (the apex; `www` redirects to it) and
+staging are separate `environment` values in [CT admin](https://ct-admin.a2f0.net).
 The build environment must match the exact HTTPS origin; local development,
 preview hosts, and browser automation do not collect clicks.
 
@@ -100,11 +100,11 @@ deployments; Terraform owns the custom domains.
 | Production | `devopsrockstars.com` | `store.devopsrockstars.com` | `devopsrockstars-website-prod`, `devopsrockstars-store-prod` |
 | Staging | `staging.devopsrockstars.com` | `store-staging.devopsrockstars.com` | `devopsrockstars-website-staging`, `devopsrockstars-store-staging` |
 
-`www.devopsrockstars.com` is a second custom domain on the production website
-Worker, serving the same content as the apex rather than redirecting to it,
-which is what CloudFront did before the move. Its pages name the apex URLs as
-canonical. Neither Worker is reachable on `workers.dev`, so the only hostnames
-are the ones above.
+`www.devopsrockstars.com` answers a 301 to the apex, keeping the path and
+query, through the zone's [`www` redirect](#www-redirect). It is still a custom
+domain on the production website Worker, but the redirect runs first, so `www`
+requests never reach the Worker. Neither Worker is reachable on `workers.dev`,
+so the only hostnames are the ones above.
 
 Disabled store/search flags hide their navigation links and routes, so those
 paths serve the not-found page with a 404 status. When the store is enabled in
@@ -300,7 +300,8 @@ new Worker before cutover.
 
 Terraform (`terraform/`) manages the Cloudflare Worker custom domains, the `www`
 hostname, the HTTPS redirect, and the Google Workspace `MX` records for both
-environments in one stack. Its state is the object `terraform.tfstate` in the
+environments in one stack. The [`www` redirect](#www-redirect) is managed
+outside it. Its state is the object `terraform.tfstate` in the
 Cloudflare R2 bucket `devopsrockstars-com-terraform-state`, read through the S3
 backend with lockfile locking, so Terraform 1.10 or later is required. The
 bucket was created by hand and is not managed here, and the backend settings
@@ -343,6 +344,84 @@ offering to migrate state.
 
 Wrangler owns Worker and asset deployments; Terraform owns hostnames. Publish a
 Worker before pointing a hostname at it.
+
+### www redirect
+
+`www.devopsrockstars.com` answers a 301 to `https://devopsrockstars.com` with
+the same path and query string, over HTTP and HTTPS. The zone's
+`http_request_dynamic_redirect` entry point ruleset, named `Redirects`
+(`93ac0e3866b94c3ebeb76c341103932f`), holds the only rule, ref `www_to_apex`.
+It was created on 2026-10-24 with the [`cf` CLI](https://www.npmjs.com/package/cf)
+signed in as the account owner, because the Terraform token lacks
+Zone → Single Redirect → Edit ("Dynamic URL Redirects Write"). Terraform does not
+manage it.
+
+`www` is still bound to the production website Worker through the
+`website_www` custom domain in `terraform/cloudflare.tf`, which also provides
+its DNS record. Single redirects run before Workers, so the Worker never
+answers `www`. The deploy guard (`scripts/deploy/deploymentSafety.ts`) still
+expects that custom domain, which is correct while it stays bound. The
+`https://www.devopsrockstars.com` entries in `STOREFRONT_ORIGINS`, the
+click-tracking origin check, and the [a2f0/ct](https://github.com/a2f0/ct)
+origins list are now unused and harmless.
+
+Removing the custom domain is optional cleanup. `apply.sh` runs
+`agent-tool dependencies check-terraform-plan`, which rejects any plan that
+deletes a resource, so it currently blocks that change. A reviewed removal
+would also drop the domain from the deploy guard and the `website_www_url`
+output, then give `www` a proxied placeholder record so the redirect still
+resolves:
+
+```shell
+cf dns records create -z devopsrockstars.com \
+  --body '{"type":"AAAA","name":"www.devopsrockstars.com","content":"100::","proxied":true,"ttl":1}'
+```
+
+To recreate the redirect, write `rules.json`:
+
+```json
+[
+  {
+    "ref": "www_to_apex",
+    "description": "www.devopsrockstars.com to devopsrockstars.com",
+    "expression": "(http.host eq \"www.devopsrockstars.com\")",
+    "action": "redirect",
+    "action_parameters": {
+      "from_value": {
+        "status_code": 301,
+        "preserve_query_string": true,
+        "target_url": {
+          "expression": "concat(\"https://devopsrockstars.com\", http.request.uri.path)"
+        }
+      }
+    },
+    "enabled": true
+  }
+]
+```
+
+and replace the entry point's rules with it. The update replaces the whole
+rule list, so `rules.json` must carry every redirect rule the zone needs:
+
+```shell
+cf rulesets entrypoint update http_request_dynamic_redirect \
+  -z devopsrockstars.com --name Redirects \
+  --description 'Single redirects (managed with cf, see the repository docs)' \
+  --rules @rules.json
+```
+
+A zone has one entry point ruleset per phase. To manage the redirect with
+Terraform later, first give the token Single Redirect Edit, then import this
+ruleset rather than creating a new one. While the custom domain stays bound,
+it supplies the `www` record from Terraform; a placeholder record created with
+`cf` after its removal would need importing too.
+
+Check it live:
+
+```shell
+curl -sI https://www.devopsrockstars.com/company | grep -i '^location'
+# location: https://devopsrockstars.com/company
+```
 
 ## Store operations
 
