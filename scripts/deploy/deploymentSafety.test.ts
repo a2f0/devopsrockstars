@@ -24,15 +24,18 @@ const account = 'a'.repeat(32);
 const zone = 'b'.repeat(32);
 const otherZone = 'c'.repeat(32);
 
-test('the disabled production store retains only its hash and admin auth secrets', async () => {
-  const production = await deploymentTarget(root, 'prod');
-  const staging = await deploymentTarget(root, 'staging');
-  expect(production.workers.backend.secrets).toEqual([
-    'BETTER_AUTH_SECRET',
-    'CHECKOUT_HASH_SECRET',
-  ]);
-  expect(staging.workers.backend.secrets).toContain('STRIPE_SECRET_KEY');
-  expect(staging.workers.backend.secrets).toContain('BETTER_AUTH_SECRET');
+test('both store Workers keep the same secrets whatever the store flag', async () => {
+  for (const environment of ['staging', 'prod'] as const) {
+    const target = await deploymentTarget(root, environment);
+    expect(target.workers.backend.secrets).toEqual([
+      'BETTER_AUTH_SECRET',
+      'CHECKOUT_HASH_SECRET',
+      'STRIPE_PUBLISHABLE_KEY',
+      'STRIPE_SECRET_KEY',
+      'STRIPE_WEBHOOK_SECRET',
+    ]);
+    expect(target.workers.frontend.secrets).toEqual([]);
+  }
 });
 
 test('only the store Worker runs with Node.js compatibility', async () => {

@@ -164,8 +164,8 @@ describe('company page', () => {
   });
 });
 
-describe('production feature flags', () => {
-  it('hides the unlaunched search and store from the navigation', async () => {
+describe('production with every feature flag off', () => {
+  it('hides search and the store from the navigation', async () => {
     await BasePage.open('');
     await BasePage.waitForAppReady();
 
@@ -174,7 +174,7 @@ describe('production feature flags', () => {
     await expect(await browser.$('a[href="/company"]')).toExist();
   });
 
-  it('routes the unlaunched pages to the not found page', async () => {
+  it('routes the disabled pages to the not found page', async () => {
     for (const path of ['search', 'store', 'store/checkout']) {
       await BasePage.open(path);
       await BasePage.waitForAppReady();
