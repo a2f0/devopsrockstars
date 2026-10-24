@@ -107,8 +107,8 @@ canonical. Neither Worker is reachable on `workers.dev`, so the only hostnames
 are the ones above.
 
 Disabled store/search flags hide their navigation links and routes, so those
-paths serve the not-found page with a 404 status. When the store is enabled in
-staging, it uses Stripe test keys.
+paths serve the not-found page with a 404 status. The staging store uses Stripe
+test keys and the production store uses live keys.
 
 ### Search engines
 
@@ -208,41 +208,40 @@ need a separately reviewed execution preview before any mutation.
    ```
 
 3. The initial schema seeded the historical $20 price and zero stock as safe
-   placeholders. `bun run db:check:prod` verifies the existing migration table
-   and requires zero pending migrations; it applies no remote SQL. Schema,
-   price and inventory changes require a separate reviewed migration rollout
-   with a complete execution preview before remote SQL is run. There is no
-   generic remote migration apply command in this maintenance workflow.
+   placeholders, and sizes added later also start sold out; stock and prices
+   are then set per environment in the [store admin](#store-admin).
+   `bun run db:check:prod` verifies the existing migration table and requires
+   zero pending migrations; it applies no remote SQL. Schema and catalog
+   changes require a separate reviewed migration rollout with a complete
+   execution preview before remote SQL is run. There is no generic remote
+   migration apply command in this maintenance workflow.
 
    ```shell
    bun run db:check:prod
    ```
 
-4. Add the Stripe test keys, checkout hash secret, and admin auth secret to the
-   staging Worker. Set only the checkout hash and admin auth secrets in
-   production for the current disabled store configuration.
+4. Add the Stripe keys, checkout hash secret, and admin auth secret to each
+   store Worker: Stripe test keys in staging and live keys in production.
 
-   The maintenance guard expects only `BETTER_AUTH_SECRET` and
-   `CHECKOUT_HASH_SECRET` in production while its committed store flag is off.
-   Provisioning live Stripe secrets and enabling that flag
-   require a separate reviewed rollout; dependency maintenance preserves the
-   current secret set. `BETTER_AUTH_SECRET` is provisioned as described under
+   The maintenance guard expects all five secrets in both environments
+   whatever the `store` flag says, so turning a storefront off or back on needs
+   no secret change. Dependency maintenance preserves the current secret set.
+   `BETTER_AUTH_SECRET` is provisioned as described under
    [store admin](#store-admin).
 
    ```shell
    for secret in STRIPE_PUBLISHABLE_KEY STRIPE_SECRET_KEY \
      STRIPE_WEBHOOK_SECRET CHECKOUT_HASH_SECRET; do
      bun run --cwd packages/backend --bun wrangler secret put \
-       "$secret" --env staging
+       "$secret" --env <staging|prod>
    done
-   bun run --cwd packages/backend --bun wrangler secret put \
-     CHECKOUT_HASH_SECRET --env prod
    ```
 
-5. Register `https://store.devopsrockstars.com/api/webhooks/stripe` (and the
-   `store-staging` equivalent) in Stripe for `payment_intent.succeeded`,
-   `payment_intent.payment_failed`, and `payment_intent.canceled`. Use each
-   endpoint's signing secret for that environment's `STRIPE_WEBHOOK_SECRET`.
+5. Register `https://store.devopsrockstars.com/api/webhooks/stripe` in Stripe
+   live mode (and the `store-staging` equivalent in test mode) for
+   `payment_intent.succeeded`, `payment_intent.payment_failed`, and
+   `payment_intent.canceled`. Use each endpoint's signing secret for that
+   environment's `STRIPE_WEBHOOK_SECRET`.
 
 6. Initial provisioning published the Workers before Terraform attached their
    custom domains. Maintenance deploys require the existing Workers and domains

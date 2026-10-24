@@ -261,15 +261,13 @@ export async function deploymentTarget(
       bindings,
       secrets:
         workspace === 'backend'
-          ? environment === 'prod'
-            ? ['BETTER_AUTH_SECRET', 'CHECKOUT_HASH_SECRET']
-            : [
-                'BETTER_AUTH_SECRET',
-                'CHECKOUT_HASH_SECRET',
-                'STRIPE_PUBLISHABLE_KEY',
-                'STRIPE_SECRET_KEY',
-                'STRIPE_WEBHOOK_SECRET',
-              ]
+          ? [
+              'BETTER_AUTH_SECRET',
+              'CHECKOUT_HASH_SECRET',
+              'STRIPE_PUBLISHABLE_KEY',
+              'STRIPE_SECRET_KEY',
+              'STRIPE_WEBHOOK_SECRET',
+            ]
           : [],
       crons: workspace === 'backend' ? ['* * * * *'] : [],
       domains:

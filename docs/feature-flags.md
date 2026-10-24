@@ -17,8 +17,10 @@ bun run flags:check    # Validate without building or deploying
 
 To release or disable a feature, change only its boolean in the target
 environment's row in `feature-flags.json`, review the change, and redeploy that
-environment through the normal shipping workflow. For example, a later store
-release would change `production.store` to `true`, leaving search alone.
+environment through the normal shipping workflow. For example, setting
+`production.store` to `false` takes the production store down again, leaving
+search alone. The store Worker keeps its Stripe secrets either way, so the flag
+can change without a secret change.
 
 Keep each flag independent; never derive a flag's value from whether the
 environment is staging. Disabling the store removes its links and routes, but
