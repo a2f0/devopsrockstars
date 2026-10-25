@@ -166,7 +166,12 @@ describe('staging 3D skyline', () => {
       const originalFetch = globalThis.fetch.bind(globalThis);
       const browserWindow: Window = window;
       browserWindow.fetch = async (input, init) => {
-        if (String(input).endsWith('/static/skyline/skyline-3d.html')) {
+        const url = input instanceof Request ? input.url : String(input);
+        if (
+          new URL(url, location.href).pathname ===
+          '/static/skyline/skyline-3d.html'
+        ) {
+          document.documentElement.dataset['skylineMarkupHeld'] = 'true';
           await sceneReady;
         }
         return originalFetch(input, init);
@@ -178,6 +183,12 @@ describe('staging 3D skyline', () => {
       await viewer.waitForExist({timeout: 30_000});
       const original = await viewer.shadow$('#embedded-original');
       await original.waitForExist({timeout: 30_000});
+      assert.strictEqual(
+        await browser.execute(
+          () => document.documentElement.dataset['skylineMarkupHeld']
+        ),
+        'true'
+      );
       await expect(viewer).toHaveAttribute('aria-busy', 'true');
       await expect(original).not.toBeDisplayed();
       await browser.execute(() =>
@@ -186,10 +197,10 @@ describe('staging 3D skyline', () => {
       await BasePage.waitForSkylineFrame();
       await expect(original).not.toBeDisplayed();
     } finally {
+      await delayScene.remove();
       await browser.execute(() =>
         window.dispatchEvent(new Event('release-skyline-markup'))
       );
-      await delayScene.remove();
     }
   });
 
