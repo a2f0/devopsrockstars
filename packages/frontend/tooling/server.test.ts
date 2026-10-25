@@ -88,19 +88,31 @@ test('simultaneous environments serve isolated HTML, hashed modules and robots r
   }
 });
 
+test('Home serves readable consulting content before JavaScript in both environments', async () => {
+  for (const server of [production, staging]) {
+    const html = await (await fetch(server.url)).text();
+    expect(html).toContain('<title>DevOpsRockstars</title>');
+    expect(html).toContain('<h1 id="home-heading">DevOpsRockstars</h1>');
+    expect(html).toContain('<p>DevOps consulting.</p>');
+    expect(html).toContain('href="mailto:info@devopsrockstars.com"');
+    expect(html.match(/<h1\b/gu)).toHaveLength(1);
+    expect(html).not.toContain('Interactive 3D Chicago Skyline');
+    for (const pathname of ['/company', '/missing']) {
+      const other = await (await fetch(new URL(pathname, server.url))).text();
+      expect(other).not.toContain('id="home-heading"');
+    }
+  }
+});
+
 test('each route serves its own document and other paths a real 404', async () => {
   const title = async (response: Response) =>
     (await response.text()).match(/<title>([^<]*)<\/title>/u)?.[1];
   for (const [server, pathname, expected] of [
-    [production, '/', 'Interactive 3D Chicago Skyline | DevOps Rockstars'],
-    [
-      production,
-      '/company',
-      'Contact: Email, vCard, and GnuPG Key | DevOps Rockstars',
-    ],
-    [production, '/admin/orders', 'Store admin | DevOps Rockstars'],
-    [staging, '/store/receipt', 'Order | DevOps Rockstars'],
-    [staging, '/search', 'Search | DevOps Rockstars'],
+    [production, '/', 'DevOpsRockstars'],
+    [production, '/company', 'DevOps Consulting Contact | DevOpsRockstars'],
+    [production, '/admin/orders', 'Store admin | DevOpsRockstars'],
+    [staging, '/store/receipt', 'Order | DevOpsRockstars'],
+    [staging, '/search', 'Search | DevOpsRockstars'],
   ] as const) {
     const response = await fetch(new URL(pathname, server.url));
     expect(response.status).toBe(200);
@@ -111,7 +123,7 @@ test('each route serves its own document and other paths a real 404', async () =
   for (const pathname of ['/store', '/store/receipt', '/search', '/missing']) {
     const response = await fetch(new URL(pathname, production.url));
     expect(response.status).toBe(404);
-    expect(await title(response)).toBe('Not found | DevOps Rockstars');
+    expect(await title(response)).toBe('Not found | DevOpsRockstars');
   }
   const missing = await fetch(new URL('/company/missing', staging.url));
   expect(missing.status).toBe(404);

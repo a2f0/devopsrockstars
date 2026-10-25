@@ -1,7 +1,9 @@
 import type {FeatureFlags} from './featureFlags';
 import {matchesRoute} from './routes';
 
-export const siteName = 'DevOps Rockstars';
+export const siteName = 'DevOpsRockstars';
+export const siteDescription =
+  'DevOpsRockstars is a DevOps consulting company. Get in touch at info@devopsrockstars.com to discuss your project.';
 // The apex is the primary host. www serves the same Worker, so its pages
 // name these URLs as canonical too.
 export const siteOrigin = 'https://devopsrockstars.com';
@@ -23,16 +25,15 @@ export function sitePages(flags: FeatureFlags): readonly Page[] {
   return [
     {
       path: '/',
-      name: 'Interactive 3D Chicago Skyline',
-      description:
-        'Explore an interactive 3D model of the Chicago skyline from DevOps Rockstars in your browser, with the original skyline drawing one click away.',
+      name: siteName,
+      description: siteDescription,
       indexable: true,
     },
     {
       path: '/company',
-      name: 'Contact: Email, vCard, and GnuPG Key',
+      name: 'DevOps Consulting Contact',
       description:
-        "Contact DevOps Rockstars by email, save the company vCard to your address book, or download the company's GnuPG public key.",
+        'Contact DevOpsRockstars about DevOps consulting. Email info@devopsrockstars.com, save our vCard, or download our GnuPG public key.',
       indexable: true,
     },
     ...(flags.search
@@ -61,7 +62,7 @@ export const notFoundPage: Page = {
 };
 
 export function pageTitle(page: Page) {
-  return `${page.name} | ${siteName}`;
+  return page.path === '/' ? siteName : `${page.name} | ${siteName}`;
 }
 
 // Match like the router, so trailing slashes and unregistered paths agree.

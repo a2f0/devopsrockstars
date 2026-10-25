@@ -27,14 +27,37 @@ async function expectNoHatPreparation() {
 }
 
 describe('index page', () => {
+  it('shows the consulting identity and contact link without application JavaScript', async () => {
+    await browser.sendCommand('Network.enable', {});
+    await browser.sendCommand('Network.setBlockedURLs', {
+      urls: ['*/assets/*.js'],
+    });
+    try {
+      await BasePage.open('');
+      assert.strictEqual(await browser.getTitle(), 'DevOpsRockstars');
+      await expect(await browser.$('h1=DevOpsRockstars')).toBeDisplayed();
+      await expect(await browser.$('p=DevOps consulting.')).toBeDisplayed();
+      await expect(
+        await browser.$('a[href="mailto:info@devopsrockstars.com"]')
+      ).toBeDisplayed();
+      await expect(BasePage.skyline).not.toExist();
+      assert.strictEqual(
+        await browser.execute(
+          () => getComputedStyle(document.body).backgroundColor
+        ),
+        'rgb(0, 0, 0)'
+      );
+    } finally {
+      await browser.sendCommand('Network.setBlockedURLs', {urls: []});
+      await browser.sendCommand('Network.disable', {});
+    }
+  });
+
   it('loads correctly', async () => {
     await BasePage.open('');
     await BasePage.waitForAppReady();
-    assert.strictEqual(
-      await browser.getTitle(),
-      'Interactive 3D Chicago Skyline | DevOps Rockstars'
-    );
-    await expect(await browser.$('h1=DevOps Rockstars')).toExist();
+    assert.strictEqual(await browser.getTitle(), 'DevOpsRockstars');
+    await expect(await browser.$('h1=DevOpsRockstars')).toExist();
     await expect(BasePage.skyline).toHaveAttribute('data-ct-app', 'skyline');
     // Production starts the interactive 3D skyline directly, without waiting
     // for a hat preview, and renders its first frame.
@@ -43,6 +66,8 @@ describe('index page', () => {
       'Interactive Chicago skyline'
     );
     await BasePage.waitForSkylineFrame();
+    assert.strictEqual(await browser.getTitle(), 'DevOpsRockstars');
+    await expect(await browser.$('h1=DevOpsRockstars')).toBeDisplayed();
     assert.strictEqual(await BasePage.headerBackground(), 'rgba(0, 0, 0, 0)');
     await expectNoHatPreparation();
   });
@@ -68,7 +93,7 @@ describe('company page', () => {
     assert.strictEqual(await BasePage.headerBackground(), 'rgb(0, 0, 0)');
     assert.strictEqual(
       await browser.getTitle(),
-      'Contact: Email, vCard, and GnuPG Key | DevOps Rockstars'
+      'DevOps Consulting Contact | DevOpsRockstars'
     );
     await expectNoHatPreparation();
   });
@@ -97,8 +122,8 @@ describe('company page', () => {
         navigated: document.documentElement.dataset['navigated'],
       }));
     const home = {
-      title: 'Interactive 3D Chicago Skyline | DevOps Rockstars',
-      description: expect.stringContaining('Chicago skyline'),
+      title: 'DevOpsRockstars',
+      description: expect.stringContaining('DevOps consulting'),
       robots: undefined,
       canonical: 'https://devopsrockstars.com/',
       ogUrl: 'https://devopsrockstars.com/',
@@ -107,7 +132,7 @@ describe('company page', () => {
     };
     const company = {
       ...home,
-      title: 'Contact: Email, vCard, and GnuPG Key | DevOps Rockstars',
+      title: 'DevOps Consulting Contact | DevOpsRockstars',
       description: expect.stringContaining('vCard'),
       canonical: 'https://devopsrockstars.com/company',
       ogUrl: 'https://devopsrockstars.com/company',
@@ -135,7 +160,7 @@ describe('company page', () => {
     await BasePage.waitForAppReady();
     await markClientNavigation();
     expect(await head()).toEqual({
-      title: 'Not found | DevOps Rockstars',
+      title: 'Not found | DevOpsRockstars',
       description: undefined,
       robots: 'noindex, nofollow',
       canonical: undefined,
@@ -182,7 +207,7 @@ describe('production with every feature flag off', () => {
       await expect(BasePage.repositoryLink).not.toExist();
       assert.strictEqual(
         await browser.getTitle(),
-        'Not found | DevOps Rockstars'
+        'Not found | DevOpsRockstars'
       );
     }
   });

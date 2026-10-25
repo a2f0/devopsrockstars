@@ -133,6 +133,13 @@ writes into its document and the application reapplies on client-side
 navigation; `packages/frontend/buildAssets.ts` renders them along with
 `robots.txt`, `sitemap.xml`, and `_headers`.
 
+Home's title is `DevOpsRockstars`; its description and structured data identify
+the DevOps consulting company. The build renders `HomeIntro.tsx`, including its
+small scoped stylesheet, into Home's initial HTML. React renders the same
+heading, consulting line, and email link when it starts, while the skyline loads
+independently behind them. No server rendering runtime is sent to the browser.
+The skyline's own viewer title and metadata belong to its separate site.
+
 Staging builds with `PUBLIC_ENVIRONMENT=staging`, which puts the `noindex,
 nofollow` robots meta tag on every page and an `X-Robots-Tag` header on every
 response. Its pages name no URL, with no canonical link, social cards, or

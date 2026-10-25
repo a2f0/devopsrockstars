@@ -101,6 +101,29 @@ describe('mobile layouts', () => {
           })
         );
         await expectLayout(width);
+        const intro = await browser.execute(() => {
+          const bounds = document
+            .querySelector('.home-intro')
+            ?.getBoundingClientRect();
+          const header = document
+            .querySelector('header')
+            ?.getBoundingClientRect();
+          return {
+            top: bounds?.top ?? 0,
+            bottom: bounds?.bottom ?? 0,
+            headerBottom: header?.bottom ?? 0,
+            height: innerHeight,
+          };
+        });
+        assert.ok(
+          intro.top >= intro.headerBottom,
+          'The consulting introduction must clear navigation'
+        );
+        assert.ok(
+          intro.bottom < intro.height - 44,
+          'The introduction must leave room for skyline controls'
+        );
+        await expect(await browser.$('h1=DevOpsRockstars')).toBeDisplayed();
         await expect(await browser.$('a[href="/store"]')).not.toExist();
         await expect(await browser.$('a[href="/search"]')).not.toExist();
       }
