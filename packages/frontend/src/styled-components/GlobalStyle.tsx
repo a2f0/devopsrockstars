@@ -6,8 +6,8 @@ const GlobalStyle = createGlobalStyle`
     --foreground-color: white;
   }
 
-  /* Match the dark grayscale selection in CommandSnippets while preserving
-     system highlight colors in high-contrast mode. */
+  /* Use grayscale selection while preserving system highlight colors in
+     high-contrast mode. */
   @media (forced-colors: none) {
     ::selection {
       background-color: #616161;
