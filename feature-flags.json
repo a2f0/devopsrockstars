@@ -1,6 +1,6 @@
 {
   "production": {
-    "store": false,
+    "store": true,
     "search": false
   },
   "staging": {

@@ -151,11 +151,9 @@ inventory must still match the reviewed configuration before either upload.
 The guard requires complete `result_info` pagination from the Workers Domains
 API. A different or incomplete page holds deployment. Zone route pagination is
 also checked when the API supplies `result_info`.
-The committed production store flag is off. The guard expects only
-`BETTER_AUTH_SECRET` and `CHECKOUT_HASH_SECRET` in production and the three
-Stripe secrets as well in staging, verifying those exact sets during each live
-preview. A production store launch needs a separate reviewed secret and flag
-rollout. The store Worker runs with exactly the `nodejs_compat` compatibility
+Both store Workers carry `BETTER_AUTH_SECRET`, `CHECKOUT_HASH_SECRET`, and the
+three Stripe secrets whatever the `store` flag says, and the guard verifies
+that exact set during each live preview. The store Worker runs with exactly the `nodejs_compat` compatibility
 flag, which Better Auth needs for `AsyncLocalStorage`; the site Worker has none.
 Publishing also requires a clean committed tree without assume-unchanged or
 skip-worktree flags. The captured commit must match GitHub Actions' validated
