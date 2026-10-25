@@ -1,6 +1,7 @@
 import {mountSkyline} from '@a2f0/skyline';
 import React, {useEffect, useRef} from 'react';
 import styled from 'styled-components';
+import HomeIntro from './HomeIntro';
 import {useHatPreviewPreparing} from './store/PreparedHatPreview';
 
 const FullScreenSkyline = styled.div`
@@ -11,20 +12,6 @@ const FullScreenSkyline = styled.div`
   height: 100vh;
   height: 100dvh;
   pointer-events: auto;
-`;
-
-// The scene is the page's content; this names the page for assistive
-// technology and search engines without covering the skyline.
-const Heading = styled.h1`
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-  pointer-events: none;
 `;
 
 const Skyline = React.memo(() => {
@@ -47,7 +34,7 @@ const Skyline = React.memo(() => {
   }, [preparingHat]);
   return (
     <>
-      <Heading>DevOps Rockstars</Heading>
+      <HomeIntro />
       <FullScreenSkyline id="skyline" ref={container} data-ct-app="skyline" />
     </>
   );

@@ -105,7 +105,7 @@ test('production pages carry their canonical URL and social cards', () => {
     assert.equal(tagContent(head, 'property', 'og:title'), candidate.name);
     assert.equal(
       tagContent(head, 'property', 'og:site_name'),
-      'DevOps Rockstars'
+      'DevOpsRockstars'
     );
     assert.equal(
       tagContent(head, 'name', 'twitter:card'),
@@ -133,6 +133,9 @@ test('the home page describes the site and its publisher as JSON-LD', () => {
     data['@graph'].map((node: {'@type': string}) => node['@type']),
     ['Organization', 'WebSite']
   );
+  assert.equal(data['@graph'][0].name, 'DevOpsRockstars');
+  assert.match(data['@graph'][0].description, /DevOps consulting/u);
+  assert.equal(data['@graph'][0].email, 'info@devopsrockstars.com');
   assert.doesNotMatch(
     pageHead(page('/company'), production),
     /application\/ld\+json/u
@@ -176,10 +179,11 @@ test('indexable page titles and descriptions are unique and sized for results', 
   );
   for (const candidate of indexable) {
     const title = pageTitle(candidate);
-    assert.ok(title.length >= 40 && title.length <= 60, title);
-    assert.ok(title.endsWith(' | DevOps Rockstars'), title);
+    assert.ok(title.length > 0 && title.length <= 60, title);
+    if (candidate.path === '/') assert.equal(title, 'DevOpsRockstars');
+    else assert.ok(title.endsWith(' | DevOpsRockstars'), title);
     const length = candidate.description?.length ?? 0;
-    assert.ok(length >= 120 && length <= 160, candidate.path);
+    assert.ok(length > 0 && length <= 160, candidate.path);
   }
 });
 

@@ -1,5 +1,11 @@
 import type {SiteEnvironment} from './environment';
-import {type Page, pageTitle, siteName, siteOrigin} from './pages';
+import {
+  type Page,
+  pageTitle,
+  siteDescription,
+  siteName,
+  siteOrigin,
+} from './pages';
 
 export interface HeadTag {
   readonly name: 'title' | 'meta' | 'link' | 'script';
@@ -20,6 +26,9 @@ const homeStructuredData = {
       '@type': 'Organization',
       '@id': `${siteOrigin}/#organization`,
       name: siteName,
+      alternateName: 'DevOps Rockstars',
+      description: siteDescription,
+      email: 'info@devopsrockstars.com',
       url: `${siteOrigin}/`,
       // The favicons target's opaque 180px rendering of the brand logo.
       logo: `${siteOrigin}/apple-touch-icon.png`,
@@ -28,6 +37,8 @@ const homeStructuredData = {
       '@type': 'WebSite',
       '@id': `${siteOrigin}/#website`,
       name: siteName,
+      alternateName: 'DevOps Rockstars',
+      description: siteDescription,
       url: `${siteOrigin}/`,
       publisher: {'@id': `${siteOrigin}/#organization`},
     },
