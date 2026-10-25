@@ -157,6 +157,7 @@ async function tapInSkyline(selector: string) {
 
 describe('staging 3D skyline', () => {
   it('hides show original while the embedded scene is loading', async () => {
+    // Hold the scene markup until the boot-state assertions complete.
     const delayScene = await browser.addInitScript(() => {
       const sceneReady = new Promise<void>(resolve => {
         window.addEventListener('release-skyline-markup', () => resolve(), {
@@ -183,11 +184,16 @@ describe('staging 3D skyline', () => {
       await viewer.waitForExist({timeout: 30_000});
       const original = await viewer.shadow$('#embedded-original');
       await original.waitForExist({timeout: 30_000});
-      assert.strictEqual(
-        await browser.execute(
-          () => document.documentElement.dataset['skylineMarkupHeld']
-        ),
-        'true'
+      await browser.waitUntil(
+        () =>
+          browser.execute(
+            () =>
+              document.documentElement.dataset['skylineMarkupHeld'] === 'true'
+          ),
+        {
+          timeout: 30_000,
+          timeoutMsg: 'The scene markup request must be held',
+        }
       );
       await expect(viewer).toHaveAttribute('aria-busy', 'true');
       await expect(original).not.toBeDisplayed();
@@ -197,10 +203,13 @@ describe('staging 3D skyline', () => {
       await BasePage.waitForSkylineFrame();
       await expect(original).not.toBeDisplayed();
     } finally {
-      await delayScene.remove();
-      await browser.execute(() =>
-        window.dispatchEvent(new Event('release-skyline-markup'))
-      );
+      try {
+        await browser.execute(() =>
+          window.dispatchEvent(new Event('release-skyline-markup'))
+        );
+      } finally {
+        await delayScene.remove();
+      }
     }
   });
 
