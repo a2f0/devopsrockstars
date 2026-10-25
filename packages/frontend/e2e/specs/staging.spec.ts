@@ -666,6 +666,24 @@ describe('store page', () => {
       };
     }, fixtures);
 
+    // Payment is visible before and after a reload. Waiting for that UI alone
+    // can accept the old document and start editing a form the reload removes.
+    // Require a fresh document, then reacquire inputs from that document.
+    const reloadCheckout = async () => {
+      await browser.execute(() => {
+        document.documentElement.dataset['checkoutReloadPending'] = 'true';
+      });
+      await browser.refresh();
+      await browser.waitUntil(
+        () =>
+          browser.execute(
+            () => !document.documentElement.dataset['checkoutReloadPending']
+          ),
+        {timeoutMsg: 'Checkout reload must replace the previous document'}
+      );
+      await BasePage.waitForAppReady();
+    };
+    let phase = 'initial checkout';
     try {
       // A known width keeps the product copy's line count deterministic.
       await browser.setWindowSize(1280, 1000);
@@ -761,7 +779,7 @@ describe('store page', () => {
         sessionStorage.setItem('__store_test_release_checkout', 'true')
       );
 
-      const shippingAddress = await browser.$('[data-shipping-address]');
+      const shippingAddress = () => browser.$('[data-shipping-address]');
       const testCalls = () =>
         browser.execute(() => ({
           canceled: sessionStorage.getItem('__store_test_canceled'),
@@ -769,10 +787,11 @@ describe('store page', () => {
         }));
       await expect(await browser.$('h2=Payment')).toExist();
       // The reserved address replaces the form with a compact summary.
-      await expect(shippingAddress).toHaveText(
+      await expect(await shippingAddress()).toHaveText(
         'Grace Hopper\ngrace@example.com\n1 Navy Way\nNew York, NY 10001'
       );
       await expect(await browser.$('input[name="name"]')).not.toExist();
+      phase = 'edit before reload';
       // Edit opens the reserved address, not what was typed while reserving.
       await (await browser.$('button=Edit')).click();
       await expect(await browser.$('input[name="name"]')).toHaveValue(
@@ -791,10 +810,9 @@ describe('store page', () => {
         )
       );
 
-      await browser.refresh();
-      await BasePage.waitForAppReady();
+      await reloadCheckout();
       await expect(await browser.$('h2=Payment')).toExist();
-      await expect(shippingAddress).toHaveText('Grace Hopper', {
+      await expect(await shippingAddress()).toHaveText('Grace Hopper', {
         containing: true,
       });
       assert.deepStrictEqual(await testCalls(), {
@@ -802,23 +820,24 @@ describe('store page', () => {
         checkout: '1',
       });
 
+      phase = 'edit after reload';
       // Editing reopens the filled form and hides payment. Canceling the edit,
       // or saving the same address, keeps the reservation.
       await (await browser.$('button=Edit')).click();
-      const addressLine1 = await browser.$('input[name="address-line1"]');
-      await expect(addressLine1).toHaveValue('1 Navy Way');
+      const addressLine1 = () => browser.$('input[name="address-line1"]');
+      await expect(await addressLine1()).toHaveValue('1 Navy Way');
       await expect(await browser.$('input[name="name"]')).toBeFocused();
       await expect(await browser.$('h2=Payment')).not.toExist();
-      await addressLine1.setValue('2 Navy Way');
+      await (await addressLine1()).setValue('2 Navy Way');
       await (await browser.$('button=Cancel')).click();
-      await expect(shippingAddress).toHaveText('1 Navy Way', {
+      await expect(await shippingAddress()).toHaveText('1 Navy Way', {
         containing: true,
       });
       await expect(await browser.$('h2=Payment')).toExist();
       await (await browser.$('button=Edit')).click();
-      await expect(addressLine1).toHaveValue('1 Navy Way');
+      await expect(await addressLine1()).toHaveValue('1 Navy Way');
       await (await browser.$('button=Continue to payment')).click();
-      await expect(shippingAddress).toHaveText('1 Navy Way', {
+      await expect(await shippingAddress()).toHaveText('1 Navy Way', {
         containing: true,
       });
       assert.deepStrictEqual(await testCalls(), {
@@ -826,6 +845,7 @@ describe('store page', () => {
         checkout: '1',
       });
 
+      phase = 'replace reservation after reload';
       // A new address cancels the order and reserves the same items again
       // with new credentials, even after the cart changed and a reload
       // followed failed replacement attempts. The reload restores the
@@ -836,30 +856,29 @@ describe('store page', () => {
           JSON.stringify([{variantId: 'hat-5950-7-1-8', quantity: 2}])
         )
       );
-      await browser.refresh();
-      await BasePage.waitForAppReady();
+      await reloadCheckout();
       await (await browser.$('button=Edit')).click();
-      await addressLine1.setValue('2 Navy Way');
+      await (await addressLine1()).setValue('2 Navy Way');
       await (await browser.$('input[name="address-line2"]')).setValue('Apt 4');
       const busyStatus = await browser.$(
         'p=The store is busy. Please try again in a few minutes.'
       );
       await (await browser.$('button=Continue to payment')).click();
       await expect(busyStatus).toExist();
-      const addressLine2 = await browser.$('input[name="address-line2"]');
-      await addressLine2.setValue('Apt 5');
+      const addressLine2 = () => browser.$('input[name="address-line2"]');
+      await (await addressLine2()).setValue('Apt 5');
       await (await browser.$('button=Continue to payment')).click();
       await browser.waitUntil(async () => (await testCalls()).checkout === '3');
       await expect(busyStatus).toExist();
-      await browser.refresh();
-      await BasePage.waitForAppReady();
-      await expect(addressLine1).toHaveValue('2 Navy Way');
-      await expect(addressLine2).toHaveValue('Apt 5');
+      phase = 'restore replacement after reload';
+      await reloadCheckout();
+      await expect(await addressLine1()).toHaveValue('2 Navy Way');
+      await expect(await addressLine2()).toHaveValue('Apt 5');
       await expect(
         await browser.$('span=DevOps Rockstars 59FIFTY — 7 1/4 × 1')
       ).toExist();
       await (await browser.$('button=Continue to payment')).click();
-      await expect(shippingAddress).toHaveText('2 Navy Way, Apt 5', {
+      await expect(await shippingAddress()).toHaveText('2 Navy Way, Apt 5', {
         containing: true,
       });
       await expect(await browser.$('h2=Payment')).toExist();
@@ -958,7 +977,7 @@ describe('store page', () => {
           'base64'
         ),
         'store-checkout.html': await browser.getPageSource(),
-        'store-checkout.json': JSON.stringify(state, null, 2),
+        'store-checkout.json': JSON.stringify({phase, ...state}, null, 2),
       });
       throw failure;
     } finally {
