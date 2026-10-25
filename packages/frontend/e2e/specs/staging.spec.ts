@@ -156,6 +156,43 @@ async function tapInSkyline(selector: string) {
 }
 
 describe('staging 3D skyline', () => {
+  it('hides show original while the embedded scene is loading', async () => {
+    const delayScene = await browser.addInitScript(() => {
+      const sceneReady = new Promise<void>(resolve => {
+        window.addEventListener('release-skyline-markup', () => resolve(), {
+          once: true,
+        });
+      });
+      const originalFetch = globalThis.fetch.bind(globalThis);
+      const browserWindow: Window = window;
+      browserWindow.fetch = async (input, init) => {
+        if (String(input).endsWith('/static/skyline/skyline-3d.html')) {
+          await sceneReady;
+        }
+        return originalFetch(input, init);
+      };
+    });
+    try {
+      await BasePage.openStaging('');
+      const viewer = await browser.$(skylineRegion);
+      await viewer.waitForExist({timeout: 30_000});
+      const original = await viewer.shadow$('#embedded-original');
+      await original.waitForExist({timeout: 30_000});
+      await expect(viewer).toHaveAttribute('aria-busy', 'true');
+      await expect(original).not.toBeDisplayed();
+      await browser.execute(() =>
+        window.dispatchEvent(new Event('release-skyline-markup'))
+      );
+      await BasePage.waitForSkylineFrame();
+      await expect(original).not.toBeDisplayed();
+    } finally {
+      await browser.execute(() =>
+        window.dispatchEvent(new Event('release-skyline-markup'))
+      );
+      await delayScene.remove();
+    }
+  });
+
   it('waits for background hat preparation before mounting the viewer', async () => {
     const delayArtwork = await browser.addInitScript(() => {
       const artworkReady = new Promise<void>(resolve => {
