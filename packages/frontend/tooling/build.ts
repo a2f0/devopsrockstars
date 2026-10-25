@@ -155,9 +155,13 @@ export async function bundleFrontend({
     const html = template
       .replace(
         '</head>',
-        `${pageHead(page, environment)}\n<script type="module" src="${entry}"></script>\n</head>`
+        () =>
+          `${pageHead(page, environment)}\n<style>${home.styles}</style>\n<script type="module" src="${entry}"></script>\n</head>`
       )
-      .replace('<div id="©"></div>', `<div id="©">${isHome ? home : ''}</div>`);
+      .replace(
+        '<div id="©"></div>',
+        () => `<div id="©">${isHome ? home.html : ''}</div>`
+      );
     assets.set(
       pageFile(page),
       new Blob([html], {type: 'text/html;charset=utf-8'})

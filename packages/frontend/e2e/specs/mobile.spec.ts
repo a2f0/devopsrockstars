@@ -108,13 +108,15 @@ describe('mobile layouts', () => {
           const header = document
             .querySelector('header')
             ?.getBoundingClientRect();
+          if (!bounds || !header) return null;
           return {
-            top: bounds?.top ?? 0,
-            bottom: bounds?.bottom ?? 0,
-            headerBottom: header?.bottom ?? 0,
+            top: bounds.top,
+            bottom: bounds.bottom,
+            headerBottom: header.bottom,
             height: innerHeight,
           };
         });
+        assert.ok(intro, 'Home must render its introduction and header');
         assert.ok(
           intro.top >= intro.headerBottom,
           'The consulting introduction must clear navigation'

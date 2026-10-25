@@ -3,7 +3,7 @@ import {siteName} from './pages';
 
 // Rendered into the initial HTML as well as the app. Keep the consulting
 // identity readable while the independent skyline loads behind it.
-const styles = `
+export const homeIntroStyles = `
   .home-intro {
     position: absolute;
     top: calc(var(--header-height, 60px) + 24px);
@@ -44,7 +44,6 @@ export default function HomeIntro() {
       aria-labelledby="home-heading"
       data-ct-app="website"
     >
-      <style>{styles}</style>
       <h1 id="home-heading">{siteName}</h1>
       <p>DevOps consulting.</p>
       <a href="mailto:info@devopsrockstars.com" data-ct="contact.email">

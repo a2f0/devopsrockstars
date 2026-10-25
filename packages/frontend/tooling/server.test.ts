@@ -96,10 +96,13 @@ test('Home serves readable consulting content before JavaScript in both environm
     expect(html).toContain('<p>DevOps consulting.</p>');
     expect(html).toContain('href="mailto:info@devopsrockstars.com"');
     expect(html.match(/<h1\b/gu)).toHaveLength(1);
+    expect(html.split('</head>')[0]).toContain('.home-intro {');
+    expect(html.split('<body>')[1]).not.toContain('<style>');
     expect(html).not.toContain('Interactive 3D Chicago Skyline');
     for (const pathname of ['/company', '/missing']) {
       const other = await (await fetch(new URL(pathname, server.url))).text();
       expect(other).not.toContain('id="home-heading"');
+      expect(other.split('</head>')[0]).toContain('.home-intro {');
     }
   }
 });

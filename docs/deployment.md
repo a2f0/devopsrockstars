@@ -134,8 +134,9 @@ navigation; `packages/frontend/buildAssets.ts` renders them along with
 `robots.txt`, `sitemap.xml`, and `_headers`.
 
 Home's title is `DevOpsRockstars`; its description and structured data identify
-the DevOps consulting company. The build renders `HomeIntro.tsx`, including its
-small scoped stylesheet, into Home's initial HTML. React renders the same
+the DevOps consulting company. The build renders `HomeIntro.tsx` into Home's
+initial HTML and puts its class-specific CSS in every document's head, so it is
+also ready when navigating Home from another route. React renders the same
 heading, consulting line, and email link when it starts, while the skyline loads
 independently behind them. No server rendering runtime is sent to the browser.
 The skyline's own viewer title and metadata belong to its separate site.
