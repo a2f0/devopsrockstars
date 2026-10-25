@@ -27,7 +27,7 @@ async function expectNoHatPreparation() {
 }
 
 describe('index page', () => {
-  it('shows the consulting identity and contact link without application JavaScript', async () => {
+  it('keeps the title and empty dark shell without application JavaScript', async () => {
     await browser.sendCommand('Network.enable', {});
     await browser.sendCommand('Network.setBlockedURLs', {
       urls: ['*/assets/*.js'],
@@ -35,11 +35,11 @@ describe('index page', () => {
     try {
       await BasePage.open('');
       assert.strictEqual(await browser.getTitle(), 'DevOpsRockstars');
-      await expect(await browser.$('h1=DevOpsRockstars')).toBeDisplayed();
-      await expect(await browser.$('p=DevOps consulting.')).toBeDisplayed();
+      await expect(await browser.$('h1')).not.toExist();
+      await expect(await browser.$('p=DevOps consulting.')).not.toExist();
       await expect(
         await browser.$('a[href="mailto:info@devopsrockstars.com"]')
-      ).toBeDisplayed();
+      ).not.toExist();
       await expect(BasePage.skyline).not.toExist();
       assert.strictEqual(
         await browser.execute(
@@ -57,7 +57,7 @@ describe('index page', () => {
     await BasePage.open('');
     await BasePage.waitForAppReady();
     assert.strictEqual(await browser.getTitle(), 'DevOpsRockstars');
-    await expect(await browser.$('h1=DevOpsRockstars')).toExist();
+    await expect(await browser.$('h1')).not.toExist();
     await expect(BasePage.skyline).toHaveAttribute('data-ct-app', 'skyline');
     // Production starts the interactive 3D skyline directly, without waiting
     // for a hat preview, and renders its first frame.
@@ -67,7 +67,7 @@ describe('index page', () => {
     );
     await BasePage.waitForSkylineFrame();
     assert.strictEqual(await browser.getTitle(), 'DevOpsRockstars');
-    await expect(await browser.$('h1=DevOpsRockstars')).toBeDisplayed();
+    await expect(await browser.$('h1')).not.toExist();
     assert.strictEqual(await BasePage.headerBackground(), 'rgba(0, 0, 0, 0)');
     await expectNoHatPreparation();
   });
@@ -80,6 +80,9 @@ describe('company page', () => {
     await expect(browser).toHaveUrl(expect.stringContaining('/company'));
     await expect(BasePage.skyline).not.toExist();
     await expect(await browser.$('h1=Contact')).toExist();
+    await expect(
+      await browser.$('p=Get in touch about DevOps consulting.')
+    ).not.toExist();
     assert.strictEqual(
       await browser.execute(() =>
         document

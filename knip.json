@@ -21,12 +21,7 @@
         "tooling/*.ts",
         "e2e/specs/**/*.spec.ts"
       ],
-      "project": [
-        "src/**/*.{ts,tsx}",
-        "e2e/**/*.ts",
-        "*.ts",
-        "tooling/**/*.{ts,tsx}"
-      ]
+      "project": ["src/**/*.{ts,tsx}", "e2e/**/*.ts", "*.ts", "tooling/**/*.ts"]
     },
     "packages/shared-types": {
       "project": ["src/**/*.ts"]

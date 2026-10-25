@@ -18,7 +18,6 @@ import {parseSiteEnvironment, type SiteEnvironment} from '../src/environment';
 import type {FeatureFlags} from '../src/featureFlags';
 import {notFoundPage, sitePages} from '../src/pages';
 import {loadFeatureFlagConfiguration, parseFeatureFlags} from './featureFlags';
-import {prerenderHome} from './prerenderHome';
 
 export const frontendRoot = path.resolve(import.meta.dir, '..');
 export const repositoryRoot = path.resolve(frontendRoot, '../..');
@@ -149,19 +148,12 @@ export async function bundleFrontend({
   // Each route gets the same application shell with its own metadata, so
   // crawlers and link previews read it without running JavaScript.
   const pages = sitePages(flags);
-  const home = prerenderHome();
   for (const page of [...pages, notFoundPage]) {
-    const isHome = page.path === '/';
-    const html = template
-      .replace(
-        '</head>',
-        () =>
-          `${pageHead(page, environment)}\n<style>${home.styles}</style>\n<script type="module" src="${entry}"></script>\n</head>`
-      )
-      .replace(
-        '<div id="©"></div>',
-        () => `<div id="©">${isHome ? home.html : ''}</div>`
-      );
+    const html = template.replace(
+      '</head>',
+      () =>
+        `${pageHead(page, environment)}\n<script type="module" src="${entry}"></script>\n</head>`
+    );
     assets.set(
       pageFile(page),
       new Blob([html], {type: 'text/html;charset=utf-8'})

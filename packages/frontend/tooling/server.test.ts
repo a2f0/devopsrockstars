@@ -88,21 +88,18 @@ test('simultaneous environments serve isolated HTML, hashed modules and robots r
   }
 });
 
-test('Home serves readable consulting content before JavaScript in both environments', async () => {
+test('Home preserves its title without visible marketing before JavaScript', async () => {
   for (const server of [production, staging]) {
     const html = await (await fetch(server.url)).text();
     expect(html).toContain('<title>DevOpsRockstars</title>');
-    expect(html).toContain('<h1 id="home-heading">DevOpsRockstars</h1>');
-    expect(html).toContain('<p>DevOps consulting.</p>');
-    expect(html).toContain('href="mailto:info@devopsrockstars.com"');
-    expect(html.match(/<h1\b/gu)).toHaveLength(1);
-    expect(html.split('</head>')[0]).toContain('.home-intro {');
-    expect(html.split('<body>')[1]).not.toContain('<style>');
+    expect(html).toContain('<div id="©"></div>');
+    expect(html).not.toContain('home-intro');
+    expect(html).not.toContain('<p>DevOps consulting.</p>');
+    expect(html).not.toContain('href="mailto:info@devopsrockstars.com"');
     expect(html).not.toContain('Interactive 3D Chicago Skyline');
     for (const pathname of ['/company', '/missing']) {
       const other = await (await fetch(new URL(pathname, server.url))).text();
-      expect(other).not.toContain('id="home-heading"');
-      expect(other.split('</head>')[0]).toContain('.home-intro {');
+      expect(other).not.toContain('home-intro');
     }
   }
 });
