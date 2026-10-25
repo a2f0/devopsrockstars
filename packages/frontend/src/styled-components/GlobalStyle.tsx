@@ -6,6 +6,16 @@ const GlobalStyle = createGlobalStyle`
     --foreground-color: white;
   }
 
+  /* Use grayscale selection while preserving system highlight colors in
+     high-contrast mode. */
+  @media (forced-colors: none) {
+    ::selection {
+      background-color: #616161;
+      color: #ffffff;
+      text-shadow: none;
+    }
+  }
+
   html {
     pointer-events: none;
     margin-left: calc(100vw - 100%);

@@ -1,7 +1,6 @@
 import {mountSkyline} from '@a2f0/skyline';
 import React, {useEffect, useRef} from 'react';
 import styled from 'styled-components';
-import HomeIntro from './HomeIntro';
 import {useHatPreviewPreparing} from './store/PreparedHatPreview';
 
 const FullScreenSkyline = styled.div`
@@ -33,10 +32,7 @@ const Skyline = React.memo(() => {
     return () => viewer.destroy();
   }, [preparingHat]);
   return (
-    <>
-      <HomeIntro />
-      <FullScreenSkyline id="skyline" ref={container} data-ct-app="skyline" />
-    </>
+    <FullScreenSkyline id="skyline" ref={container} data-ct-app="skyline" />
   );
 });
 

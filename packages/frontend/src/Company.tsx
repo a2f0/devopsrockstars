@@ -11,7 +11,6 @@ const Company = React.memo(() => {
   return (
     <FlexContainerColumn data-ct-app="company">
       <h1>Contact</h1>
-      <p>Get in touch about DevOps consulting.</p>
       <ContactRowContainer>
         <ContactRow
           svgHeight={20}
