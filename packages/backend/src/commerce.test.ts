@@ -135,7 +135,7 @@ function availableVariant() {
     label: '7 1/4',
     product_active: 1,
     product_id: 'hat-5950',
-    product_name: 'DevOps Rockstars 59FIFTY',
+    product_name: 'DevOpsRockstars 59FIFTY',
     sku: 'DOR-5950-7-1-4',
     unit_amount: 2000,
     variant_id: 'hat-5950-7-1-4',
@@ -159,7 +159,7 @@ test('checkout reserves inventory in one batch before creating payment', async (
   assert.deepEqual(checkout.lines, [
     {
       currency: 'usd',
-      productName: 'DevOps Rockstars 59FIFTY',
+      productName: 'DevOpsRockstars 59FIFTY',
       quantity: 2,
       unitAmount: 2000,
       variantId: 'hat-5950-7-1-4',
@@ -254,7 +254,7 @@ function databaseWithActiveCheckout(order: unknown, quantity = 2) {
     query.includes('FROM order_items')
       ? [
           {
-            product_name: 'DevOps Rockstars 59FIFTY',
+            product_name: 'DevOpsRockstars 59FIFTY',
             quantity,
             unit_amount: 2000,
             variant_id: 'hat-5950-7-1-4',
@@ -298,7 +298,7 @@ test('checkout resumes an identical active checkout whose response was lost', as
     lines: [
       {
         currency: 'usd',
-        productName: 'DevOps Rockstars 59FIFTY',
+        productName: 'DevOpsRockstars 59FIFTY',
         quantity: 2,
         unitAmount: 2000,
         variantId: 'hat-5950-7-1-4',

@@ -27,7 +27,7 @@ const fixtures = {
       {
         id: 'hat-5950',
         slug: 'devops-rockstars-59fifty',
-        name: 'DevOps Rockstars 59FIFTY',
+        name: 'DevOpsRockstars 59FIFTY',
         manufacturer: 'New Era',
         active: true,
         variants: [variant],
@@ -61,7 +61,7 @@ const fixtures = {
         items: [
           {
             sku: 'DOR-5950-7-1-4',
-            productName: 'DevOps Rockstars 59FIFTY',
+            productName: 'DevOpsRockstars 59FIFTY',
             variantLabel: '7 1/4',
             unitAmount: 2000,
             quantity: 1,

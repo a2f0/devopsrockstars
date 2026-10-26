@@ -8,7 +8,7 @@ beforeAll(startBrowser, 60000);
 afterAll(stopBrowser, 60000);
 
 const canvasSelector = 'canvas[aria-label$="interactive 3D preview"]';
-const imageSelector = 'img[alt="DevOps Rockstars 59FIFTY"]';
+const imageSelector = 'img[alt="DevOpsRockstars 59FIFTY"]';
 const loadingSelector = '[data-hat-loading]';
 const statusSelector = '[data-hat-preview-status]';
 
@@ -95,7 +95,7 @@ describe('3D hat preview', () => {
             products: [
               {
                 id: 'hat-5950',
-                name: 'DevOps Rockstars 59FIFTY',
+                name: 'DevOpsRockstars 59FIFTY',
                 description: 'Fitted, black.',
                 imagePath: '/static/image/store/5950.svg',
                 variants: [
@@ -313,7 +313,7 @@ describe('3D hat preview', () => {
               interactive: !canvas?.closest('[inert]'),
               loading: Boolean(document.querySelector('[data-hat-loading]')),
               oldImage: Boolean(
-                document.querySelector('img[alt="DevOps Rockstars 59FIFTY"]')
+                document.querySelector('img[alt="DevOpsRockstars 59FIFTY"]')
               ),
               contexts: document.documentElement.dataset['previewContexts'],
             };

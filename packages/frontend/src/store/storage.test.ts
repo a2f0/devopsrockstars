@@ -56,7 +56,7 @@ function pendingCheckout(expiresAt: string) {
       lines: [
         {
           currency: 'usd',
-          productName: 'DevOps Rockstars 59FIFTY',
+          productName: 'DevOpsRockstars 59FIFTY',
           quantity: 2,
           unitAmount: 2000,
           variantId: 'hat-5950-7-1-4',

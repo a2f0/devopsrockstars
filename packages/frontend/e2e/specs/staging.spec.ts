@@ -550,7 +550,7 @@ describe('store page', () => {
         lines: [
           {
             currency: 'usd',
-            productName: 'DevOps Rockstars 59FIFTY',
+            productName: 'DevOpsRockstars 59FIFTY',
             quantity: 1,
             unitAmount: 2000,
             variantId: 'hat-5950-7-1-4',
@@ -571,7 +571,7 @@ describe('store page', () => {
           {
             id: 'hat-5950',
             slug: 'devops-rockstars-59fifty',
-            name: 'DevOps Rockstars 59FIFTY',
+            name: 'DevOpsRockstars 59FIFTY',
             manufacturer: 'New Era',
             description:
               'Embroidered New Era Low Crown 59FIFTY\nFitted, black.',
@@ -932,7 +932,7 @@ describe('store page', () => {
       await expect(await addressLine1()).toHaveValue('2 Navy Way');
       await expect(await addressLine2()).toHaveValue('Apt 5');
       await expect(
-        await browser.$('span=DevOps Rockstars 59FIFTY — 7 1/4 × 1')
+        await browser.$('span=DevOpsRockstars 59FIFTY — 7 1/4 × 1')
       ).toExist();
       await (await browser.$('button=Continue to payment')).click();
       await expect(await shippingAddress()).toHaveText('2 Navy Way, Apt 5', {
@@ -1054,7 +1054,7 @@ describe('store page', () => {
               products: [
                 {
                   id: 'hat-5950',
-                  name: 'DevOps Rockstars 59FIFTY',
+                  name: 'DevOpsRockstars 59FIFTY',
                   description: 'Fitted, black.',
                   imagePath: '/static/image/store/5950.svg',
                   variants: [

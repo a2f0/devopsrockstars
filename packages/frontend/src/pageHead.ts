@@ -13,7 +13,7 @@ export interface HeadTag {
   readonly text?: string;
 }
 
-const shareImageAlt = 'The DevOps Rockstars six-pointed star on black';
+const shareImageAlt = 'The DevOpsRockstars six-pointed star on black';
 
 export function pageUrl(page: Page) {
   return new URL(page.path, siteOrigin).href;
@@ -26,7 +26,7 @@ const homeStructuredData = {
       '@type': 'Organization',
       '@id': `${siteOrigin}/#organization`,
       name: siteName,
-      alternateName: 'DevOps Rockstars',
+      alternateName: 'DevOpsRockstars',
       description: siteDescription,
       email: 'info@devopsrockstars.com',
       url: `${siteOrigin}/`,
@@ -37,7 +37,7 @@ const homeStructuredData = {
       '@type': 'WebSite',
       '@id': `${siteOrigin}/#website`,
       name: siteName,
-      alternateName: 'DevOps Rockstars',
+      alternateName: 'DevOpsRockstars',
       description: siteDescription,
       url: `${siteOrigin}/`,
       publisher: {'@id': `${siteOrigin}/#organization`},

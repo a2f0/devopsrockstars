@@ -85,7 +85,7 @@ const Admin = () => {
               {environment}
             </Badge>
           </Eyebrow>
-          <AdminHeading>DevOps Rockstars</AdminHeading>
+          <AdminHeading>DevOpsRockstars</AdminHeading>
         </div>
         {context ? (
           <AdminNav aria-label="Admin">

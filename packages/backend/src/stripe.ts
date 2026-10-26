@@ -132,7 +132,7 @@ export async function createPaymentIntent(
   form.set('amount', String(input.amount));
   form.set('currency', input.currency);
   form.append('payment_method_types[]', 'card');
-  form.set('description', 'DevOps Rockstars store order');
+  form.set('description', 'DevOpsRockstars store order');
   form.set('receipt_email', input.shipping.email);
   form.set('metadata[order_id]', input.orderId);
   form.set('metadata[source]', 'devopsrockstars_store');
