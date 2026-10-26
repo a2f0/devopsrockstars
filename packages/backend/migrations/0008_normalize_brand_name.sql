@@ -1,10 +1,9 @@
--- One-time catalog update for databases that already applied 0001_store.sql.
--- Preview the catalog rows and affected order-item count before applying to
--- each environment. Only display names change; IDs, URLs, prices, stock, and
--- order state stay intact.
+-- Existing databases do not replay the updated initial seed. Normalize the
+-- brand spelling in their catalog and receipt labels without changing IDs,
+-- URLs, prices, inventory, or order state.
 UPDATE products
 SET name = 'DevOpsRockstars 59FIFTY',
-    updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+    updated_at = '2026-10-26T00:00:00.000Z'
 WHERE id = 'hat-5950' AND name <> 'DevOpsRockstars 59FIFTY';
 
 UPDATE product_images
@@ -12,6 +11,8 @@ SET alt_text = 'DevOpsRockstars fitted cap'
 WHERE id = 'hat-5950-main' AND product_id = 'hat-5950'
   AND alt_text <> 'DevOpsRockstars fitted cap';
 
+-- The requested brand normalization includes existing receipt display names;
+-- their purchase amounts, quantities, and payment records remain untouched.
 UPDATE order_items
 SET product_name = 'DevOpsRockstars 59FIFTY'
 WHERE product_id = 'hat-5950' AND product_name <> 'DevOpsRockstars 59FIFTY';
