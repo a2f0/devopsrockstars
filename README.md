@@ -1,5 +1,7 @@
 # DevOpsRockstars
 
+[devopsrockstars.com](https://devopsrockstars.com)
+
 React website and Cloudflare store backend for DevOpsRockstars.
 
 Use Bun **1.4.3** (see `.mise.toml`) for all workspace commands. TypeScript
