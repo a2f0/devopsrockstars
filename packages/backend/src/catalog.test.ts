@@ -55,7 +55,10 @@ test('brand migration upgrades existing labels without changing commerce data', 
       'buyer@example.test', 'Test Buyer', '1 Test Way', 'New York', 'NY',
       '10001', 'US', '2026-10-25', '2026-10-25', '2026-10-25', '2026-10-25')`);
     sqlite
-      .query(`INSERT INTO order_items VALUES (
+      .query(`INSERT INTO order_items (
+        order_id, variant_id, product_id, sku, product_name, variant_label,
+        unit_amount, quantity, line_total
+      ) VALUES (
         'brand-order', 'hat-5950-7', 'hat-5950', 'DOR-5950-7', ?,
         '7', 2000, 1, 2000)`)
       .run(`${oldBrand} 59FIFTY`);
