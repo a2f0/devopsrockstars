@@ -6,7 +6,7 @@ import type {Env} from './types';
 // database-backed sessions and rate limits, and no public registration.
 function buildAuth(env: Env, origin: string, secret: string) {
   return betterAuth({
-    appName: 'DevOps Rockstars Admin',
+    appName: 'DevOpsRockstars Admin',
     baseURL: origin,
     // Better Auth detects the D1 binding and uses its native dialect.
     database: env.DB as unknown as AuthD1Database,

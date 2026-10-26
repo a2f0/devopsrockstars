@@ -129,7 +129,7 @@ function insertOrder(
       `INSERT INTO order_items (
          order_id, variant_id, product_id, sku, product_name, variant_label,
          unit_amount, quantity, line_total
-       ) VALUES (?, ?, 'hat-5950', 'DOR-5950-7', 'DevOps Rockstars 59FIFTY',
+       ) VALUES (?, ?, 'hat-5950', 'DOR-5950-7', 'DevOpsRockstars 59FIFTY',
          '7', 2000, ?, ?)`
     )
     .run(id, variantId, quantity, 2000 * quantity);
@@ -403,7 +403,7 @@ test('orders page newest first with filters, counts, and line items', async () =
   expect(first.orders[0]?.items).toEqual([
     {
       sku: 'DOR-5950-7',
-      productName: 'DevOps Rockstars 59FIFTY',
+      productName: 'DevOpsRockstars 59FIFTY',
       variantLabel: '7',
       unitAmount: 2000,
       quantity: 1,

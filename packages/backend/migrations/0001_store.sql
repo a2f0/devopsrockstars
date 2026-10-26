@@ -111,7 +111,7 @@ INSERT INTO products (
 ) VALUES (
   'hat-5950',
   'devops-rockstars-59fifty',
-  'DevOps Rockstars 59FIFTY',
+  'DevOpsRockstars 59FIFTY',
   'New Era',
   'Embroidered New Era Low Crown 59FIFTY cap. Fitted, black.',
   1,
@@ -125,7 +125,7 @@ VALUES (
   'hat-5950-main',
   'hat-5950',
   '/static/image/store/hat.svg',
-  'DevOps Rockstars fitted cap',
+  'DevOpsRockstars fitted cap',
   10
 );
 

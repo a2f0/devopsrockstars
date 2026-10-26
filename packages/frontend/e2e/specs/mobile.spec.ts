@@ -159,7 +159,7 @@ describe('mobile layouts', () => {
             products: [
               {
                 id: 'hat-5950',
-                name: 'DevOps Rockstars 59FIFTY',
+                name: 'DevOpsRockstars 59FIFTY',
                 description: 'Fitted, black.\nEmbroidered in Chicago.',
                 imagePath: '/static/image/store/5950.svg',
                 variants: [

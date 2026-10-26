@@ -92,7 +92,7 @@ Third-party lifecycle scripts are disabled with `trustedDependencies: []`.
 
 ## Architecture Overview
 
-This is a Bun monorepo for the DevOps Rockstars React site and Cloudflare
+This is a Bun monorepo for the DevOpsRockstars React site and Cloudflare
 store backend.
 
 ### Workspace packages

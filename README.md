@@ -1,6 +1,6 @@
-# DevOps Rockstars
+# DevOpsRockstars
 
-React website and Cloudflare store backend for DevOps Rockstars.
+React website and Cloudflare store backend for DevOpsRockstars.
 
 Use Bun **1.4.3** (see `.mise.toml`) for all workspace commands. TypeScript
 **7.0.2** checks types; Bun transpiles and bundles the application. Install

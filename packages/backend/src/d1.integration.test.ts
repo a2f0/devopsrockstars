@@ -88,7 +88,7 @@ const VARIANT = {
   label: '7 1/4',
   product_active: 1,
   product_id: 'hat-5950',
-  product_name: 'DevOps Rockstars 59FIFTY',
+  product_name: 'DevOpsRockstars 59FIFTY',
   sku: 'DOR-5950-7-1-4',
   unit_amount: 2000,
   variant_id: 'hat-5950-7-1-4',
@@ -188,7 +188,7 @@ test('D1 migrations enforce reservation, restock, and cap invariants', () => {
     assert.equal(activeResult[0]?.results[0]?.['status'], 'creating_payment');
     assert.deepEqual(activeResult[1]?.results, [
       {
-        product_name: 'DevOps Rockstars 59FIFTY',
+        product_name: 'DevOpsRockstars 59FIFTY',
         quantity: 1,
         unit_amount: 2000,
         variant_id: 'hat-5950-7-1-4',
