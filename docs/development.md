@@ -22,7 +22,9 @@ bun run dev:cloudflare         # Store API Worker on port 8787
 ```
 
 The Bun dev server proxies `/api` to `http://127.0.0.1:8787`, so the site
-and the store API stay same-origin in development.
+and the store API stay same-origin in development. The
+[backend README](../packages/backend/README.md#local-development) sets up the
+local store database, secrets, inventory, and an admin account.
 
 ## Builds
 
@@ -80,10 +82,12 @@ bun run --cwd packages/frontend test \
 ## Package management
 
 This project uses **Bun 1.4.3** for package management, TypeScript execution,
-bundling, development servers, and unit/browser test execution. The version is
-pinned in `.mise.toml` and `package.json`; CI installs it with `mise-action`.
-When mise is not activated, agent shells using its default data directory should
-put `~/.local/share/mise/installs/bun/1.4.3/bin` first on `PATH`.
+bundling, development servers, and unit/browser test execution. TypeScript
+**7.0.2** only checks types; Bun transpiles and bundles the application. The
+Bun version is pinned in `.mise.toml` and `package.json`; CI installs it with
+`mise-action`. When mise is not activated, agent shells using its default data
+directory should put `~/.local/share/mise/installs/bun/1.4.3/bin` first on
+`PATH`.
 
 Use `bun install`, `bun add --exact <package>`, and `bun run <script>`.
 Commit `bun.lock` with dependency changes. JavaScript CLIs run with
@@ -97,8 +101,8 @@ store backend.
 
 ### Workspace packages
 
-- `packages/frontend` — React application, assets, Bun tooling, and browser tests
-- `packages/backend` — Cloudflare Worker, D1 migrations, and Wrangler config
+- [`packages/frontend`](../packages/frontend/README.md) — React application, assets, Bun tooling, and browser tests
+- [`packages/backend`](../packages/backend/README.md) — Cloudflare Worker, D1 migrations, and Wrangler config
 - `packages/shared-types` — shared API request and response types
 - `packages/diagnostics` — private browser and Worker Sentry error reporting
 
