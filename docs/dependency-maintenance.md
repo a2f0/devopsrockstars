@@ -3,7 +3,7 @@
 Keep reusable upgrade procedures and active constraints here. Update or remove
 guidance as it stops applying; keep each run's version inventory, audit findings,
 validation, and preview evidence in its PR instead of accumulating a journal.
-[PR #841](https://github.com/a2f0/devopsrockstars.com/pull/841) records the upgrade
+[PR #841](https://github.com/a2f0/devopsrockstars/pull/841) records the upgrade
 and guard rollout that introduced the constraints below. Historical findings
 and previews are not current audit or live-state evidence.
 

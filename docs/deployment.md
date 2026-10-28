@@ -318,7 +318,7 @@ which the matrix workspace manages and backs up
 Link it from the repository root and confirm Git ignores it:
 
 ```shell
-ln -s ../matrix-secrets/devopsrockstars.com .secrets   # ../../../ from a matrix checkout
+ln -s ../matrix-secrets/devopsrockstars .secrets   # ../../../ from a matrix checkout
 git check-ignore .secrets
 ```
 

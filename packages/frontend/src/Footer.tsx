@@ -12,7 +12,7 @@ import MenuItemCenter from './styled-components/MenuItemCenter';
 import MenuItemLeft from './styled-components/MenuItemLeft';
 import MenuItemRight from './styled-components/MenuItemRight';
 
-const repositoryUrl = 'https://github.com/a2f0/devopsrockstars.com';
+const repositoryUrl = 'https://github.com/a2f0/devopsrockstars';
 
 const repositoryLinkRoutes = [
   '/company',

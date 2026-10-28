@@ -181,7 +181,7 @@ describe('company page', () => {
     await BasePage.waitForAppReady();
     assert.strictEqual(
       await BasePage.repositoryLink.getAttribute('href'),
-      'https://github.com/a2f0/devopsrockstars.com'
+      'https://github.com/a2f0/devopsrockstars'
     );
     const {company, repository} = await BasePage.footerLogoGaps();
     assert.ok(Math.abs(company) < 1, `Company logo is ${company}px up`);

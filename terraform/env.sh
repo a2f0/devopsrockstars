@@ -1,6 +1,6 @@
 # Sourced by the Terraform scripts in this directory; it does nothing when run.
 #
-# .secrets is a gitignored link to matrix-secrets/devopsrockstars.com. Its
+# .secrets is a gitignored link to matrix-secrets/devopsrockstars. Its
 # production tier holds this stack's credentials and variables: shared.env,
 # loaded first when present, holds TF_VAR_cloudflare_api_token; app.env, loaded
 # last so it wins, holds the state bucket token's R2 S3 key as
@@ -17,13 +17,13 @@ load_terraform_env() {
 
   if [[ ! -f "$tier_dir/app.env" ]]; then
     echo "ERROR: $tier_dir/app.env is missing." >&2
-    echo "Link .secrets to matrix-secrets/devopsrockstars.com; see the" >&2
+    echo "Link .secrets to matrix-secrets/devopsrockstars; see the" >&2
     echo "Infrastructure section of docs/deployment.md." >&2
     return 1
   fi
   if [[ ! -f "$tier_dir/main.tfvars" ]]; then
     echo "ERROR: $tier_dir/main.tfvars is missing." >&2
-    echo "Link .secrets to matrix-secrets/devopsrockstars.com; see the" >&2
+    echo "Link .secrets to matrix-secrets/devopsrockstars; see the" >&2
     echo "Infrastructure section of docs/deployment.md." >&2
     return 1
   fi
