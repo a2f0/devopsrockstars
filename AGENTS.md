@@ -48,16 +48,6 @@ them with `bun run agents:check`. Do not edit managed skills locally.
 `scripts/checks/check-agent-skills-in-sync.mjs` keeps skills present in both
 `.agents/skills` and `.claude/skills` identical through the pre-commit hook.
 
-Capture noisy finite commands with the pinned harness, for example
-`bun run agent:run --label unit -- bun run unit` or
-`bun run agent:run --label hooks -- pre-commit run --all-files`.
-It preserves exit status and full private logs while returning a compact receipt
-and a bounded failure excerpt. Use `bun run agent-tool logs <log-path>` or a
-targeted search to inspect warnings, timings, and artifacts needed to accept a
-check. Keep review verdicts and structured decision output visible, and inspect
-complete deployment preview evidence before publication. Do not wrap interactive
-commands or persistent servers.
-
 Keep README focused on purpose, setup, and normal usage. Maintain reusable upgrade
 procedures and active constraints in
 [dependency maintenance](docs/dependency-maintenance.md), with operational
@@ -77,6 +67,27 @@ Primary checks in this repo:
 Pre-commit hook entrypoint:
 
 - `pre-commit run --all-files`
+
+## Output capture
+
+Run finite, noisy commands, such as installs, builds, tests, linters, and Git
+commands that run hooks, through
+`bun run agent:run --label <name> -- <command> [args...]`. It keeps complete
+output in a private log, preserves the exit status, and prints a compact
+receipt, with a bounded excerpt of the log on failure. Read more with
+`bun run agent:logs <log-path>`, raising `--tail-lines` or `--max-bytes` as
+needed, or with a targeted search of the log. A zero exit does not rule out
+warnings: inspect required warnings, timings, and artifacts before accepting a
+check. Run reviews, version preparation, audits, infrastructure previews, and
+run-group checks directly so their results stay visible, and run interactive
+tools and servers directly too. Never narrow a suite or silence warnings to
+reduce output.
+
+For example, run `bun run agent:run --label unit -- bun run unit` or
+`bun run agent:run --label hooks -- pre-commit run --all-files`.
+`bun run check` is an agent-tool run group that records its pre-commit, flag,
+unit, and browser steps itself, so run it directly. Inspect complete deployment
+preview evidence before publication.
 
 ## Shipping and Production Verification
 

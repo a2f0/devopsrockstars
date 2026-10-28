@@ -17,6 +17,7 @@
     "ci-headless": "bun scripts/testing/ci.ts --headless",
     "agent-tool": "agent-tool",
     "agent:run": "agent-tool run",
+    "agent:logs": "agent-tool logs",
     "flags": "bun scripts/dev/feature-flags.ts",
     "flags:check": "bun scripts/dev/feature-flags.ts --check",
     "skyline:update": "bun scripts/dev/skyline.ts",

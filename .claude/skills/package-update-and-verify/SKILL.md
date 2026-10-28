@@ -20,7 +20,7 @@ Report blocked checks rather than weakening their scope.
 
 Capture noisy finite checks with `bun run agent:run --label <name> -- <command>`.
 The receipt preserves exit status and names the complete private log; inspect
-required warnings and artifacts with `bun run agent-tool logs <log-path>` or a
+required warnings and artifacts with `bun run agent:logs <log-path>` or a
 targeted search. Keep audit decisions, review verdicts, and complete deployment
 preview evidence visible. Do not capture interactive commands or persistent
 servers.
