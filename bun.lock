@@ -5,7 +5,7 @@
     "": {
       "name": "devopsrockstars",
       "devDependencies": {
-        "@a2f0/agent-tool": "0.1.23",
+        "@a2f0/agent-tool": "0.1.25",
         "@biomejs/biome": "2.6.2",
         "@sentry/cli": "3.8.2",
         "@tsconfig/strictest": "2.0.8",
@@ -72,7 +72,7 @@
     "miniflare@5.20261019.0-beta": "patches/miniflare@5.20261019.0-beta.patch",
   },
   "packages": {
-    "@a2f0/agent-tool": ["@a2f0/agent-tool@0.1.23", "", { "dependencies": { "@resvg/resvg-wasm": "2.6.2" }, "bin": { "agent-tool": "src/index.ts" } }, "sha512-n9xQ3HUD4YLa2r3G+a0Gy71Zj5ceVd2zh7T24CmOKiT8hhgZjAavX2jPmPWAvXRvWriJMC63e/Z8rF3lxZlWXw=="],
+    "@a2f0/agent-tool": ["@a2f0/agent-tool@0.1.25", "", { "dependencies": { "@resvg/resvg-wasm": "2.6.2" }, "bin": { "agent-tool": "src/index.ts" } }, "sha512-CIUd0/GezcFK/T+xIv7FA9U/hUAHoLyzwEHo9alMNbistuAptdXlvRHHioIChqE/KUEbSk2W5C7qC8Eba9rQXA=="],
 
     "@a2f0/ct-client": ["@a2f0/ct-client@0.1.4", "", {}, "sha512-b6JYVDpKMEbkPgMdd55D6JM+S45sqxTJj9wx687wjrGZEN2DBSE7M7v02Xxyh33QwUpv+kzG7NTBqQtR6tDgXg=="],
 
