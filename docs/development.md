@@ -42,6 +42,11 @@ bun run format              # Biome formatting
 
 ## Testing
 
+`bun run unit` runs every unit test file in its own worker with
+`bun test --parallel`. Keep each file independent: bind servers to port 0 and
+write only to fresh temporary directories, never to fixed ports or shared paths
+in the checkout.
+
 ```shell
 bun run ci
 bun run ci-headless
