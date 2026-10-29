@@ -56,6 +56,25 @@ export function detailTexture(
 }
 
 /**
+ * Reads a row-major height field at texel (x, y), wrapping out-of-range
+ * coordinates around a tiling texture or clamping them to its edge.
+ */
+export function heightSampler(
+  height: Float32Array,
+  width: number,
+  rows: number,
+  wrap: boolean
+) {
+  return (x: number, y: number) => {
+    const column = wrap
+      ? (x + width) % width
+      : Math.min(width - 1, Math.max(0, x));
+    const row = wrap ? (y + rows) % rows : Math.min(rows - 1, Math.max(0, y));
+    return height[row * width + column] ?? 0;
+  };
+}
+
+/**
  * Encodes a height field as a tangent-space normal map. `slope` converts a
  * height difference between neighboring texels into a surface gradient.
  */
@@ -68,13 +87,7 @@ export async function normalPixels(
   task = new BuildTask()
 ) {
   const pixels = new Uint8Array(width * rows * 4);
-  const at = (x: number, y: number) => {
-    const column = wrap
-      ? (x + width) % width
-      : Math.min(width - 1, Math.max(0, x));
-    const row = wrap ? (y + rows) % rows : Math.min(rows - 1, Math.max(0, y));
-    return height[row * width + column] ?? 0;
-  };
+  const at = heightSampler(height, width, rows, wrap);
   for (let y = 0; y < rows; y++) {
     if (y % 8 === 0) await task.checkpoint();
     for (let x = 0; x < width; x++) {

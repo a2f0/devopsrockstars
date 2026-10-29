@@ -1,7 +1,12 @@
 import type {DataTexture} from 'three';
 import type {HatResources} from './resources';
 import {MM} from './shape';
-import {detailTexture, type SurfaceMaps, twillTile} from './textures';
+import {
+  detailTexture,
+  heightSampler,
+  type SurfaceMaps,
+  twillTile,
+} from './textures';
 
 // Stitched details on the crown carry the cloth's own twill texels, so the
 // parts around the thread match the panels exactly and only the stitching
@@ -102,13 +107,7 @@ function composeStitches(
       albedo[i * 4 + 3] = roughness[i * 4 + 3] = 255;
     }
   }
-  const at = (x: number, y: number) => {
-    const column = wrap
-      ? (x + width) % width
-      : Math.min(width - 1, Math.max(0, x));
-    const row = wrap ? (y + rows) % rows : Math.min(rows - 1, Math.max(0, y));
-    return height[row * width + column] ?? 0;
-  };
+  const at = heightSampler(height, width, rows, wrap);
   const normals = new Uint8Array(width * rows * 4);
   for (let y = 0; y < rows; y++) {
     for (let x = 0; x < width; x++) {
