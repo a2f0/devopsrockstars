@@ -43,8 +43,11 @@ Use the exact-pinned `@a2f0/agent-tool` npm package through
 required CI policy. Dependency maintenance follows the shared
 `update-dependencies` skill and
 [deployment preview policy](docs/dependency-maintenance.md). Update installed
-skills with `bun run agents:sync` after changing the dependency pin, and check
-them with `bun run agents:check`. Do not edit managed skills locally.
+skills and the generated harness permission rules (`.claude/settings.json`,
+`.codex/rules/agent-tool.rules`, `.agent-tool-permissions.json`) with
+`bun run agents:sync` after changing the dependency pin or the
+`permissions.executables` classes in `agent-tool.json`, and check them with
+`bun run agents:check`. Do not edit managed skills or generated rules locally.
 `scripts/checks/check-agent-skills-in-sync.mjs` keeps skills present in both
 `.agents/skills` and `.claude/skills` identical through the pre-commit hook.
 
@@ -70,9 +73,10 @@ Pre-commit hook entrypoint:
 
 ## Output capture
 
-Run finite, noisy commands, such as installs, builds, tests, linters, and Git
-commands that run hooks, through
-`bun run agent:run --label <name> -- <command> [args...]`. It keeps complete
+Run Bun tests through `bun run agent-tool bun test --log [-- args...]`, and
+other finite, noisy commands, such as installs, builds, linters, package
+scripts, and Git commands that run hooks, through
+`bun run agent:run --label <name> -- <command> [args...]`. Each keeps complete
 output in a private log, preserves the exit status, and prints a compact
 receipt, with a bounded excerpt of the log on failure. Read more with
 `bun run agent:logs <log-path>`, raising `--tail-lines` or `--max-bytes` as
@@ -83,7 +87,10 @@ run-group checks directly so their results stay visible, and run interactive
 tools and servers directly too. Never narrow a suite or silence warnings to
 reduce output.
 
-For example, run `bun run agent:run --label unit -- bun run unit` or
+For example, run
+`bun run agent-tool bun test --log -- --timeout 60000 packages/backend/src`
+for one package's unit tests, `bun run agent:run --label unit -- bun run unit`
+for the whole unit suite, or
 `bun run agent:run --label hooks -- pre-commit run --all-files`.
 `bun run check` is an agent-tool run group that records its pre-commit, flag,
 unit, and browser steps itself, so run it directly. Inspect complete deployment

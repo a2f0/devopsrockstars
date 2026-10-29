@@ -15,6 +15,15 @@
   "pr": {
     "rejectClaudeBranding": true
   },
+  "permissions": {
+    "executables": {
+      "biome": "local",
+      "knip": "local",
+      "markdownlint-cli2": "local",
+      "tsc": "local",
+      "wrangler": "release"
+    }
+  },
   "images": {
     "targets": {
       "favicons": {

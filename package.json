@@ -39,15 +39,15 @@
     "start-staging-server": "bun run --filter @devopsrockstars/frontend start:staging",
     "version:patch": "bun scripts/release/version-bump.ts",
     "check:unused": "bun run --bun knip",
-    "agents:sync": "bun run agent-tool skills install --apply",
-    "agents:check": "bun run agent-tool skills check",
+    "agents:sync": "bun run agent-tool skills install --apply && bun run agent-tool permissions install --apply",
+    "agents:check": "bun run agent-tool skills check && bun run agent-tool permissions check",
     "lint:branch-name": "agent-tool branch check",
     "check": "agent-tool run-group scripts/testing/check.json"
   },
   "keywords": [],
   "author": "Dan Sullivan",
   "devDependencies": {
-    "@a2f0/agent-tool": "0.1.23",
+    "@a2f0/agent-tool": "0.1.28",
     "@biomejs/biome": "2.6.2",
     "@sentry/cli": "3.8.2",
     "@tsconfig/strictest": "2.0.8",
