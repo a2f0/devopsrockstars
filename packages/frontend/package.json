@@ -21,7 +21,7 @@
   },
   "dependencies": {
     "@a2f0/ct-client": "0.1.4",
-    "@a2f0/skyline": "0.2.57",
+    "@a2f0/skyline": "0.2.58",
     "@devopsrockstars/diagnostics": "workspace:*",
     "@devopsrockstars/shared-types": "workspace:*",
     "@stripe/stripe-js": "10.1.0",
