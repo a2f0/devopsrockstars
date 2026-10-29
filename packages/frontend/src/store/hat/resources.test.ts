@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {test} from 'node:test';
+import {type TestContext, test} from 'node:test';
 import {BoxGeometry, Group, Mesh, MeshPhysicalMaterial, Texture} from 'three';
 import {createHatModel, disposeHatModel} from '../hatModel';
 import {BuildTask} from './buildTask';
@@ -43,7 +43,9 @@ test('merged intermediate geometries are released before the completed assembly'
   assert.equal(finished, 1);
 });
 
-test('a failed model build releases allocations in both completed and unfinished parts', async t => {
+// Counts disposals of every allocation a model build registers, calling
+// afterOwn once each allocation is registered.
+function trackAllocations(t: TestContext, afterOwn: (size: number) => void) {
   const allocations = new Map<{dispose(): void}, number>();
   const own = HatResources.prototype.own;
   t.mock.method(HatResources.prototype, 'own', function <
@@ -59,9 +61,16 @@ test('a failed model build releases allocations in both completed and unfinished
       });
     }
     const owned = own.call(this, item);
-    // Fail after registration, while a builder still owns unattached parts.
-    if (allocations.size === 20) throw new Error('injected builder failure');
+    afterOwn(allocations.size);
     return owned;
+  });
+  return allocations;
+}
+
+test('a failed model build releases allocations in both completed and unfinished parts', async t => {
+  const allocations = trackAllocations(t, size => {
+    // Fail after registration, while a builder still owns unattached parts.
+    if (size === 20) throw new Error('injected builder failure');
   });
   await assert.rejects(
     () => createHatModel({front: '', side: '', rear: ''}),
@@ -73,23 +82,8 @@ test('a failed model build releases allocations in both completed and unfinished
 
 test('cancelling a partial model build releases its allocations', async t => {
   const controller = new AbortController();
-  const allocations = new Map<{dispose(): void}, number>();
-  const own = HatResources.prototype.own;
-  t.mock.method(HatResources.prototype, 'own', function <
-    T extends {dispose(): void},
-  >(this: HatResources, item: T) {
-    if (!allocations.has(item)) {
-      allocations.set(item, 0);
-      const dispose = item.dispose.bind(item);
-      const disposable: {dispose(): void} = item;
-      t.mock.method(disposable, 'dispose', () => {
-        allocations.set(item, (allocations.get(item) ?? 0) + 1);
-        dispose();
-      });
-    }
-    const owned = own.call(this, item);
-    if (allocations.size === 10) controller.abort();
-    return owned;
+  const allocations = trackAllocations(t, size => {
+    if (size === 10) controller.abort();
   });
   await assert.rejects(
     createHatModel(

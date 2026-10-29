@@ -27,6 +27,27 @@ async function waitForPreparedPreview() {
   );
 }
 
+// Holds the hat artwork's response until the page dispatches
+// release-hat-artwork, so a test can observe the preview while it builds.
+function holdHatArtwork() {
+  return browser.addInitScript(() => {
+    const artworkReady = new Promise<void>(resolve => {
+      window.addEventListener('release-hat-artwork', () => resolve(), {
+        once: true,
+      });
+    });
+    const originalFetch = globalThis.fetch.bind(globalThis);
+    const browserWindow: Window = window;
+    browserWindow.fetch = async (input, init) => {
+      const response = await originalFetch(input, init);
+      if (String(input).endsWith('/static/image/store/5950.svg')) {
+        await artworkReady;
+      }
+      return response;
+    };
+  });
+}
+
 async function expectUnavailable() {
   await browser.waitUntil(async () =>
     String(await browser.$(statusSelector).getProperty('textContent')).includes(
@@ -126,22 +147,7 @@ describe('3D hat preview', () => {
   afterAll(async () => fixtures.remove());
 
   it('shows the store while the preview builds and keeps the layout stable', async () => {
-    const delayArtwork = await browser.addInitScript(() => {
-      const artworkReady = new Promise<void>(resolve => {
-        window.addEventListener('release-hat-artwork', () => resolve(), {
-          once: true,
-        });
-      });
-      const originalFetch = globalThis.fetch.bind(globalThis);
-      const browserWindow: Window = window;
-      browserWindow.fetch = async (input, init) => {
-        const response = await originalFetch(input, init);
-        if (String(input).endsWith('/static/image/store/5950.svg')) {
-          await artworkReady;
-        }
-        return response;
-      };
-    });
+    const delayArtwork = await holdHatArtwork();
     try {
       await BasePage.openStaging('store');
       const loading = await browser.$(loadingSelector);
@@ -423,21 +429,8 @@ describe('3D hat preview', () => {
         'devopsrockstars.store.cart',
         JSON.stringify([{variantId: 'hat-small', quantity: 1}])
       );
-      const artworkReady = new Promise<void>(resolve => {
-        window.addEventListener('release-hat-artwork', () => resolve(), {
-          once: true,
-        });
-      });
-      const originalFetch = globalThis.fetch.bind(globalThis);
-      const browserWindow: Window = window;
-      browserWindow.fetch = async (input, init) => {
-        const response = await originalFetch(input, init);
-        if (String(input).endsWith('/static/image/store/5950.svg')) {
-          await artworkReady;
-        }
-        return response;
-      };
     });
+    const delayArtwork = await holdHatArtwork();
     try {
       await BasePage.openStaging('store');
       await expect(await browser.$(loadingSelector)).toExist();
@@ -456,6 +449,7 @@ describe('3D hat preview', () => {
         window.dispatchEvent(new Event('release-hat-artwork'));
         sessionStorage.removeItem('devopsrockstars.store.cart');
       });
+      await delayArtwork.remove();
       await restoreCart.remove();
     }
   });
@@ -469,22 +463,7 @@ describe('3D hat preview', () => {
         offset = 31_000;
       });
     });
-    const delayArtwork = await browser.addInitScript(() => {
-      const artworkReady = new Promise<void>(resolve => {
-        window.addEventListener('release-hat-artwork', () => resolve(), {
-          once: true,
-        });
-      });
-      const originalFetch = globalThis.fetch.bind(globalThis);
-      const browserWindow: Window = window;
-      browserWindow.fetch = async (input, init) => {
-        const response = await originalFetch(input, init);
-        if (String(input).endsWith('/static/image/store/5950.svg')) {
-          await artworkReady;
-        }
-        return response;
-      };
-    });
+    const delayArtwork = await holdHatArtwork();
     try {
       await BasePage.openStaging('company');
       await browser.waitUntil(() =>
