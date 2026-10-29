@@ -63,8 +63,11 @@ bun run test-headless
 ```
 
 In CI, `e2e/specs/basic.spec.ts` runs against a production build on :8081 with
-every flag off; `e2e/specs/staging.spec.ts` runs against a staging build on :8082
-with every flag on. These fixed test profiles keep both behaviors covered when
+every flag off; the `e2e/specs/staging*.spec.ts` files run against a staging
+build on :8082 with every flag on: `staging.spec.ts` for navigation, crawler
+headers, and search, `staging-skyline.spec.ts` for the 3D skyline, and
+`staging-store.spec.ts` for the store and checkout. These fixed test profiles
+keep both behaviors covered when
 the rollout configuration changes. The manual development servers above use
 the committed matrix; use `bun run ci` or `bun run ci-headless` for the fixed
 test profiles regardless of the current rollout.
