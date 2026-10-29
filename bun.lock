@@ -42,7 +42,7 @@
       "version": "0.1.2",
       "dependencies": {
         "@a2f0/ct-client": "0.1.4",
-        "@a2f0/skyline": "0.2.50",
+        "@a2f0/skyline": "0.2.51",
         "@devopsrockstars/diagnostics": "workspace:*",
         "@devopsrockstars/shared-types": "workspace:*",
         "@stripe/stripe-js": "10.1.0",
@@ -76,7 +76,7 @@
 
     "@a2f0/ct-client": ["@a2f0/ct-client@0.1.4", "", {}, "sha512-b6JYVDpKMEbkPgMdd55D6JM+S45sqxTJj9wx687wjrGZEN2DBSE7M7v02Xxyh33QwUpv+kzG7NTBqQtR6tDgXg=="],
 
-    "@a2f0/skyline": ["@a2f0/skyline@0.2.50", "", { "dependencies": { "@a2f0/ct-client": "0.1.2", "@types/three": "0.186.0" }, "peerDependencies": { "three": "~0.186.0" }, "optionalPeers": ["three"] }, "sha512-RECPKHrcqDNG/tKi5p7+fn2vqYQ4Nm81qgpaRvQ48XQHD0jbwnNt20lWM9hQWPqtQvXlS8nqTK6CKpuMrLYxHg=="],
+    "@a2f0/skyline": ["@a2f0/skyline@0.2.51", "", { "dependencies": { "@a2f0/ct-client": "0.1.2", "@types/three": "0.186.0" }, "peerDependencies": { "three": "~0.186.0" }, "optionalPeers": ["three"] }, "sha512-MH3Y/MMfNvlk2ZBYYTOeFnL0Hisi4LaC1lYY3mDe04S24ZMpeDuA83LgsjJLxtHzMI/HKmWlaRien8/qMMv8ew=="],
 
     "@babel/code-frame": ["@babel/code-frame@7.29.7", "", { "dependencies": { "@babel/helper-validator-identifier": "7.29.7", "js-tokens": "4.0.0", "picocolors": "1.1.1" } }, "sha512-Aup7aUOfpbAUg2ROOJN6Iw5f9DMBlzu0mIkm/malLQFN/YQgO48wCj0Kxa3sEHJvPVFg7siR+qRInwXd2qhQKw=="],
 
