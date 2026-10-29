@@ -59,11 +59,11 @@ class RecordingStatement implements D1PreparedStatement {
   }
 
   async all<T>(): Promise<D1Result<T>> {
-    return {meta: {changes: 0}, results: [], success: true};
+    return {meta: {changes: 0, last_row_id: 0}, results: [], success: true};
   }
 
   async run<T>(): Promise<D1Result<T>> {
-    return {meta: {changes: 0}, results: [], success: true};
+    return {meta: {changes: 0, last_row_id: 0}, results: [], success: true};
   }
 }
 
@@ -76,8 +76,12 @@ class RecordingDatabase implements D1Database {
     return statement;
   }
 
-  async batch<T>(): Promise<readonly D1Result<T>[]> {
+  async batch<T>(): Promise<D1Result<T>[]> {
     return [];
+  }
+
+  async exec() {
+    return {count: 0, duration: 0};
   }
 }
 

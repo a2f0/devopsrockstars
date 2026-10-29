@@ -7,7 +7,10 @@ import worker, {fetchHandler} from './index';
 import * as orders from './orders';
 import type {D1Database, Env} from './types';
 
+// No code path under test runs raw SQL through exec.
+const exec = async () => ({count: 0, duration: 0});
 const failureDatabase: D1Database = {
+  exec,
   prepare() {
     throw new Error('private database failure');
   },
@@ -184,6 +187,7 @@ test('a scheduled job failure reports the original error and preserves its rejec
   );
   const promises: Promise<unknown>[] = [];
   const DB: D1Database = {
+    exec,
     prepare() {
       throw failure;
     },
@@ -217,6 +221,7 @@ test('on the hour, the administrator sweep also reports its failure', async () =
   );
   const promises: Promise<unknown>[] = [];
   const DB: D1Database = {
+    exec,
     prepare() {
       throw failure;
     },
@@ -260,6 +265,7 @@ test('cleanup captures each failed order, continues processing, and flushes only
   });
   const logging = spyOn(console, 'error').mockImplementation(() => {});
   const DB: D1Database = {
+    exec,
     async batch() {
       return [];
     },
@@ -278,7 +284,7 @@ test('cleanup captures each failed order, continues processing, and flushes only
         async all<T>() {
           return {
             success: true,
-            meta: {},
+            meta: {changes: 0, last_row_id: 0},
             results: [1, 2, 3].map(id => ({
               id: String(id),
               stripe_payment_intent_id: null,

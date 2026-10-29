@@ -179,7 +179,7 @@ export function reservationStatements(input: {
   readonly request: CreateCheckoutRequest;
   readonly totalAmount: number;
   readonly env: Env;
-}): readonly D1PreparedStatement[] {
+}): D1PreparedStatement[] {
   const {shipping} = input.request;
   const statements: D1PreparedStatement[] = [
     input.env.DB.prepare(

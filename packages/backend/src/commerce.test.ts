@@ -22,7 +22,11 @@ import type {
 import {handleStripeWebhook, processEvent, type StripeEvent} from './webhook';
 
 function result<T>(results: readonly T[] = [], changes = 1): D1Result<T> {
-  return {meta: {changes}, results, success: true};
+  return {
+    meta: {changes, last_row_id: 0},
+    results: [...results],
+    success: true,
+  };
 }
 
 class FakeStatement implements D1PreparedStatement {
@@ -74,7 +78,11 @@ class FakeDatabase implements D1Database {
     return statement;
   }
 
-  async batch<T>(statements: readonly D1PreparedStatement[]) {
+  async exec() {
+    return {count: 0, duration: 0};
+  }
+
+  async batch<T>(statements: D1PreparedStatement[]) {
     const captured = statements.map(statement => {
       assert.ok(statement instanceof FakeStatement);
       return statement;
