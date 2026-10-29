@@ -52,12 +52,14 @@ export async function testDatabase() {
       return {count: 1, duration: 0};
     },
     prepare: (sql: string) => new Statement(sql),
-    batch: async <T>(statements: readonly D1PreparedStatement[]) =>
+    batch: async <T>(statements: D1PreparedStatement[]) =>
       sqlite.transaction(() =>
-        (statements as readonly Statement[]).map(statement =>
-          execute<T>(statement.sql, statement.values)
-        )
+        statements.map(statement => {
+          if (!(statement instanceof Statement))
+            throw new Error('batch received a statement from another database');
+          return execute<T>(statement.sql, statement.values);
+        })
       )(),
-  } satisfies D1Database & {exec: unknown};
+  } satisfies D1Database;
   return {db, sqlite};
 }

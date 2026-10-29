@@ -1,4 +1,4 @@
-import {betterAuth, type D1Database as AuthD1Database} from 'better-auth';
+import {betterAuth} from 'better-auth';
 import {configuredOrigins} from './http';
 import type {Env} from './types';
 
@@ -9,7 +9,7 @@ function buildAuth(env: Env, origin: string, secret: string) {
     appName: 'DevOpsRockstars Admin',
     baseURL: origin,
     // Better Auth detects the D1 binding and uses its native dialect.
-    database: env.DB as unknown as AuthD1Database,
+    database: env.DB,
     secret,
     trustedOrigins: [origin, ...configuredOrigins(env.STOREFRONT_ORIGINS)],
     logger: {disabled: true},

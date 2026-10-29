@@ -1,7 +1,16 @@
+// The subset of Cloudflare's D1 binding types that this Worker and Better Auth
+// use. It matches the real binding, so Better Auth accepts `env.DB` directly:
+// D1 always reports `changes` and `last_row_id`, returns mutable result
+// arrays, and has `exec`, which Better Auth uses to recognize a D1 database.
 export interface D1Result<T = Record<string, unknown>> {
-  readonly meta: {readonly changes?: number};
-  readonly results: readonly T[];
+  readonly meta: {readonly changes: number; readonly last_row_id: number};
+  readonly results: T[];
   readonly success: boolean;
+}
+
+interface D1ExecResult {
+  readonly count: number;
+  readonly duration: number;
 }
 
 export interface D1PreparedStatement {
@@ -13,8 +22,9 @@ export interface D1PreparedStatement {
 
 export interface D1Database {
   batch<T = Record<string, unknown>>(
-    statements: readonly D1PreparedStatement[]
-  ): Promise<readonly D1Result<T>[]>;
+    statements: D1PreparedStatement[]
+  ): Promise<D1Result<T>[]>;
+  exec(query: string): Promise<D1ExecResult>;
   prepare(query: string): D1PreparedStatement;
 }
 

@@ -5,7 +5,7 @@
     "": {
       "name": "devopsrockstars",
       "devDependencies": {
-        "@a2f0/agent-tool": "0.1.28",
+        "@a2f0/agent-tool": "0.1.30",
         "@biomejs/biome": "2.6.2",
         "@sentry/cli": "3.8.2",
         "@tsconfig/strictest": "2.0.8",
@@ -42,7 +42,7 @@
       "version": "0.1.2",
       "dependencies": {
         "@a2f0/ct-client": "0.1.4",
-        "@a2f0/skyline": "0.2.57",
+        "@a2f0/skyline": "0.2.58",
         "@devopsrockstars/diagnostics": "workspace:*",
         "@devopsrockstars/shared-types": "workspace:*",
         "@stripe/stripe-js": "10.1.0",
@@ -72,11 +72,11 @@
     "miniflare@5.20261019.0-beta": "patches/miniflare@5.20261019.0-beta.patch",
   },
   "packages": {
-    "@a2f0/agent-tool": ["@a2f0/agent-tool@0.1.28", "", { "dependencies": { "@resvg/resvg-wasm": "2.6.2" }, "bin": { "agent-tool": "src/index.ts" } }, "sha512-Xy7B5qtV9BG6cHOI4n1WtzFVkpodFpk8in5dZa9nkP8Y7pDPedFd9MCYqzNVUMtXJMzRgfAfoL3YsXq8TNgoEg=="],
+    "@a2f0/agent-tool": ["@a2f0/agent-tool@0.1.30", "", { "dependencies": { "@resvg/resvg-wasm": "2.6.2" }, "bin": { "agent-tool": "src/index.ts" } }, "sha512-nuXL8cSqhq9P80xWxCl0eSMchvgDyb/xfGNclqzcdbocQWF2r3dFDzV9UXV1RD/Q0bBJlmYvf4L9o/MK4lYlWQ=="],
 
     "@a2f0/ct-client": ["@a2f0/ct-client@0.1.4", "", {}, "sha512-b6JYVDpKMEbkPgMdd55D6JM+S45sqxTJj9wx687wjrGZEN2DBSE7M7v02Xxyh33QwUpv+kzG7NTBqQtR6tDgXg=="],
 
-    "@a2f0/skyline": ["@a2f0/skyline@0.2.57", "", { "dependencies": { "@a2f0/ct-client": "0.1.2", "@types/three": "0.186.0" }, "peerDependencies": { "three": "~0.186.0" }, "optionalPeers": ["three"] }, "sha512-U5oUI4EFc5aY8ivdNYCQlvSXJVffUMgU1fYWXIWXWwi2d+DZBYpnYpS9L0NzAhN3ZyDCOcs5UZXNaxOgeQJX+g=="],
+    "@a2f0/skyline": ["@a2f0/skyline@0.2.58", "", { "dependencies": { "@a2f0/ct-client": "0.1.2", "@types/three": "0.186.0" }, "peerDependencies": { "three": "~0.186.0" }, "optionalPeers": ["three"] }, "sha512-ssffnj+kYY+toMixAVrhf/RtTYHXCPvG0dPBmN7BeauW8CzhcGSDlyDj3DaMSxgY8YPwsNPuhqrUnuvYMBhHPQ=="],
 
     "@babel/code-frame": ["@babel/code-frame@7.29.7", "", { "dependencies": { "@babel/helper-validator-identifier": "7.29.7", "js-tokens": "4.0.0", "picocolors": "1.1.1" } }, "sha512-Aup7aUOfpbAUg2ROOJN6Iw5f9DMBlzu0mIkm/malLQFN/YQgO48wCj0Kxa3sEHJvPVFg7siR+qRInwXd2qhQKw=="],
 

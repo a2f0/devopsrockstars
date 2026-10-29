@@ -63,10 +63,15 @@ class Base {
   // Distance from the company logo and the GitHub mark to the bottom of the
   // viewport, once both have been injected.
   async footerLogoGaps() {
-    await browser.waitUntil(() =>
-      browser.execute(
-        () => document.querySelectorAll('footer svg').length === 2
-      )
+    // Each poll is a WebDriver script, which may take up to its 30-second
+    // script timeout while the page's main thread is busy. Under machine load
+    // the default 10-second wait failed on a stall that the poll would survive.
+    await browser.waitUntil(
+      () =>
+        browser.execute(
+          () => document.querySelectorAll('footer svg').length === 2
+        ),
+      {timeout: 30000, timeoutMsg: 'The footer logos were not injected'}
     );
     return browser.execute(() => {
       const gap = (selector: string) =>

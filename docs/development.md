@@ -63,8 +63,11 @@ bun run test-headless
 ```
 
 In CI, `e2e/specs/basic.spec.ts` runs against a production build on :8081 with
-every flag off; `e2e/specs/staging.spec.ts` runs against a staging build on :8082
-with every flag on. These fixed test profiles keep both behaviors covered when
+every flag off; the `e2e/specs/staging*.spec.ts` files run against a staging
+build on :8082 with every flag on: `staging.spec.ts` for navigation, crawler
+headers, and search, `staging-skyline.spec.ts` for the 3D skyline, and
+`staging-store.spec.ts` for the store and checkout. These fixed test profiles
+keep both behaviors covered when
 the rollout configuration changes. The manual development servers above use
 the committed matrix; use `bun run ci` or `bun run ci-headless` for the fixed
 test profiles regardless of the current rollout.
@@ -76,6 +79,14 @@ and reject incomplete or invalid configuration.
 
 `e2e/specs/mobile.spec.ts` covers both environments with Chromium phone viewport
 and touch emulation, including portrait, landscape, and viewport height changes.
+
+Browser tests render WebGL in software, so a loaded machine can stall the
+page's main thread for seconds. WebdriverIO runs `execute` and element reads
+such as `getProperty` as page scripts with a 30-second script timeout, and
+`waitUntil` fails when one poll outlasts its own timeout (10 seconds by
+default). Give a `waitUntil` that polls a 3D page a 30-second `timeout` and a
+`timeoutMsg`. Start a test on Home only when it is about Home: the skyline
+competes for the software GPU, and leaving Home costs a long main-thread task.
 
 Run tests whose names match a pattern
 
