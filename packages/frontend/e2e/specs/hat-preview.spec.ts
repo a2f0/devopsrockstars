@@ -397,7 +397,11 @@ describe('3D hat preview', () => {
   });
 
   it('rebuilds a lost parked context when the Store is opened', async () => {
-    await BasePage.openStaging('');
+    // Park on Company, not Home: Home's 3D skyline shares the software GPU, and
+    // leaving it costs a long main-thread task. Under machine load those tasks
+    // outlast WebDriver's 30-second script timeout. Home parking keeps its own
+    // coverage in the first-frame test above.
+    await BasePage.openStaging('company');
     await waitForPreparedPreview();
     const parkedCanvasId = await browser.$(canvasSelector).elementId;
     assert.ok(
@@ -411,10 +415,12 @@ describe('3D hat preview', () => {
         return Boolean(extension);
       })
     );
-    await browser.waitUntil(async () =>
-      String(
-        await browser.$(statusSelector).getProperty('textContent')
-      ).includes('3D preview unavailable')
+    await browser.waitUntil(
+      async () =>
+        String(
+          await browser.$(statusSelector).getProperty('textContent')
+        ).includes('3D preview unavailable'),
+      {timeoutMsg: 'The parked preview did not report its lost context'}
     );
     await (await browser.$('a[href="/store"]')).click();
     await waitForPreparedPreview();
