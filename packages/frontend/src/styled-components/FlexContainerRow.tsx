@@ -1,4 +1,3 @@
-// biome-ignore lint: style/useImportType
 import React from 'react';
 import styled from 'styled-components';
 

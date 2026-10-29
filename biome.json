@@ -40,7 +40,8 @@
       "trailingCommas": "es5",
       "bracketSpacing": false,
       "arrowParentheses": "asNeeded"
-    }
+    },
+    "jsxRuntime": "reactClassic"
   },
   "files": {
     "includes": [
@@ -53,9 +54,9 @@
       "!**/dist/",
       "!**/node_modules/",
       "!**/static/**/*.svg",
-      "!**/.agents/skills/**",
-      "!**/.claude/skills/**",
-      "!**/.wrangler/**"
+      "!**/.agents/skills",
+      "!**/.claude/skills",
+      "!**/.wrangler"
     ]
   },
   "markdown": {
