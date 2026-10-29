@@ -17,6 +17,14 @@
       },
       "a11y": {
         "useValidAriaRole": "off"
+      },
+      "suspicious": {
+        "noImportCycles": {
+          "level": "error",
+          "options": {
+            "ignoreTypes": false
+          }
+        }
       }
     }
   },
@@ -59,5 +67,141 @@
     "formatter": {
       "enabled": false
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": [
+        "packages/shared-types/src/**",
+        "packages/diagnostics/src/**",
+        "!**/*.test.ts"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@devopsrockstars/*",
+                      "@devopsrockstars/*/**",
+                      "**/packages/**",
+                      "**/frontend/**",
+                      "**/backend/**",
+                      "**/scripts/**"
+                    ],
+                    "message": "shared-types and diagnostics are leaf packages: they must not import the apps, other workspace packages, or scripts."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "packages/backend/src/**",
+        "!**/*.test.ts",
+        "!packages/backend/src/localWorker.ts",
+        "!packages/backend/src/testDatabase.ts"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@devopsrockstars/frontend",
+                      "@devopsrockstars/frontend/**",
+                      "**/frontend/**",
+                      "**/scripts/**",
+                      "@devopsrockstars/diagnostics/browser"
+                    ],
+                    "message": "The Worker must not import the frontend, scripts, or browser diagnostics; share types through @devopsrockstars/shared-types."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "packages/frontend/src/**",
+        "!**/*.test.ts",
+        "!packages/frontend/src/store/hat/**"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@devopsrockstars/backend",
+                      "@devopsrockstars/backend/**",
+                      "**/backend/**",
+                      "**/tooling/**",
+                      "**/e2e/**",
+                      "**/scripts/**",
+                      "@devopsrockstars/diagnostics/server",
+                      "node:*"
+                    ],
+                    "message": "Browser code must not import the Worker, build tooling, browser tests, scripts, server diagnostics, or Node built-ins; share types through @devopsrockstars/shared-types."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/frontend/src/store/hat/**", "!**/*.test.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@devopsrockstars/backend",
+                      "@devopsrockstars/backend/**",
+                      "**/backend/**",
+                      "**/tooling/**",
+                      "**/e2e/**",
+                      "**/scripts/**",
+                      "@devopsrockstars/diagnostics/server",
+                      "node:*"
+                    ],
+                    "message": "Browser code must not import the Worker, build tooling, browser tests, scripts, server diagnostics, or Node built-ins; share types through @devopsrockstars/shared-types."
+                  },
+                  {
+                    "group": [
+                      "react",
+                      "react-dom",
+                      "react-dom/**",
+                      "styled-components",
+                      "../**"
+                    ],
+                    "message": "store/hat is the three.js geometry layer: no React or styling, and nothing from outside store/hat."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
 }

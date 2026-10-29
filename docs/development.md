@@ -106,6 +106,28 @@ store backend.
 - `packages/shared-types` — shared API request and response types
 - `packages/diagnostics` — private browser and Worker Sentry error reporting
 
+### Module layering
+
+Dependencies point one way, and `biome.json` enforces it in every lint run
+(the pre-commit hook and CI):
+
+- `shared-types` and `diagnostics` are leaf packages: they import no other
+  workspace package, application, or script.
+- The Worker (`packages/backend/src`) imports the leaf packages but never the
+  frontend, `scripts/`, or browser diagnostics. Its test harnesses
+  (`localWorker.ts`, `testDatabase.ts`, and tests) may start the frontend
+  server.
+- Browser code (`packages/frontend/src`) imports the leaf packages but never
+  the Worker, `tooling/`, `e2e/`, `scripts/`, server diagnostics, or Node
+  built-ins; API shapes come from `@devopsrockstars/shared-types`.
+- `packages/frontend/src/store/hat` is the three.js geometry layer: no React or
+  styling, and nothing from outside `store/hat`. `hatModel.ts` and
+  `hatViewer.ts` adapt it for the store.
+- `scripts/` and each package's `tooling/` and `e2e/` sit on top and may import
+  any package.
+
+`suspicious/noImportCycles` rejects import cycles, including type-only ones.
+
 ### Core Stack
 
 - **Frontend**: React 19+ with TypeScript in strict mode
