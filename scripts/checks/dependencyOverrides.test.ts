@@ -1,4 +1,6 @@
 import {expect, test} from 'bun:test';
+import {realpathSync} from 'node:fs';
+import {createRequire} from 'node:module';
 
 function assertOverrideParents(selectors: readonly string[], source: string) {
   const lockfile: unknown = Bun.JSONC.parse(source);
@@ -65,6 +67,80 @@ test('Markdownlint resolves the fixed Smol-TOML parser', async () => {
   expect(resolved.length).toBeGreaterThan(0);
   expect(resolved.map(([, entry]) => entry[0])).toEqual(
     resolved.map(() => 'smol-toml@1.9.1')
+  );
+});
+
+test.each([
+  ['markdownlint', 're2js', '2.8.7'],
+  ['cheerio', 'undici', '7.30.1'],
+  ['miniflare', 'undici', '7.30.1'],
+])(
+  '%s resolves its fixed %s transport or matcher',
+  async (owner, name, version) => {
+    const source = await Bun.file(
+      new URL('../../bun.lock', import.meta.url)
+    ).text();
+    const lockfile = Bun.JSONC.parse(source) as {
+      packages: Record<string, [string, ...unknown[]]>;
+    };
+    // Undici has multiple major lines; losing this explicit owner entry must
+    // fail rather than silently checking a different owner's hoisted version.
+    if (name === 'undici') {
+      expect(lockfile.packages[`${owner}/${name}`]).toBeDefined();
+    }
+    const resolved =
+      lockfile.packages[`${owner}/${name}`] ?? lockfile.packages[name];
+    expect(resolved?.[0]).toBe(`${name}@${version}`);
+  }
+);
+
+test.each([
+  ['Miniflare', '../../package.json', 'wrangler/package.json', 'miniflare'],
+  ['Cheerio', '../../packages/frontend/package.json', 'webdriverio', 'cheerio'],
+])(
+  '%s resolves the installed fixed Undici',
+  async (_, manifest, first, second) => {
+    let owner = createRequire(new URL(manifest, import.meta.url));
+    for (const specifier of [first, second]) {
+      owner = createRequire(realpathSync(owner.resolve(specifier)));
+    }
+    const installed = (await Bun.file(
+      owner.resolve('undici/package.json')
+    ).json()) as {
+      version: string;
+    };
+    expect(installed.version).toBe('7.30.1');
+  }
+);
+
+test('Markdownlint uses its installed lookbehind matcher for repeated matches', () => {
+  const cli = createRequire(
+    realpathSync(
+      new URL(
+        '../../node_modules/markdownlint-cli2/package.json',
+        import.meta.url
+      )
+    )
+  );
+  const owner = createRequire(realpathSync(cli.resolve('markdownlint')));
+  const {RE2JS} = owner('re2js') as {
+    RE2JS: {
+      LOOKBEHINDS: number;
+      compile(
+        pattern: string,
+        flags: number
+      ): {
+        matcher(input: string): {find(): boolean; start(): number};
+      };
+    };
+  };
+  const matcher = RE2JS.compile('(?<=a)b', RE2JS.LOOKBEHINDS).matcher(
+    'ab'.repeat(1000)
+  );
+  const positions: number[] = [];
+  while (matcher.find()) positions.push(matcher.start());
+  expect(positions).toEqual(
+    Array.from({length: 1000}, (_, index) => index * 2 + 1)
   );
 });
 
