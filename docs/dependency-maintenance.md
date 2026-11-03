@@ -83,10 +83,8 @@ adds an unconditional Bun request-forwarding rejection: the real local Worker
 returns HTTP 503. Keep 4.151.2 with its Miniflare Undici transport patch until
 upstream supports this runtime or a separately reviewed toolchain migration is
 validated. The local Worker/proxy unit regression must pass before lifting this
-hold; Wrangler 4.157.0 still carries the rejection and fails the real local
-Worker/proxy regression under Bun 1.4.4. Recheck on the next Wrangler/Bun release
-or by **2026-11-07**. A successful deployment dry-run alone does not establish
-local compatibility.
+hold; recheck on the next Wrangler/Bun release or by **2026-11-07**. A successful
+deployment dry-run alone does not establish local compatibility.
 
 Biome's new Markdown and YAML formatters remain disabled: Markdownlint and the
 existing YAML hooks own those formats. Generated Wrangler files and installed
@@ -107,10 +105,6 @@ without changing other Undici major lines. Keep Miniflare's installed-transport
 patch and verify actual Worker/proxy, D1, diagnostics and full browser integrations.
 Remove these overrides when each owner selects a fixed compatible transport;
 recheck on the next owner release or by **2026-11-07**.
-
-[GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm)
-was withdrawn on October 23, 2026 because it is not practically exploitable.
-It is not an active Braces hold; preserve historical audit evidence in its PR.
 
 The following owner constraints need compatible upstream fixes. Recheck current
 advisories and owner releases during each upgrade.
