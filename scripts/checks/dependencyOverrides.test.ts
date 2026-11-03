@@ -83,9 +83,33 @@ test.each([
     const lockfile = Bun.JSONC.parse(source) as {
       packages: Record<string, [string, ...unknown[]]>;
     };
+    // Undici has multiple major lines; losing this explicit owner entry must
+    // fail rather than silently checking a different owner's hoisted version.
+    if (name === 'undici') {
+      expect(lockfile.packages[`${owner}/${name}`]).toBeDefined();
+    }
     const resolved =
       lockfile.packages[`${owner}/${name}`] ?? lockfile.packages[name];
     expect(resolved?.[0]).toBe(`${name}@${version}`);
+  }
+);
+
+test.each([
+  ['Miniflare', '../../package.json', 'wrangler/package.json', 'miniflare'],
+  ['Cheerio', '../../packages/frontend/package.json', 'webdriverio', 'cheerio'],
+])(
+  '%s resolves the installed fixed Undici',
+  async (_, manifest, first, second) => {
+    let owner = createRequire(new URL(manifest, import.meta.url));
+    for (const specifier of [first, second]) {
+      owner = createRequire(realpathSync(owner.resolve(specifier)));
+    }
+    const installed = (await Bun.file(
+      owner.resolve('undici/package.json')
+    ).json()) as {
+      version: string;
+    };
+    expect(installed.version).toBe('7.30.1');
   }
 );
 

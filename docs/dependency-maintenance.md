@@ -106,6 +106,11 @@ patch and verify actual Worker/proxy, D1, diagnostics and full browser integrati
 Remove these overrides when each owner selects a fixed compatible transport;
 recheck on the next owner release or by **2026-11-07**.
 
+The Braces hold is removed because
+[GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm)
+is withdrawn as not practically exploitable, not because the locked Braces
+version changed. Historical audit severity remains in its originating PR.
+
 The following owner constraints need compatible upstream fixes. Recheck current
 advisories and owner releases during each upgrade.
 
