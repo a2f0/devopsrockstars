@@ -31,5 +31,5 @@
       "project": ["src/**/*.ts"]
     }
   },
-  "ignoreDependencies": ["@biomejs/biome", "markdownlint-cli2"]
+  "ignoreDependencies": ["@biomejs/biome"]
 }

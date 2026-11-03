@@ -17,7 +17,7 @@ a reported coverage limit, never a reason to downgrade newer installed versions.
 ## Compatibility constraints
 
 - Read current pins from workspace manifests, `bun.lock`, and tool configuration.
-  Bun 1.4.3 selects lockfile format 3 only when nested owner overrides need it;
+  Bun 1.4 selects lockfile format 3 only when nested owner overrides need it;
   removing the last nested override can legitimately restore format 2. Confirm
   the pinned binary and an unchanged frozen install instead of hand-editing the
   lock version. See [Bun overrides](https://bun.sh/docs/pm/overrides).
@@ -83,20 +83,42 @@ adds an unconditional Bun request-forwarding rejection: the real local Worker
 returns HTTP 503. Keep 4.151.2 with its Miniflare Undici transport patch until
 upstream supports this runtime or a separately reviewed toolchain migration is
 validated. The local Worker/proxy unit regression must pass before lifting this
-hold; recheck on the next Wrangler/Bun release or by **2026-11-07**. A successful
-deployment dry-run alone does not establish local compatibility.
+hold; Wrangler 4.157.0 still carries the rejection and fails the real local
+Worker/proxy regression under Bun 1.4.4. Recheck on the next Wrangler/Bun release
+or by **2026-11-07**. A successful deployment dry-run alone does not establish
+local compatibility.
 
 Biome's new Markdown and YAML formatters remain disabled: Markdownlint and the
 existing YAML hooks own those formats. Generated Wrangler files and installed
 agent skills are excluded from Biome, while the dedicated skill check remains
 mandatory.
 
+The exact-owner `markdownlint@0.42.0` override selects RE2JS 2.8.7 for
+[GHSA-gg6h-894w-4m9c](https://github.com/advisories/GHSA-gg6h-894w-4m9c).
+Keep the smallest fixed patch rather than forcing the unrelated latest minor.
+Validate the actual CLI, TOML regression, and owner-resolved lookbehind matcher;
+remove this override when Markdownlint selects a fixed compatible version.
+The override-parent regression requires a fresh review when the owner changes.
+
+The exact `cheerio@1.2.0` and `miniflare@5.20261019.0-beta` owners pin
+vulnerable Undici 7 releases. Their scoped overrides select 7.30.1, the supported
+7.x [security release](https://github.com/nodejs/undici/releases/tag/v7.30.1),
+without changing other Undici major lines. Keep Miniflare's installed-transport
+patch and verify actual Worker/proxy, D1, diagnostics and full browser integrations.
+Remove these overrides when each owner selects a fixed compatible transport;
+recheck on the next owner release or by **2026-11-07**.
+
+[GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm)
+was withdrawn on October 23, 2026 because it is not practically exploitable.
+It is not an active Braces hold; preserve historical audit evidence in its PR.
+
 The following owner constraints need compatible upstream fixes. Recheck current
 advisories and owner releases during each upgrade.
 
 | Locked dependency | Owning path and exposure | Fix or hold |
 | --- | --- | --- |
-| Braces 3.0.3 | Markdownlint CLI2 → Micromatch 4.0.8; repository-controlled glob patterns | [GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm), high; no published fix listed. Do not feed untrusted patterns into this tooling. |
+| Glob 13.0.6 | WebdriverIO → @wdio/config; browser-test file discovery | [GHSA-3g3m-2fjr-6pw4](https://github.com/advisories/GHSA-3g3m-2fjr-6pw4), moderate; fixed in 14.0.2, outside the owner's range. Preserve test discovery and cancellation semantics when the owner adopts the next major. |
+| Minimatch 10.2.6 | Glob and readdir-glob; browser-tooling patterns | [GHSA-g3hv-75wg-m249](https://github.com/advisories/GHSA-g3hv-75wg-m249), moderate; fixed in 11.0.1, outside both owners' ranges. Do not accept untrusted glob patterns or force a cross-major override. |
 | KaTeX 0.16.47 | Markdownlint → Micromark Math 3.1; Markdown tooling, outside the deployed app | [GHSA-238p-pmpm-9mq7](https://github.com/advisories/GHSA-238p-pmpm-9mq7), low; fixed in 0.18.2. Exploitation requires existing prototype pollution; the pinned owner needs tested compatibility before replacing its renderer. |
 
 Repository maintainers review each hold by **2026-11-07**, on the owning
