@@ -42,7 +42,7 @@
       "version": "0.1.2",
       "dependencies": {
         "@a2f0/ct-client": "0.1.6",
-        "@a2f0/skyline": "0.2.61",
+        "@a2f0/skyline": "0.2.63",
         "@devopsrockstars/diagnostics": "workspace:*",
         "@devopsrockstars/shared-types": "workspace:*",
         "@stripe/stripe-js": "10.2.1",
@@ -88,7 +88,7 @@
 
     "@a2f0/ct-client": ["@a2f0/ct-client@0.1.6", "", {}, "sha512-DlDg2DKCilbrX5jIh3D+jctG66+xwpjnead8L4YY3jnIVFZ4fOBHbpJk7yY9KFBcuhNAy9UhvbgmHJgI97dI4w=="],
 
-    "@a2f0/skyline": ["@a2f0/skyline@0.2.61", "", { "dependencies": { "@a2f0/ct-client": "0.1.2", "@types/three": "0.186.0" }, "peerDependencies": { "three": "~0.186.0" }, "optionalPeers": ["three"] }, "sha512-VhcdZc3HZMKfCADcsWOoys54xib2GewAftG1QK1s/mXNMtswjpppD5FTKzMSkg8GA7jdKrokfdMYj2EtvRiSHA=="],
+    "@a2f0/skyline": ["@a2f0/skyline@0.2.63", "", { "dependencies": { "@a2f0/ct-client": "0.1.7", "@types/three": "0.186.0" }, "peerDependencies": { "three": "~0.186.0" }, "optionalPeers": ["three"] }, "sha512-JQly/QUsOZKzbpFvlzqfU1daT+1jtwRp7x7vF4+sVAgpx9ZuwFF2Gw5s14xYcdlY3vbPsPTbfmgZ3T6meSggJw=="],
 
     "@babel/code-frame": ["@babel/code-frame@7.29.7", "", { "dependencies": { "@babel/helper-validator-identifier": "7.29.7", "js-tokens": "4.0.0", "picocolors": "1.1.1" } }, "sha512-Aup7aUOfpbAUg2ROOJN6Iw5f9DMBlzu0mIkm/malLQFN/YQgO48wCj0Kxa3sEHJvPVFg7siR+qRInwXd2qhQKw=="],
 
@@ -1140,7 +1140,7 @@
 
     "zod": ["zod@4.6.7", "", {}, "sha512-g8W2D2kU6a8untc053fX1uVBKzM7yqAxW/3zwk83+6RyF2+SKOuV+c0wBDhUwzV1PaGapmZH+rmcUzPf+3CGwg=="],
 
-    "@a2f0/skyline/@a2f0/ct-client": ["@a2f0/ct-client@0.1.2", "", {}, "sha512-EfTVf5ZwcbNLOktMktmiwdp+nQ5GW6y7cVp2Wl9/ZX1yfPw3Gf4mZKqAKOPLC/rf2JsQ5xrV4cx1zPM/Xq22WA=="],
+    "@a2f0/skyline/@a2f0/ct-client": ["@a2f0/ct-client@0.1.7", "", {}, "sha512-43oR0r9whel+A+zfKDMb+8zHZRfl+XR4OjN9wCGDXoiRFkkui/XsMHc34lHck+mwX3IEekgHO5cw4lw7okLa1g=="],
 
     "@img/sharp-wasm32/@emnapi/runtime": ["@emnapi/runtime@1.11.3", "", { "dependencies": { "tslib": "2.8.1" } }, "sha512-Xz4Tpyki7XyrpbUK1jR1AhdAdaXyhhY4lZ3neLodmhpuWfy2PAQN5B46sAiU4liOXGLkHypn/qU+jvfWSCYYLA=="],
 
