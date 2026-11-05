@@ -1,5 +1,4 @@
-import type {StorefrontResponse} from '@devopsrockstars/shared-types';
-import React, {useEffect, useMemo, useState} from 'react';
+import React, {useEffect, useMemo, useReducer, useState} from 'react';
 import {useStoreCart} from './cart';
 import {formatMoney} from './format';
 import PreparedHatPreview from './PreparedHatPreview';
@@ -25,32 +24,28 @@ import {
   refreshStorefront,
   storedStorefront,
 } from './storefrontCache';
+import {
+  initialStorefrontAvailability,
+  transitionStorefrontAvailability,
+} from './storefrontAvailability';
 
 function useStorefront() {
-  const [storefront, setStorefront] = useState<StorefrontResponse | null>(
-    storedStorefront
-  );
-  const [error, setError] = useState<string | null>(null);
-  const [inventoryReady, setInventoryReady] = useState(
-    () => cachedStorefront() !== null
+  const [availability, dispatch] = useReducer(
+    transitionStorefrontAvailability,
+    null,
+    () => initialStorefrontAvailability(cachedStorefront(), storedStorefront())
   );
 
   useEffect(() => {
     let mounted = true;
     void refreshStorefront()
-      .then(result => {
-        if (mounted) {
-          setStorefront(result);
-          setInventoryReady(true);
-        }
+      .then(storefront => {
+        if (mounted) dispatch({type: 'refreshed', storefront});
       })
       .catch(loadError => {
         if (mounted) {
           console.error('Failed to load the store:', loadError);
-          // A failed refresh leaves inventory availability unverified.
-          setStorefront(null);
-          setInventoryReady(false);
-          setError('The store is temporarily unavailable.');
+          dispatch({type: 'failed'});
         }
       });
     return () => {
@@ -58,7 +53,16 @@ function useStorefront() {
     };
   }, []);
 
-  return {storefront, error, inventoryReady};
+  return {
+    storefront:
+      availability.status === 'failed' ? null : availability.storefront,
+    // A failed refresh leaves inventory availability unverified.
+    error:
+      availability.status === 'failed'
+        ? 'The store is temporarily unavailable.'
+        : null,
+    inventoryReady: availability.status === 'verified',
+  };
 }
 
 const Store = React.memo(() => {

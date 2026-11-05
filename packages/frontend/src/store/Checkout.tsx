@@ -1,7 +1,14 @@
-import React, {useEffect, useMemo, useRef, useState} from 'react';
+import React, {useEffect, useMemo, useReducer, useRef, useState} from 'react';
 import {useNavigate} from 'react-router';
 import {cancelCheckout, createCheckout, loadStorefront} from './api';
 import {useStoreCart} from './cart';
+import {
+  editingAddress,
+  heldReservation,
+  initialCheckoutFlow,
+  shownReservation,
+  transitionCheckoutFlow,
+} from './checkoutFlow';
 import CheckoutHeading from './CheckoutHeading';
 import type {
   CreateCheckoutResponse,
@@ -32,7 +39,6 @@ import {
   clearPendingCheckout,
   clearShippingDraft,
   getCheckoutClientToken,
-  type PendingCheckout,
   readPendingCheckout,
   readShippingDraft,
   storeOrderToken,
@@ -62,24 +68,25 @@ function sameShipping(first: ShippingInput, second: ShippingInput) {
 const Checkout = React.memo(() => {
   const cart = useStoreCart();
   const navigate = useNavigate();
-  // The active checkout and the address it reserved the cart with.
-  const [reservation, setReservation] = useState<PendingCheckout | null>(
-    readPendingCheckout
+  const [flow, dispatch] = useReducer(transitionCheckoutFlow, null, () =>
+    initialCheckoutFlow(readPendingCheckout())
   );
+  // The active checkout and the address it reserved the cart with.
+  const reservation = heldReservation(flow);
   const [storefront, setStorefront] = useState<StorefrontResponse | null>(null);
   const [shipping, setShipping] = useState<ShippingInput>(
     () => reservation?.shipping ?? readShippingDraft() ?? EMPTY_SHIPPING
   );
-  const [editing, setEditing] = useState(false);
   const [paymentBusy, setPaymentBusy] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [canceling, setCanceling] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [clock, setClock] = useState(Date.now);
   const nameInput = useRef<HTMLInputElement | null>(null);
   const checkout = reservation?.checkout ?? null;
+  const editing = editingAddress(flow);
+  const busy = flow.status === 'reserving';
+  const canceling = flow.status === 'canceling';
   // Editing hides the reservation until its address is saved or kept.
-  const reserved = editing ? null : reservation;
+  const reserved = shownReservation(flow);
 
   useEffect(() => {
     if (editing) nameInput.current?.focus();
@@ -155,16 +162,15 @@ const Checkout = React.memo(() => {
       navigate(`/store/receipt?order=${active.orderId}`);
       return false;
     }
-    setReservation(null);
-    setEditing(false);
+    dispatch({type: 'released', orderId: active.orderId});
     return true;
   };
 
   const startPayment = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (busy) return;
+    if (flow.status !== 'entering' && flow.status !== 'editing') return;
     if (reservation && sameShipping(shipping, reservation.shipping)) {
-      setEditing(false);
+      dispatch({type: 'keep'});
       return;
     }
     if (!storefront?.stripePublishableKey) {
@@ -175,7 +181,7 @@ const Checkout = React.memo(() => {
       setError('The items in your cart are no longer available.');
       return;
     }
-    setBusy(true);
+    dispatch({type: 'reserve'});
     setError(null);
     try {
       // A reservation keeps the address it was made with, so a new address
@@ -196,7 +202,7 @@ const Checkout = React.memo(() => {
       // Drop anything typed while the request was in flight, so Edit opens
       // the reserved address.
       setShipping(shipping);
-      setReservation(pending);
+      dispatch({type: 'reserved', reservation: pending});
     } catch (checkoutError) {
       console.error('Failed to start checkout:', checkoutError);
       setError(
@@ -205,7 +211,7 @@ const Checkout = React.memo(() => {
           : 'Checkout could not be started.'
       );
     } finally {
-      setBusy(false);
+      dispatch({type: 'stopped'});
     }
   };
 
@@ -215,12 +221,12 @@ const Checkout = React.memo(() => {
 
   const keepReservedAddress = () => {
     if (reservation) setShipping(reservation.shipping);
-    setEditing(false);
+    dispatch({type: 'keep'});
   };
 
   const cancelWithoutPaymentForm = async () => {
-    if (canceling) return;
-    setCanceling(true);
+    if (flow.status !== 'reserved') return;
+    dispatch({type: 'cancel'});
     setError(null);
     try {
       await abandonPayment();
@@ -232,7 +238,7 @@ const Checkout = React.memo(() => {
           : 'Checkout could not be canceled.'
       );
     } finally {
-      setCanceling(false);
+      dispatch({type: 'stopped'});
     }
   };
 
@@ -280,7 +286,7 @@ const Checkout = React.memo(() => {
                 <Button
                   type="button"
                   disabled={paymentBusy || canceling}
-                  onClick={() => setEditing(true)}
+                  onClick={() => dispatch({type: 'edit'})}
                 >
                   Edit
                 </Button>
