@@ -1,9 +1,10 @@
 import React, {useEffect, useState} from 'react';
 import {useSearchParams} from 'react-router';
-import {loadOrder} from './api';
+import {isTransientStoreError, loadOrder} from './api';
 import {useStoreCart} from './cart';
 import type {StoreOrderResponse} from '@devopsrockstars/shared-types';
 import {formatMoney} from './format';
+import {ORDER_POLL_INTERVAL_MS, orderRetryDelay} from './orderPolling';
 import {
   ActionLink,
   FormActions,
@@ -30,10 +31,12 @@ const Receipt = React.memo(() => {
     }
     const controller = new AbortController();
     let timeout: ReturnType<typeof setTimeout> | undefined;
+    let failedReads = 0;
 
     const refresh = async () => {
       try {
         const result = await loadOrder(orderId, orderToken, controller.signal);
+        failedReads = 0;
         setOrder(result);
         if (result.status === 'paid') {
           cart.clear();
@@ -45,16 +48,24 @@ const Receipt = React.memo(() => {
           result.status === 'creating_payment'
         ) {
           if (Date.parse(result.expiresAt) + 2 * 60_000 > Date.now()) {
-            timeout = setTimeout(refresh, 1500);
+            timeout = setTimeout(refresh, ORDER_POLL_INTERVAL_MS);
           } else {
             setError('This order expired before payment was confirmed.');
           }
         }
       } catch (loadError) {
-        if (!controller.signal.aborted) {
-          console.error('Failed to load order:', loadError);
-          setError('The order status could not be loaded.');
+        if (controller.signal.aborted) return;
+        // A brief outage must not end the receipt: the payment can still
+        // succeed, so keep reading the order until the failures persist.
+        const delay = isTransientStoreError(loadError)
+          ? orderRetryDelay(++failedReads)
+          : null;
+        if (delay !== null) {
+          timeout = setTimeout(refresh, delay);
+          return;
         }
+        console.error('Failed to load order:', loadError);
+        setError('The order status could not be loaded.');
       }
     };
     void refresh();

@@ -1,6 +1,12 @@
 import assert from 'node:assert/strict';
 import {afterEach, test} from 'node:test';
-import {cancelCheckout, createCheckout, loadStorefront} from './api';
+import {
+  cancelCheckout,
+  createCheckout,
+  isTransientStoreError,
+  loadOrder,
+  loadStorefront,
+} from './api';
 
 const originalFetch = globalThis.fetch;
 
@@ -79,6 +85,30 @@ test('does not retry a response the store returned', async () => {
   const requests = stubFetch([503]);
   await assert.rejects(loadStorefront(), {name: 'StoreApiError'});
   assert.equal(requests.length, 1);
+});
+
+test('treats unreachable, throttled, and failing stores as transient', async () => {
+  const failures: unknown[] = [];
+  for (const outcomes of [
+    [new TypeError('Failed to fetch'), new TypeError('Failed to fetch')],
+    [429],
+    [500],
+    [503],
+    [404],
+    [400],
+  ] as const) {
+    stubFetch(outcomes);
+    failures.push(await loadOrder('order-id', 'order-token').catch(e => e));
+  }
+  assert.deepEqual(failures.map(isTransientStoreError), [
+    true,
+    true,
+    true,
+    true,
+    false,
+    false,
+  ]);
+  assert.equal(isTransientStoreError(new Error('unrelated')), false);
 });
 
 test('does not retry an aborted request', async () => {

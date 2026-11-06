@@ -713,6 +713,78 @@ describe('store page', () => {
     }
   });
 
+  it('keeps confirming a payment through a brief order API outage', async () => {
+    const orderId = '12345678-1234-4234-8234-123456789abc';
+    // The order API fails twice with a server error, then reports the order
+    // paid, as when the Worker or its database briefly fails mid-payment.
+    const orderApi = await browser.addInitScript(() => {
+      const originalFetch = globalThis.fetch.bind(globalThis);
+      const browserWindow: Window = window;
+      browserWindow.fetch = async (input, init) => {
+        const inputUrl =
+          typeof input === 'string'
+            ? input
+            : input instanceof URL
+              ? input.href
+              : input.url;
+        const url = new URL(inputUrl, globalThis.location.href);
+        if (!url.pathname.startsWith('/api/orders/')) {
+          return originalFetch(input, init);
+        }
+        const calls = Number(
+          sessionStorage.getItem('__store_test_order_calls') ?? '0'
+        );
+        sessionStorage.setItem('__store_test_order_calls', String(calls + 1));
+        if (calls < 2) {
+          return Response.json(
+            {
+              error: {
+                code: 'internal_error',
+                message: 'The store could not complete the request.',
+              },
+            },
+            {status: 500}
+          );
+        }
+        return Response.json({
+          currency: 'usd',
+          expiresAt: new Date(Date.now() + 10 * 60_000).toISOString(),
+          orderId: url.pathname.split('/').pop(),
+          status: 'paid',
+          totalAmount: 2000,
+        });
+      };
+    });
+
+    try {
+      await BasePage.openStaging('');
+      await browser.execute(id => {
+        sessionStorage.clear();
+        sessionStorage.setItem(`devopsrockstars.store.order.${id}`, 'token');
+      }, orderId);
+      await BasePage.openStaging(
+        `store/receipt?order=${orderId}&redirect_status=succeeded`
+      );
+      await BasePage.waitForAppReady();
+
+      await expect(
+        await browser.$('p=Thank you. Your payment is complete.')
+      ).toExist();
+      await expect(
+        await browser.$('p=The order status could not be loaded.')
+      ).not.toExist();
+      assert.strictEqual(
+        await browser.execute(() =>
+          sessionStorage.getItem('__store_test_order_calls')
+        ),
+        '3'
+      );
+    } finally {
+      await browser.execute(() => sessionStorage.clear());
+      await orderApi.remove();
+    }
+  });
+
   it('shows a graceful unavailable state without the Worker API', async () => {
     await BasePage.openStaging('store');
     await BasePage.waitForAppReady();

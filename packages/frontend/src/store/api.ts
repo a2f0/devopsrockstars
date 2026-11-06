@@ -9,12 +9,25 @@ import {storeApiOrigin} from '../environment';
 
 class StoreApiError extends Error {
   readonly code: string;
+  // The HTTP status the store answered with, or null when it was unreachable.
+  readonly status: number | null;
 
-  constructor(code: string, message: string) {
+  constructor(code: string, message: string, status: number | null) {
     super(message);
     this.name = 'StoreApiError';
     this.code = code;
+    this.status = status;
   }
+}
+
+// Whether the same request may succeed later: the store was unreachable,
+// throttled, or failed on its side. Client errors such as an unknown order or
+// a wrong token stay errors however often they are retried.
+export function isTransientStoreError(error: unknown) {
+  return (
+    error instanceof StoreApiError &&
+    (error.status === null || error.status === 429 || error.status >= 500)
+  );
 }
 
 // Each deployed environment serves the store API from its own Worker, so the
@@ -32,11 +45,16 @@ async function readResponse<T>(response: Response): Promise<T> {
     // A connection that drops mid-body fails the read like a failed fetch.
     if (error instanceof TypeError) throw error;
     if (!response.ok) {
-      throw new StoreApiError('request_failed', 'The store request failed.');
+      throw new StoreApiError(
+        'request_failed',
+        'The store request failed.',
+        response.status
+      );
     }
     throw new StoreApiError(
       'invalid_response',
-      'The store returned an invalid response.'
+      'The store returned an invalid response.',
+      response.status
     );
   }
   if (!response.ok) {
@@ -46,7 +64,8 @@ async function readResponse<T>(response: Response): Promise<T> {
         : {};
     throw new StoreApiError(
       errorBody.error?.code ?? 'request_failed',
-      errorBody.error?.message ?? 'The store request failed.'
+      errorBody.error?.message ?? 'The store request failed.',
+      response.status
     );
   }
   return body as T;
@@ -69,7 +88,8 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     if (!(error instanceof TypeError) || init.signal?.aborted) throw error;
     throw new StoreApiError(
       'network_error',
-      'The store could not be reached. Check your connection and try again.'
+      'The store could not be reached. Check your connection and try again.',
+      null
     );
   }
 }
