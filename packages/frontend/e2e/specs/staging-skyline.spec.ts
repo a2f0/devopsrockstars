@@ -12,6 +12,7 @@ type SkylineProbe = Window & {
   __skylineProbe?: {
     contexts: (WebGLRenderingContext | WebGL2RenderingContext)[];
     messages: string[];
+    restoration?: WEBGL_lose_context;
   };
 };
 
@@ -39,6 +40,15 @@ function probeSkyline() {
       }
       return context;
     } as typeof getContext;
+    const draw = WebGL2RenderingContext.prototype.drawElements;
+    WebGL2RenderingContext.prototype.drawElements = function (...args) {
+      if (this.canvas instanceof HTMLCanvasElement) {
+        this.canvas.dataset['drawCalls'] = String(
+          Number(this.canvas.dataset['drawCalls'] ?? 0) + 1
+        );
+      }
+      return draw.apply(this, args);
+    };
     for (const level of ['warn', 'error'] as const) {
       const log = console[level].bind(console);
       console[level] = (...args: unknown[]) => {
@@ -80,11 +90,29 @@ async function tapInSkyline(selector: string) {
   });
 }
 
-// The pinned Skyline 0.2.68 exposes this renderer probe on its canvas.
-// Assert frame activity, not private scene geometry or implementation details.
-type SkylineCanvas = HTMLCanvasElement & {
-  __buildingStudy: {renderCount: number; turning: boolean};
-};
+async function animationFrames(count: number) {
+  await browser.execute(async count => {
+    for (let index = 0; index < count; index++) {
+      const {promise, resolve} = Promise.withResolvers<void>();
+      requestAnimationFrame(() => resolve());
+      await promise;
+    }
+  }, count);
+}
+
+function skylineDrawCalls() {
+  return browser.execute(
+    selector =>
+      Number(
+        document
+          .querySelector(selector)
+          ?.shadowRoot?.querySelector<HTMLCanvasElement>('#building')?.dataset[
+          'drawCalls'
+        ] ?? 0
+      ),
+    skylineRegion
+  );
+}
 
 describe('staging 3D skyline', () => {
   it('does not start a skyline on transactional, admin, or missing pages', async () => {
@@ -105,6 +133,7 @@ describe('staging 3D skyline', () => {
           }),
         {timeout: 30_000, timeoutMsg: 'Hat preparation must settle'}
       );
+      await animationFrames(2);
       await expect(await browser.$(skylineRegion)).not.toExist();
       assert.deepEqual(
         await browser.execute(() =>
@@ -125,70 +154,116 @@ describe('staging 3D skyline', () => {
   });
 
   it('prepares on Store and retains a paused viewer across round trips', async () => {
-    await BasePage.openStaging('store');
-    await BasePage.waitForSkylineFrame();
-    const viewer = await browser.$(skylineRegion);
-    const viewerId = viewer.elementId;
-    const canvas = await viewer.shadow$('#building');
-    const canvasId = canvas.elementId;
-    await expect(BasePage.skyline).not.toBeDisplayed();
-    await expect(BasePage.skyline).toHaveAttribute('inert');
-    await (await browser.$('footer a[href="/"]')).click();
-    await expect(viewer).toBeDisplayed();
-    assert.equal((await browser.$(skylineRegion)).elementId, viewerId);
-    await expect(viewer).not.toHaveAttribute('aria-busy');
-    await (await viewer.shadow$('#menu-toggle')).click();
-    await (await viewer.shadow$('#wireframe')).click();
-    await (await viewer.shadow$('#turntable')).click();
-    await (await browser.$('a[href="/store"]')).click();
-    await expect(BasePage.skyline).not.toBeDisplayed();
-    // Drain pending resize/render callbacks, then prove an enabled turntable
-    // does not keep rendering in the background.
-    const parked = await browser.execute(async selector => {
-      const host = document.querySelector(selector);
-      const study =
-        host?.shadowRoot?.querySelector<SkylineCanvas>(
-          '#building'
-        )?.__buildingStudy;
-      if (!study) throw new Error('Skyline render state is missing');
-      const frames = async (count: number) => {
-        for (let index = 0; index < count; index++) {
-          const {promise, resolve} = Promise.withResolvers<void>();
-          requestAnimationFrame(() => resolve());
-          await promise;
+    const probe = await probeSkyline();
+    try {
+      await BasePage.openStaging('store');
+      await BasePage.waitForSkylineFrame();
+      const viewer = await browser.$(skylineRegion);
+      const viewerId = viewer.elementId;
+      const canvas = await viewer.shadow$('#building');
+      const canvasId = canvas.elementId;
+      await expect(BasePage.skyline).not.toBeDisplayed();
+      await expect(BasePage.skyline).toHaveAttribute('inert');
+      await (await browser.$('footer a[href="/"]')).click();
+      await expect(viewer).toBeDisplayed();
+      assert.equal((await browser.$(skylineRegion)).elementId, viewerId);
+      await expect(viewer).not.toHaveAttribute('aria-busy');
+      await (await viewer.shadow$('#menu-toggle')).click();
+      await (await viewer.shadow$('#wireframe')).click();
+      await (await viewer.shadow$('#turntable')).click();
+      await (await browser.$('a[href="/store"]')).click();
+      await expect(BasePage.skyline).not.toBeDisplayed();
+      // Drain pending resize/render callbacks, then prove an enabled turntable
+      // does not keep rendering in the background.
+      await animationFrames(2);
+      const parkedDraws = await skylineDrawCalls();
+      assert.ok(parkedDraws > 0, 'The prepared skyline must have drawn');
+      await animationFrames(8);
+      assert.equal(await skylineDrawCalls(), parkedDraws);
+      await expect(await viewer.shadow$('#turntable')).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
+      await (await browser.$('footer a[href="/"]')).click();
+      await expect(viewer).toBeDisplayed();
+      assert.equal(
+        (await (await browser.$(skylineRegion)).shadow$('#building')).elementId,
+        canvasId
+      );
+      await expect(viewer).not.toHaveAttribute('aria-busy');
+      await expect(await viewer.shadow$('#wireframe')).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
+      await browser.waitUntil(
+        async () => (await skylineDrawCalls()) > parkedDraws,
+        {timeout: 30_000, timeoutMsg: 'The parked turntable must resume'}
+      );
+    } finally {
+      await probe.remove();
+    }
+  });
+
+  it('restores a lost parked context without replacing the skyline', async () => {
+    const probe = await probeSkyline();
+    try {
+      await BasePage.openStaging('store');
+      await BasePage.waitForSkylineFrame();
+      const viewer = await browser.$(skylineRegion);
+      const canvasId = (await viewer.shadow$('#building')).elementId;
+      await browser.execute(selector => {
+        const canvas = document
+          .querySelector(selector)
+          ?.shadowRoot?.querySelector<HTMLCanvasElement>('#building');
+        const extension = canvas
+          ?.getContext('webgl2')
+          ?.getExtension('WEBGL_lose_context');
+        if (!extension) throw new Error('WebGL context loss is unavailable');
+        (window as SkylineProbe).__skylineProbe!.restoration = extension;
+        extension.loseContext();
+      }, skylineRegion);
+      await browser.waitUntil(
+        () =>
+          browser.execute(
+            selector =>
+              document
+                .querySelector(selector)
+                ?.shadowRoot?.querySelector('#loading')
+                ?.textContent?.includes('graphics context was interrupted'),
+            skylineRegion
+          ),
+        {
+          timeout: 30_000,
+          timeoutMsg: 'The parked skyline must report context loss',
         }
-      };
-      await frames(2);
-      const before = study.renderCount;
-      await frames(8);
-      return {before, after: study.renderCount, turning: study.turning};
-    }, skylineRegion);
-    assert.equal(parked.turning, true);
-    assert.equal(parked.after, parked.before);
-    await (await browser.$('footer a[href="/"]')).click();
-    await expect(viewer).toBeDisplayed();
-    assert.equal(
-      (await (await browser.$(skylineRegion)).shadow$('#building')).elementId,
-      canvasId
-    );
-    await expect(viewer).not.toHaveAttribute('aria-busy');
-    await expect(await viewer.shadow$('#wireframe')).toHaveAttribute(
-      'aria-pressed',
-      'true'
-    );
-    await browser.waitUntil(
-      () =>
-        browser.execute(
-          (selector, previous) =>
-            (document
+      );
+      await browser.execute(() =>
+        (window as SkylineProbe).__skylineProbe!.restoration!.restoreContext()
+      );
+      await BasePage.waitForSkylineFrame();
+      const parkedDraws = await skylineDrawCalls();
+      await (await browser.$('footer a[href="/"]')).click();
+      await expect(viewer).toBeDisplayed();
+      assert.equal((await viewer.shadow$('#building')).elementId, canvasId);
+      await browser.waitUntil(
+        async () => (await skylineDrawCalls()) > parkedDraws,
+        {timeout: 30_000, timeoutMsg: 'The restored skyline must draw on Home'}
+      );
+      assert.equal(
+        await browser.execute(
+          selector =>
+            document
               .querySelector(selector)
-              ?.shadowRoot?.querySelector<SkylineCanvas>('#building')
-              ?.__buildingStudy.renderCount ?? 0) > previous,
-          skylineRegion,
-          parked.after
+              ?.shadowRoot?.querySelector<HTMLCanvasElement>('#building')
+              ?.getContext('webgl2')
+              ?.isContextLost(),
+          skylineRegion
         ),
-      {timeout: 30_000, timeoutMsg: 'The parked turntable must resume'}
-    );
+        false
+      );
+    } finally {
+      await probe.remove();
+    }
   });
 
   it('keeps a pending background load across navigation and hides show original', async () => {
@@ -502,14 +577,22 @@ describe('staging 3D skyline', () => {
         await expect(viewer).not.toBeDisplayed();
         // Route changes retain the prepared viewer and its WebGL resources.
         assert.ok(
-          await browser.execute(() =>
-            (window as SkylineProbe).__skylineProbe?.contexts.every(
-              context =>
-                context.canvas instanceof HTMLCanvasElement &&
-                context.canvas.isConnected &&
-                !context.isContextLost()
-            )
-          ),
+          await browser.execute(selector => {
+            const canvas = document
+              .querySelector(selector)
+              ?.shadowRoot?.querySelector('#building');
+            const contexts =
+              (window as SkylineProbe).__skylineProbe?.contexts ?? [];
+            return (
+              contexts.some(context => context.canvas === canvas) &&
+              contexts.every(
+                context =>
+                  context.canvas instanceof HTMLCanvasElement &&
+                  context.canvas.isConnected &&
+                  !context.isContextLost()
+              )
+            );
+          }, skylineRegion),
           'The parked viewers must retain their connected contexts'
         );
         await (await browser.$('footer a[href="/"]')).click();

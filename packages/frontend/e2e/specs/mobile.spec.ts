@@ -186,7 +186,10 @@ describe('mobile layouts', () => {
         }
         // Layout coverage does not need another expensive model build. The
         // dedicated preview and skyline specs exercise the actual renderers.
-        if (pathname === '/static/image/store/5950.svg') {
+        if (
+          pathname === '/static/image/store/5950.svg' ||
+          pathname === '/static/skyline/skyline-3d.html'
+        ) {
           throw new Error('Preview unavailable in the layout fixture');
         }
         return originalFetch(input, init);

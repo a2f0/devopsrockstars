@@ -13,7 +13,7 @@ which ships built JavaScript and its own viewer assets, so installs run no
 build step and need no sibling checkout.
 
 The site prepares the skyline while browsing and preserves it between visits
-to Home. See [viewer lifecycle](../../docs/deployment.md#search-engines) for
+to Home. See [viewer lifecycle](../../docs/deployment.md#skyline-lifecycle) for
 background loading and resource behavior.
 
 ## Development

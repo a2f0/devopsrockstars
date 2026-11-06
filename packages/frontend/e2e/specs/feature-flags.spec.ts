@@ -104,6 +104,33 @@ describe('independent feature flags', () => {
               await browser.$('h1=Not found').isExisting(),
               !enabled
             );
+            if (!enabled) {
+              // Let passive startup effects and the failed hat fixture settle.
+              await browser.execute(async () => {
+                for (let frame = 0; frame < 3; frame++) {
+                  const {promise, resolve} = Promise.withResolvers<void>();
+                  requestAnimationFrame(() => resolve());
+                  await promise;
+                }
+              });
+              await expect(
+                await browser.$('#skyline > [role="region"]')
+              ).not.toExist();
+              assert.deepEqual(
+                await browser.execute(() =>
+                  performance
+                    .getEntriesByType('resource')
+                    .filter(entry =>
+                      new URL(entry.name).pathname.startsWith(
+                        '/static/skyline/'
+                      )
+                    )
+                    .map(entry => entry.name)
+                ),
+                [],
+                `${route} must not prepare a skyline while disabled`
+              );
+            }
             if (route === 'search' && enabled) {
               await expect(
                 await browser.$('input[aria-label="Search"]')

@@ -146,6 +146,13 @@ structured data, and it publishes no sitemap, so only production is offered to
 search engines. Staging's `robots.txt` still allows crawling:
 a crawler that may not fetch a page never sees its noindex.
 
+Cloudflare prepends its own managed `robots.txt` block, with content signals
+and AI crawler rules, to the one each build publishes. It is a zone setting;
+check that the served file still carries production's `Sitemap` line and does
+not block Googlebot or Bingbot.
+
+### Skyline lifecycle
+
 Home mounts the shared interactive 3D skyline from
 `@a2f0/skyline` ([a2f0/skyline](https://github.com/a2f0/skyline)) in the page
 itself, inside a shadow root, and gives it the site's own three.js through
@@ -171,10 +178,13 @@ not a second one.
 Direct visits to checkout, receipt, admin, or unknown routes do not start
 skyline preparation; a previously prepared viewer remains parked there.
 
-Cloudflare prepends its own managed `robots.txt` block, with content signals
-and AI crawler rules, to the one each build publishes. It is a zone setting;
-check that the served file still carries production's `Sitemap` line and does
-not block Googlebot or Bingbot.
+The package handles `webglcontextlost` and `webglcontextrestored` itself:
+it requests restoration, shows the interruption with its original-drawing
+fallback, and redraws the same scene when the browser restores the context,
+including while parked. If the browser cannot restore it, the viewer's reload
+message remains available on Home.
+
+### Deployment commands
 
 GitHub Actions deploys `main` to production and `staging` to staging, and
 `workflow_dispatch` defaults to read-only previews. Explicit
