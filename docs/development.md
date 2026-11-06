@@ -90,6 +90,9 @@ routes, waiting for the hat to settle when `store` is enabled. It stays mounted
 but outside layout away from Home; normal navigation must not rebuild it.
 The hat can rebuild after failure or context loss; the skyline package handles
 its own context loss and restoration.
+Specs that do not exercise rendering should fail the fetch for
+`/static/skyline/skyline-3d.html`, as the layout-only fixture in
+`e2e/specs/mobile.spec.ts` does, rather than build a competing software-GPU scene.
 
 Run tests whose names match a pattern
 

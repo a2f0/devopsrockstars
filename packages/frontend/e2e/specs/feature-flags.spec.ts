@@ -105,6 +105,21 @@ describe('independent feature flags', () => {
               !enabled
             );
             if (!enabled) {
+              if (flags.store) {
+                await browser.waitUntil(
+                  () =>
+                    browser.execute(() => {
+                      const status = document.querySelector(
+                        '[data-hat-preview-status]'
+                      )?.textContent;
+                      return Boolean(
+                        status?.includes('ready') ||
+                          status?.includes('unavailable')
+                      );
+                    }),
+                  {timeout: 30_000, timeoutMsg: 'The hat fixture must settle'}
+                );
+              }
               // Let passive startup effects and the failed hat fixture settle.
               await browser.execute(async () => {
                 for (let frame = 0; frame < 3; frame++) {
@@ -135,6 +150,9 @@ describe('independent feature flags', () => {
               await expect(
                 await browser.$('input[aria-label="Search"]')
               ).toExist();
+              await (
+                await browser.$('#skyline > [role="region"]')
+              ).waitForExist({timeout: 30_000});
             }
           }
         } finally {
