@@ -5,7 +5,7 @@
     "": {
       "name": "devopsrockstars",
       "devDependencies": {
-        "@a2f0/agent-tool": "0.1.30",
+        "@a2f0/agent-tool": "0.1.46",
         "@biomejs/biome": "2.6.4",
         "@sentry/cli": "3.8.2",
         "@tsconfig/strictest": "2.0.8",
@@ -84,7 +84,7 @@
     },
   },
   "packages": {
-    "@a2f0/agent-tool": ["@a2f0/agent-tool@0.1.30", "", { "dependencies": { "@resvg/resvg-wasm": "2.6.2" }, "bin": { "agent-tool": "src/index.ts" } }, "sha512-nuXL8cSqhq9P80xWxCl0eSMchvgDyb/xfGNclqzcdbocQWF2r3dFDzV9UXV1RD/Q0bBJlmYvf4L9o/MK4lYlWQ=="],
+    "@a2f0/agent-tool": ["@a2f0/agent-tool@0.1.46", "", { "dependencies": { "@resvg/resvg-wasm": "2.6.2" }, "bin": { "agent-tool": "src/index.ts" } }, "sha512-/v13zbhlVAbVgh0vP7ke51FLdujRf0y7nxemFFb+e/YkZXVGz1a9O7LjofbY4X/7jnEMIhL0l7nhY2I3Ip5u6g=="],
 
     "@a2f0/ct-client": ["@a2f0/ct-client@0.1.6", "", {}, "sha512-DlDg2DKCilbrX5jIh3D+jctG66+xwpjnead8L4YY3jnIVFZ4fOBHbpJk7yY9KFBcuhNAy9UhvbgmHJgI97dI4w=="],
 

@@ -23,6 +23,9 @@ machine-readable receipts and review findings visible by running `versions
 prepare`, `review`, and other commands whose output drives a decision directly.
 Prefer documented compact test reporters when they preserve required evidence;
 do not reduce test scope, skip checks, silence warnings, or mask failures.
+Start servers, watchers, and other long-running processes with
+`agent-tool proc start --label <name> -- <command>`, never a backgrounded shell
+command, so they can be found and stopped.
 
 1. Finish the requested change on a feature branch. Use
    `agent-tool branch create <branch> --base <base-branch> --remote <remote>`
@@ -54,15 +57,21 @@ do not reduce test scope, skip checks, silence warnings, or mask failures.
    Validate, commit, push, and independently review every feedback or CI repair.
    Wait with `agent-tool pr checks --wait --head <reviewed-head>`, whose limit
    defaults to `agent-tool.json` `merge.checksTimeoutSeconds`; when a job
-   fails, read its log with `agent-tool pr logs --head <reviewed-head>`. Then run
+   fails, read its log with `agent-tool pr logs --head <reviewed-head>`. When it
+   stops with `behind: true`, the base moved: cancel the stale head's CI with
+   `agent-tool pr cancel-runs --head <reviewed-head>`, integrate the reported
+   base, validate, review, push the new head, and wait on it. Then run
    `agent-tool pr preflight <reviewed-head> <base-branch> <reviewed-base>` to
    recheck CI, live base, PR identity, local state, and explicit version policy.
    A changed base requires integration, validation, and another review. When
    versions are managed, `agent-tool versions check <base-oid>` must pass for the
    live base. Use the squash-merge skill to merge the exact reviewed HEAD.
-5. After confirmed MERGED, use the reset skill to return to the updated default
-   branch and prune the shipped local feature branch as part of cleanup, honoring
-   stronger repository cleanup rules. If the user requested keep-branch, preserve
+5. After confirmed MERGED, follow the reset skill: run
+   `agent-tool repo cleanup <PR-number> <reviewed-head> --apply` to return to the
+   updated default branch and prune the shipped feature branch, honoring
+   stronger repository cleanup rules. Never prune with raw `git branch -D` or
+   `git push --delete`: the cleanup command checks the merge and both refs
+   first, and harness command guards prompt for raw force deletes. If the user requested keep-branch, preserve
    both feature refs. Check the cleanup receipt and verify the local feature ref
    is absent unless preserved; report incomplete cleanup explicitly. Apply
    documented dependency/hook setup.
@@ -73,8 +82,15 @@ do not reduce test scope, skip checks, silence warnings, or mask failures.
    live checks. Report deployment failures
    separately from a successful merge; follow project policy for repairs.
 
+Before the final report, run `agent-tool teardown` in each repository this work
+touched. Stop what the work started (`teardown --apply`, `proc stop`), stop any
+untracked process it started, and remove worktrees it added. Report what
+remains and why; the work is not done while teardown fails for anything it
+started.
+
 Never infer a clean review from process success alone or carry a review across
 content changes. Do not weaken configured CI policy to get a merge through.
 If a step fails, preserve useful intermediate work and report the concrete
 remaining issue. Report PR link, merged commit, review verdict, validation, final
-checkout state, and whether the shipped local branch was pruned or preserved.
+checkout state, the teardown result, and whether the shipped local branch was
+pruned or preserved.
