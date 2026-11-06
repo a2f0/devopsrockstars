@@ -4,12 +4,16 @@ import type {
   StripePaymentElement,
 } from '@stripe/stripe-js';
 import {loadStripe} from '@stripe/stripe-js/pure';
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useEffect, useReducer, useRef, useState} from 'react';
 import type {
   CreateCheckoutResponse,
   ShippingInput,
 } from '@devopsrockstars/shared-types';
 import {PAYMENT_ELEMENT_OPTIONS} from './paymentElementOptions';
+import {
+  initialPaymentFormLoad,
+  transitionPaymentFormLoad,
+} from './paymentFormLoad';
 import {Button, FormActions, PaymentHost, Status} from './StoreStyles';
 import {createStripeLoader} from './stripeLoader';
 
@@ -45,10 +49,17 @@ const StripePayment = React.memo(
   }: Props) => {
     const hostRef = useRef<HTMLDivElement | null>(null);
     const mountedRef = useRef<MountedPayment | null>(null);
-    const [ready, setReady] = useState(false);
+    const loadRequestRef = useRef(0);
+    const [load, dispatchLoad] = useReducer(
+      transitionPaymentFormLoad,
+      initialPaymentFormLoad
+    );
+    const ready = load.status === 'ready';
     const [busyAction, setBusyAction] = useState<'canceling' | 'paying' | null>(
       null
     );
+    // What paying or canceling last reported. A form that failed to load
+    // keeps its own message in `load`, which these actions never clear.
     const [error, setError] = useState<string | null>(null);
 
     // Checkout keeps the shipping address locked while a payment or a
@@ -61,10 +72,16 @@ const StripePayment = React.memo(
     useEffect(() => {
       let active = true;
       let payment: StripePaymentElement | null = null;
+      loadRequestRef.current += 1;
+      const request = loadRequestRef.current;
+      dispatchLoad({type: 'start', request});
+      const fail = () => {
+        if (active) dispatchLoad({type: 'fail', request});
+      };
       void getStripe(publishableKey)
         .then(stripe => {
           if (!active || !stripe || !hostRef.current) {
-            if (active) setError('The payment form could not be loaded.');
+            fail();
             return;
           }
           const elements = stripe.elements({
@@ -97,19 +114,21 @@ const StripePayment = React.memo(
             },
           });
           payment = elements.create('payment', PAYMENT_ELEMENT_OPTIONS);
-          payment.on('ready', () => active && setReady(true));
+          payment.on('ready', () => {
+            if (active) dispatchLoad({type: 'ready', request});
+          });
           // Without this the form would stay loading forever, for example
           // for a PaymentIntent that Stripe can no longer show.
           payment.on('loaderror', ({error: loadError}) => {
             console.error('Failed to load the payment form:', loadError.type);
-            if (active) setError('The payment form could not be loaded.');
+            fail();
           });
           payment.mount(hostRef.current);
           mountedRef.current = {stripe, elements, payment};
         })
         .catch(loadError => {
           console.error('Failed to load Stripe:', loadError);
-          if (active) setError('The payment form could not be loaded.');
+          fail();
         });
 
       return () => {
@@ -200,8 +219,11 @@ const StripePayment = React.memo(
     return (
       <>
         <PaymentHost ref={hostRef} />
-        {!ready && !error ? (
+        {load.status === 'loading' && !error ? (
           <Status>Loading secure payment form…</Status>
+        ) : null}
+        {load.status === 'failed' ? (
+          <Status $error>The payment form could not be loaded.</Status>
         ) : null}
         {error ? <Status $error>{error}</Status> : null}
         <FormActions>
