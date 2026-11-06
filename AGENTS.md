@@ -136,6 +136,23 @@ storefront API returns JSON. Mobile browser checks should emulate viewport and
 touch input, including narrow portrait, landscape, and viewport height changes.
 Verify branch identities and merge ancestry before deleting shipped branches.
 
+## State machines
+
+Make implicit state machines explicit when you write or change code: one closed
+state type (a discriminated union, enum, or sealed type) carrying each state's
+data, typed events, and one pure transition function, with effects run on
+entering a state and async work tagged so only the current request can finish.
+Follow the `explicit-state-machines` skill for what to convert, what to leave
+alone, and how to prove behavior did not change; `agent-tool state-machines`
+lists leads. Reviews flag new implicit machines.
+
+In this repository the tag is `status`. Frontend machines are pure modules
+beside their components in `packages/frontend/src/store/` (`checkoutFlow.ts`,
+`storefrontAvailability.ts`) with `node:test` table tests; components drive
+them with `useReducer`. Order and alert status in `packages/backend` is closed
+by D1 `CHECK` constraints, and every write is a compare-and-set
+`UPDATE ... WHERE status IN (...)`; keep new writers in that form.
+
 ## Markdown Linting
 
 Markdown lint is enforced in CI and hooks:

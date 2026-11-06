@@ -5,7 +5,7 @@
     "": {
       "name": "devopsrockstars",
       "devDependencies": {
-        "@a2f0/agent-tool": "0.1.46",
+        "@a2f0/agent-tool": "0.1.51",
         "@biomejs/biome": "2.6.4",
         "@sentry/cli": "3.8.2",
         "@tsconfig/strictest": "2.0.8",
@@ -42,7 +42,7 @@
       "version": "0.1.2",
       "dependencies": {
         "@a2f0/ct-client": "0.1.6",
-        "@a2f0/skyline": "0.2.66",
+        "@a2f0/skyline": "0.2.67",
         "@devopsrockstars/diagnostics": "workspace:*",
         "@devopsrockstars/shared-types": "workspace:*",
         "@stripe/stripe-js": "10.2.1",
@@ -84,11 +84,11 @@
     },
   },
   "packages": {
-    "@a2f0/agent-tool": ["@a2f0/agent-tool@0.1.46", "", { "dependencies": { "@resvg/resvg-wasm": "2.6.2" }, "bin": { "agent-tool": "src/index.ts" } }, "sha512-/v13zbhlVAbVgh0vP7ke51FLdujRf0y7nxemFFb+e/YkZXVGz1a9O7LjofbY4X/7jnEMIhL0l7nhY2I3Ip5u6g=="],
+    "@a2f0/agent-tool": ["@a2f0/agent-tool@0.1.51", "", { "dependencies": { "@resvg/resvg-wasm": "2.6.2" }, "bin": { "agent-tool": "src/index.ts" } }, "sha512-sSJUTqAziD+Rx2ZfGdXY1nCQR0f22WGIdLXw4MkmDBNuORnWCLT8caTq3OX5mbs1i8AAak/qMQ7LqtDDVE6efg=="],
 
     "@a2f0/ct-client": ["@a2f0/ct-client@0.1.6", "", {}, "sha512-DlDg2DKCilbrX5jIh3D+jctG66+xwpjnead8L4YY3jnIVFZ4fOBHbpJk7yY9KFBcuhNAy9UhvbgmHJgI97dI4w=="],
 
-    "@a2f0/skyline": ["@a2f0/skyline@0.2.66", "", { "dependencies": { "@a2f0/ct-client": "0.1.7", "@types/three": "0.186.0" }, "peerDependencies": { "three": "~0.186.0" }, "optionalPeers": ["three"] }, "sha512-YWMU/W9OFrfeVtYLRP3wSMiAcE2GJLP3FqqnzPVHTYVeOm5UjUcfNqobeYu1erXdF7+Hsv00L2V4tygIfMZ+uw=="],
+    "@a2f0/skyline": ["@a2f0/skyline@0.2.67", "", { "dependencies": { "@a2f0/ct-client": "0.1.7", "@types/three": "0.186.0" }, "peerDependencies": { "three": "~0.186.0" }, "optionalPeers": ["three"] }, "sha512-vLHLgMvrRQ9Yl0TVUMQa0BakvDHMFOYkBh2K24xG3TbNTswAzH3tYcc/i98C1Oiss3Ts4afWI+pvq7a8X9MRSg=="],
 
     "@babel/code-frame": ["@babel/code-frame@7.29.7", "", { "dependencies": { "@babel/helper-validator-identifier": "7.29.7", "js-tokens": "4.0.0", "picocolors": "1.1.1" } }, "sha512-Aup7aUOfpbAUg2ROOJN6Iw5f9DMBlzu0mIkm/malLQFN/YQgO48wCj0Kxa3sEHJvPVFg7siR+qRInwXd2qhQKw=="],
 
