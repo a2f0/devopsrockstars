@@ -713,6 +713,137 @@ describe('store page', () => {
     }
   });
 
+  it('keeps a payment form load failure through a failed cancel', async () => {
+    const pending = {
+      checkout: {
+        clientSecret: 'pi_unloadable_secret_test',
+        currency: 'usd',
+        expiresAt: new Date(Date.now() + 10 * 60_000).toISOString(),
+        lines: [
+          {
+            currency: 'usd',
+            productName: 'DevOpsRockstars 59FIFTY',
+            quantity: 1,
+            unitAmount: 2000,
+            variantId: 'hat-5950-7-1-4',
+            variantLabel: '7 1/4',
+          },
+        ],
+        orderId: '12345678-1234-4234-8234-123456789abc',
+        orderToken: 'order-token',
+        totalAmount: 2000,
+      },
+      shipping: {
+        name: 'Grace Hopper',
+        email: 'grace@example.com',
+        addressLine1: '1 Navy Way',
+        addressLine2: '',
+        city: 'New York',
+        state: 'NY',
+        postalCode: '10001',
+        country: 'US',
+      },
+    };
+    // A Payment Element that fails to load, and a cancellation that waits
+    // for the test and then fails, as when a payment is processing.
+    const fakeStripe = await browser.addInitScript(() => {
+      const browserWindow = window as unknown as {Stripe: unknown};
+      browserWindow.Stripe = () => ({
+        elements: () => ({
+          create: () => {
+            const handlers = new Map<string, (event: unknown) => void>();
+            const element = {
+              on(type: string, handler: (event: unknown) => void) {
+                handlers.set(type, handler);
+                return element;
+              },
+              mount() {
+                setTimeout(() =>
+                  handlers.get('loaderror')?.({
+                    elementType: 'payment',
+                    error: {type: 'invalid_request_error'},
+                  })
+                );
+              },
+              destroy() {},
+            };
+            return element;
+          },
+        }),
+      });
+      const originalFetch = globalThis.fetch.bind(globalThis);
+      const fetchWindow: Window = window;
+      fetchWindow.fetch = async (input, init) => {
+        const url = String(input);
+        if (url.endsWith('/api/storefront')) {
+          return Response.json({
+            products: [],
+            stripePublishableKey: 'pk_test_store',
+          });
+        }
+        if (url.endsWith('/cancel') && init?.method === 'POST') {
+          while (!sessionStorage.getItem('__store_test_release_cancel')) {
+            await new Promise(resolve => setTimeout(resolve, 50));
+          }
+          return Response.json(
+            {
+              error: {
+                code: 'payment_processing',
+                message:
+                  'The payment is already processing and cannot be canceled here.',
+              },
+            },
+            {status: 409}
+          );
+        }
+        return originalFetch(input, init);
+      };
+    });
+
+    try {
+      await BasePage.openStaging('');
+      await browser.execute(value => {
+        sessionStorage.clear();
+        sessionStorage.setItem(
+          'devopsrockstars.store.pending-checkout',
+          JSON.stringify(value)
+        );
+      }, pending);
+      await BasePage.openStaging('store/checkout');
+      await BasePage.waitForAppReady();
+      const loadFailure = await browser.$(
+        'p=The payment form could not be loaded.'
+      );
+      await expect(loadFailure).toExist();
+
+      // Canceling neither brings back the loading message nor hides why the
+      // form is missing, while it runs or after it fails.
+      await (await browser.$('button=Cancel checkout')).click();
+      await expect(await browser.$('button=Canceling…')).toExist();
+      await expect(
+        await browser.$('p=Loading secure payment form…')
+      ).not.toExist();
+      await expect(loadFailure).toExist();
+      await browser.execute(() =>
+        sessionStorage.setItem('__store_test_release_cancel', 'true')
+      );
+      await expect(
+        await browser.$(
+          'p=The payment is already processing and cannot be canceled here.'
+        )
+      ).toExist();
+      await expect(loadFailure).toExist();
+      await expect(
+        await browser.$('p=Loading secure payment form…')
+      ).not.toExist();
+      await expect(await browser.$('button=Pay order')).toBeDisabled();
+      await expect(await browser.$('button=Cancel checkout')).toBeEnabled();
+    } finally {
+      await browser.execute(() => sessionStorage.clear());
+      await fakeStripe.remove();
+    }
+  });
+
   it('keeps confirming a payment through a brief order API outage', async () => {
     const orderId = '12345678-1234-4234-8234-123456789abc';
     // The order API fails twice with a server error, then reports the order
