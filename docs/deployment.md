@@ -445,8 +445,12 @@ duplicates for the same resumable browser session.
 Signed Stripe events without the store's source metadata are acknowledged and
 ignored. Store events that cannot be applied safely are recorded in
 `stripe_event_alerts`; entries with `action = 'refund'` require operator action.
-Review and resolve the open queue in the [store admin](#store-admin), or
-check it with:
+When an expired order's payment succeeded but does not match the order,
+scheduled cleanup records one `cleanup:<PaymentIntent>` alert and then skips
+the order: it stays `awaiting_payment` with its stock reserved, because the
+customer was charged. After a refund, return its items to stock in the admin;
+resolving the alert does not release them. Review and resolve the open
+queue in the [store admin](#store-admin), or check it with:
 
 ```shell
 bun run --cwd packages/backend --bun wrangler d1 execute \

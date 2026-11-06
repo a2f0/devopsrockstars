@@ -117,11 +117,20 @@ export async function cleanupExpiredOrders(
   const diagnostics = createApiDiagnostics();
   const secretKey = env.STRIPE_SECRET_KEY?.trim();
   const now = new Date(scheduledTime).toISOString();
+  // An order whose PaymentIntent succeeded without matching it awaits review:
+  // its cleanup alert (open or resolved) is the durable marker, so the job
+  // neither calls Stripe nor alerts again, and such orders cannot fill the
+  // batch ahead of newer expired ones. The customer was charged, so its stock
+  // stays reserved until an operator refunds or fulfils it.
   const expired = await env.DB.prepare(
     `SELECT id, stripe_payment_intent_id, currency, total_amount
-     FROM orders
+     FROM orders o
      WHERE status IN ('creating_payment', 'awaiting_payment')
        AND reservation_expires_at <= ?
+       AND NOT EXISTS (
+         SELECT 1 FROM stripe_event_alerts a
+         WHERE a.event_id = 'cleanup:' || o.stripe_payment_intent_id
+       )
      ORDER BY reservation_expires_at
      LIMIT 100`
   )
