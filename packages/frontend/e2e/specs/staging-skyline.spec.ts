@@ -169,6 +169,22 @@ describe('staging 3D skyline', () => {
       assert.equal((await browser.$(skylineRegion)).elementId, viewerId);
       await expect(viewer).not.toHaveAttribute('aria-busy');
       await (await viewer.shadow$('#menu-toggle')).click();
+      await browser.waitUntil(
+        () =>
+          browser.execute(selector => {
+            const controls = document
+              .querySelector(selector)
+              ?.shadowRoot?.querySelector('.control-bar');
+            return (
+              controls !== null &&
+              controls !== undefined &&
+              controls
+                .getAnimations({subtree: true})
+                .every(animation => animation.playState !== 'running')
+            );
+          }, skylineRegion),
+        {timeout: 30_000, timeoutMsg: 'The controls must finish opening'}
+      );
       await (await viewer.shadow$('#wireframe')).click();
       await (await viewer.shadow$('#turntable')).click();
       await (await browser.$('a[href="/store"]')).click();

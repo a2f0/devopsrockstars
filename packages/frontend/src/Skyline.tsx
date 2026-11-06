@@ -69,7 +69,8 @@ const Skyline = React.memo(() => {
       // Prepare at viewport size, then remove the parked viewer from layout:
       // its ResizeObserver pauses the turntable without losing GPU resources.
       hidden={!active && settled}
-      style={{visibility: active ? 'visible' : 'hidden'}}
+      // The package resets inherited visibility with all:initial.
+      style={{opacity: active ? 1 : 0}}
     />
   );
 });

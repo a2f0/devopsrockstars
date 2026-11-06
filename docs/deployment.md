@@ -153,7 +153,7 @@ not block Googlebot or Bingbot.
 
 ### Skyline lifecycle
 
-Home mounts the shared interactive 3D skyline from
+The site mounts the shared interactive 3D skyline from
 `@a2f0/skyline` ([a2f0/skyline](https://github.com/a2f0/skyline)) in the page
 itself, inside a shadow root, and gives it the site's own three.js through
 `@a2f0/skyline/three`, so the skyline and the hat preview share one engine.
@@ -161,11 +161,12 @@ Every build serves its assets at `/static/skyline/`. They include copies of
 the package's viewer pages, which carry a `noindex` robots meta tag, and
 production's `_headers` sends `X-Robots-Tag: noindex, nofollow` on everything
 under that path, matching the package's own host, so neither the pages nor
-their images appear in search. A single viewer lives outside the routes:
-it prepares at viewport size while hidden and inert on public browsing routes
-(Home, Company, and enabled Store/Search pages), then
-leaves layout once loading settles. Its existing resize handling stops the
-turntable while parked; returning Home restores the same canvas, camera and
+their images appear in search. A single viewer lives outside the routes.
+It prepares at viewport size on public browsing routes (Home, Company, and
+enabled Store/Search pages). Away from Home, opacity and `inert` hide even a
+still-loading viewer without collapsing it; after loading settles, it leaves
+layout. Its existing resize handling stops the turntable while parked;
+returning Home restores the same canvas, camera and
 controls without rebuilding. WebGL resources stay allocated until the app
 unmounts. If the 3D skyline cannot start, as without WebGL 2, the viewer says
 why in its place and in the browser console, and its **show original** button

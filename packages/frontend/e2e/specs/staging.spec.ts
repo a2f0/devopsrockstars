@@ -98,8 +98,8 @@ describe('search page', () => {
     await searchInput.setValue('continuous delivery');
     await browser.keys('Enter');
 
-    await expect(await browser.$('[role="status"]')).toHaveText(
-      'Search results are not connected yet. Stay tuned.'
-    );
+    await expect(
+      await browser.$('[data-ct-app="search"] [role="status"]')
+    ).toHaveText('Search results are not connected yet. Stay tuned.');
   });
 });

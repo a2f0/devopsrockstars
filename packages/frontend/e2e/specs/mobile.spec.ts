@@ -206,7 +206,9 @@ describe('mobile layouts', () => {
         assert.ok((await input.getSize()).height >= 44);
         await input.setValue('devops');
         await browser.keys('Enter');
-        await expect(await browser.$('[role="status"]')).toExist();
+        await expect(
+          await browser.$('[data-ct-app="search"] [role="status"]')
+        ).toExist();
         await tap('nav a[href="/store"]');
         const size = await browser.$('[role="combobox"]');
         await expect(size).toBeEnabled();
