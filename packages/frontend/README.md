@@ -12,10 +12,9 @@ The interactive 3D skyline comes from the exact-pinned
 which ships built JavaScript and its own viewer assets, so installs run no
 build step and need no sibling checkout.
 
-The site prepares one skyline in the background, after the store's hat preview
-finishes when enabled. Navigating Home reuses that viewer; leaving Home hides
-it and pauses its turntable without discarding its camera, controls, or GPU
-resources. A visit before preparation finishes continues the same load.
+The site prepares the skyline while browsing and preserves it between visits
+to Home. See [viewer lifecycle](../../docs/deployment.md#search-engines) for
+background loading and resource behavior.
 
 ## Development
 

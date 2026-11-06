@@ -272,6 +272,7 @@ describe('3D hat preview', () => {
       for (const path of ['', 'company']) {
         await BasePage.openStaging(path);
         await waitForPreparedPreview();
+        await BasePage.waitForSkylineFrame();
         const canvas = await browser.$(canvasSelector);
         const canvasId = await canvas.elementId;
         await expect(canvas).not.toBeDisplayed();

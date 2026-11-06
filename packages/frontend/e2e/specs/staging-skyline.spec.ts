@@ -80,11 +80,50 @@ async function tapInSkyline(selector: string) {
   });
 }
 
+// The pinned Skyline 0.2.68 exposes this renderer probe on its canvas.
+// Assert frame activity, not private scene geometry or implementation details.
 type SkylineCanvas = HTMLCanvasElement & {
   __buildingStudy: {renderCount: number; turning: boolean};
 };
 
 describe('staging 3D skyline', () => {
+  it('does not start a skyline on transactional, admin, or missing pages', async () => {
+    for (const path of [
+      'store/checkout',
+      'store/receipt',
+      'admin',
+      'missing',
+    ]) {
+      await BasePage.openStaging(path);
+      await browser.waitUntil(
+        () =>
+          browser.execute(() => {
+            const status = document.querySelector(
+              '[data-hat-preview-status]'
+            )?.textContent;
+            return status?.includes('ready') || status?.includes('unavailable');
+          }),
+        {timeout: 30_000, timeoutMsg: 'Hat preparation must settle'}
+      );
+      await expect(await browser.$(skylineRegion)).not.toExist();
+      assert.deepEqual(
+        await browser.execute(() =>
+          performance
+            .getEntriesByType('resource')
+            .filter(entry =>
+              new URL(entry.name).pathname.startsWith('/static/skyline/')
+            )
+            .map(entry => entry.name)
+        ),
+        [],
+        `${path} must not fetch skyline assets`
+      );
+    }
+    await (await browser.$('footer a[href="/"]')).click();
+    await BasePage.waitForSkylineFrame();
+    await expect(await browser.$(skylineRegion)).toBeDisplayed();
+  });
+
   it('prepares on Store and retains a paused viewer across round trips', async () => {
     await BasePage.openStaging('store');
     await BasePage.waitForSkylineFrame();

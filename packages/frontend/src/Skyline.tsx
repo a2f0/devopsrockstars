@@ -2,7 +2,17 @@ import {mountSkyline, type SkylineInstance} from '@a2f0/skyline';
 import React, {useEffect, useRef, useState} from 'react';
 import {useLocation} from 'react-router';
 import styled from 'styled-components';
+import {features} from './featureFlags';
+import {matchesRoute} from './routes';
 import {useHatPreviewPreparing} from './store/PreparedHatPreview';
+
+// Do not start optional model work on transactional, admin, or error pages.
+const preparationRoutes = [
+  '/',
+  '/company',
+  ...(features.store ? ['/store'] : []),
+  ...(features.search ? ['/search'] : []),
+];
 
 const FullScreenSkyline = styled.div`
   z-index: -1337;
@@ -20,11 +30,13 @@ const Skyline = React.memo(() => {
   const [settled, setSettled] = useState(false);
   const {pathname} = useLocation();
   const active = pathname === '/';
+  const prepare = matchesRoute(preparationRoutes, pathname);
   const preparingHat = useHatPreviewPreparing();
   useEffect(() => {
     // Only initial startup waits for the hat; a later hat retry must not
     // destroy an already prepared skyline.
-    if (preparingHat || viewer.current || !container.current) return;
+    if (!prepare || preparingHat || viewer.current || !container.current)
+      return;
     const instance = mountSkyline(container.current, {
       assetsUrl: '/static/skyline/',
       // Match the site's dark backdrop while the scene assets load.
@@ -39,7 +51,7 @@ const Skyline = React.memo(() => {
       if (viewer.current === instance) setSettled(true);
     };
     void instance.ready.then(finish, finish);
-  }, [preparingHat]);
+  }, [prepare, preparingHat]);
   useEffect(
     () => () => {
       viewer.current?.destroy();

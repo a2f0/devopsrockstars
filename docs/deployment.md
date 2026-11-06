@@ -155,7 +155,8 @@ the package's viewer pages, which carry a `noindex` robots meta tag, and
 production's `_headers` sends `X-Robots-Tag: noindex, nofollow` on everything
 under that path, matching the package's own host, so neither the pages nor
 their images appear in search. A single viewer lives outside the routes:
-it prepares at viewport size while hidden and inert on other pages, then
+it prepares at viewport size while hidden and inert on public browsing routes
+(Home, Company, and enabled Store/Search pages), then
 leaves layout once loading settles. Its existing resize handling stops the
 turntable while parked; returning Home restores the same canvas, camera and
 controls without rebuilding. WebGL resources stay allocated until the app
@@ -167,6 +168,8 @@ hat preview to succeed or fail, so the two models build in sequence. Later hat
 retries do not restart the skyline. With the store disabled, preparation starts
 directly. Navigating Home before preparation finishes shows the existing load,
 not a second one.
+Direct visits to checkout, receipt, admin, or unknown routes do not start
+skyline preparation; a previously prepared viewer remains parked there.
 
 Cloudflare prepends its own managed `robots.txt` block, with content signals
 and AI crawler rules, to the one each build publishes. It is a zone setting;
