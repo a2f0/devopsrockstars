@@ -25,8 +25,9 @@ a reported coverage limit, never a reason to downgrade newer installed versions.
   `.agent-tool-skills.json`; commit them with its manifest and `bun.lock`.
 - Skyline mounts a region in an open shadow root. The React
   effect leaves startup failures to the viewer, shares the host's Three.js through
-  `@a2f0/skyline/three`, and always destroys the viewer on cleanup. Browser tests
-  use the region/shadow DOM and verify readiness, controls, and navigation cleanup.
+  `@a2f0/skyline/three`, and destroys the viewer when the app unmounts, not
+  when a route changes. Browser tests use the region/shadow DOM and verify
+  background readiness, preserved controls, and paused rendering while parked.
   The asset build uses a fresh dedicated temporary directory and removes
   the previous build before writing a complete new asset set. Keep Three and its
   types within Skyline's supported peer range. See its

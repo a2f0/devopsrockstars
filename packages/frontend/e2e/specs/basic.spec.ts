@@ -78,7 +78,7 @@ describe('company page', () => {
     await BasePage.open('company');
     await BasePage.waitForAppReady();
     await expect(browser).toHaveUrl(expect.stringContaining('/company'));
-    await expect(BasePage.skyline).not.toExist();
+    await expect(BasePage.skyline).not.toBeDisplayed();
     await expect(await browser.$('h1=Contact')).toExist();
     await expect(
       await browser.$('p=Get in touch about DevOps consulting.')

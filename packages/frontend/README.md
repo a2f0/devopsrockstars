@@ -12,6 +12,10 @@ The interactive 3D skyline comes from the exact-pinned
 which ships built JavaScript and its own viewer assets, so installs run no
 build step and need no sibling checkout.
 
+The site prepares the skyline while browsing and preserves it between visits
+to Home. See [viewer lifecycle](../../docs/deployment.md#skyline-lifecycle) for
+background loading and resource behavior.
+
 ## Development
 
 Run these from the repository root, whose scripts wrap this package's:

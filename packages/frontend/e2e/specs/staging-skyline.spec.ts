@@ -12,11 +12,12 @@ type SkylineProbe = Window & {
   __skylineProbe?: {
     contexts: (WebGLRenderingContext | WebGL2RenderingContext)[];
     messages: string[];
+    restoration?: WEBGL_lose_context;
   };
 };
 
 // Records the page's WebGL contexts and console warnings and errors, so tests
-// can check that the viewer shares three.js and releases its contexts.
+// can check that the viewer shares three.js and retains its contexts.
 function probeSkyline() {
   return browser.addInitScript(() => {
     const probe: NonNullable<SkylineProbe['__skylineProbe']> = {
@@ -39,6 +40,15 @@ function probeSkyline() {
       }
       return context;
     } as typeof getContext;
+    const draw = WebGL2RenderingContext.prototype.drawElements;
+    WebGL2RenderingContext.prototype.drawElements = function (...args) {
+      if (this.canvas instanceof HTMLCanvasElement) {
+        this.canvas.dataset['drawCalls'] = String(
+          Number(this.canvas.dataset['drawCalls'] ?? 0) + 1
+        );
+      }
+      return draw.apply(this, args);
+    };
     for (const level of ['warn', 'error'] as const) {
       const log = console[level].bind(console);
       console[level] = (...args: unknown[]) => {
@@ -80,8 +90,199 @@ async function tapInSkyline(selector: string) {
   });
 }
 
+async function animationFrames(count: number) {
+  await browser.execute(async count => {
+    for (let index = 0; index < count; index++) {
+      const {promise, resolve} = Promise.withResolvers<void>();
+      requestAnimationFrame(() => resolve());
+      await promise;
+    }
+  }, count);
+}
+
+function skylineDrawCalls() {
+  return browser.execute(
+    selector =>
+      Number(
+        document
+          .querySelector(selector)
+          ?.shadowRoot?.querySelector<HTMLCanvasElement>('#building')?.dataset[
+          'drawCalls'
+        ] ?? 0
+      ),
+    skylineRegion
+  );
+}
+
 describe('staging 3D skyline', () => {
-  it('hides show original while the embedded scene is loading', async () => {
+  it('does not start a skyline on transactional, admin, or missing pages', async () => {
+    for (const path of [
+      'store/checkout',
+      'store/receipt',
+      'admin',
+      'missing',
+    ]) {
+      await BasePage.openStaging(path);
+      await browser.waitUntil(
+        () =>
+          browser.execute(() => {
+            const status = document.querySelector(
+              '[data-hat-preview-status]'
+            )?.textContent;
+            return status?.includes('ready') || status?.includes('unavailable');
+          }),
+        {timeout: 30_000, timeoutMsg: 'Hat preparation must settle'}
+      );
+      await animationFrames(2);
+      await expect(await browser.$(skylineRegion)).not.toExist();
+      assert.deepEqual(
+        await browser.execute(() =>
+          performance
+            .getEntriesByType('resource')
+            .filter(entry =>
+              new URL(entry.name).pathname.startsWith('/static/skyline/')
+            )
+            .map(entry => entry.name)
+        ),
+        [],
+        `${path} must not fetch skyline assets`
+      );
+    }
+    await (await browser.$('footer a[href="/"]')).click();
+    await BasePage.waitForSkylineFrame();
+    await expect(await browser.$(skylineRegion)).toBeDisplayed();
+  });
+
+  it('prepares on Store and retains a paused viewer across round trips', async () => {
+    const probe = await probeSkyline();
+    try {
+      await BasePage.openStaging('store');
+      await BasePage.waitForSkylineFrame();
+      const viewer = await browser.$(skylineRegion);
+      const viewerId = viewer.elementId;
+      const canvas = await viewer.shadow$('#building');
+      const canvasId = canvas.elementId;
+      await expect(BasePage.skyline).not.toBeDisplayed();
+      await expect(BasePage.skyline).toHaveAttribute('inert');
+      await (await browser.$('footer a[href="/"]')).click();
+      await expect(viewer).toBeDisplayed();
+      assert.equal((await browser.$(skylineRegion)).elementId, viewerId);
+      await expect(viewer).not.toHaveAttribute('aria-busy');
+      await (await viewer.shadow$('#menu-toggle')).click();
+      await browser.waitUntil(
+        () =>
+          browser.execute(selector => {
+            const controls = document
+              .querySelector(selector)
+              ?.shadowRoot?.querySelector('.control-bar');
+            return (
+              controls !== null &&
+              controls !== undefined &&
+              controls
+                .getAnimations({subtree: true})
+                .every(animation => animation.playState !== 'running')
+            );
+          }, skylineRegion),
+        {timeout: 30_000, timeoutMsg: 'The controls must finish opening'}
+      );
+      await (await viewer.shadow$('#wireframe')).click();
+      await (await viewer.shadow$('#turntable')).click();
+      await (await browser.$('a[href="/store"]')).click();
+      await expect(BasePage.skyline).not.toBeDisplayed();
+      // Drain pending resize/render callbacks, then prove an enabled turntable
+      // does not keep rendering in the background.
+      await animationFrames(2);
+      const parkedDraws = await skylineDrawCalls();
+      assert.ok(parkedDraws > 0, 'The prepared skyline must have drawn');
+      await animationFrames(8);
+      assert.equal(await skylineDrawCalls(), parkedDraws);
+      await expect(await viewer.shadow$('#turntable')).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
+      await (await browser.$('footer a[href="/"]')).click();
+      await expect(viewer).toBeDisplayed();
+      assert.equal(
+        (await (await browser.$(skylineRegion)).shadow$('#building')).elementId,
+        canvasId
+      );
+      await expect(viewer).not.toHaveAttribute('aria-busy');
+      await expect(await viewer.shadow$('#wireframe')).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
+      await browser.waitUntil(
+        async () => (await skylineDrawCalls()) > parkedDraws,
+        {timeout: 30_000, timeoutMsg: 'The parked turntable must resume'}
+      );
+    } finally {
+      await probe.remove();
+    }
+  });
+
+  it('restores a lost parked context without replacing the skyline', async () => {
+    const probe = await probeSkyline();
+    try {
+      await BasePage.openStaging('store');
+      await BasePage.waitForSkylineFrame();
+      const viewer = await browser.$(skylineRegion);
+      const canvasId = (await viewer.shadow$('#building')).elementId;
+      await browser.execute(selector => {
+        const canvas = document
+          .querySelector(selector)
+          ?.shadowRoot?.querySelector<HTMLCanvasElement>('#building');
+        const extension = canvas
+          ?.getContext('webgl2')
+          ?.getExtension('WEBGL_lose_context');
+        if (!extension) throw new Error('WebGL context loss is unavailable');
+        (window as SkylineProbe).__skylineProbe!.restoration = extension;
+        extension.loseContext();
+      }, skylineRegion);
+      await browser.waitUntil(
+        () =>
+          browser.execute(
+            selector =>
+              document
+                .querySelector(selector)
+                ?.shadowRoot?.querySelector('#loading')
+                ?.textContent?.includes('graphics context was interrupted'),
+            skylineRegion
+          ),
+        {
+          timeout: 30_000,
+          timeoutMsg: 'The parked skyline must report context loss',
+        }
+      );
+      await browser.execute(() =>
+        (window as SkylineProbe).__skylineProbe!.restoration!.restoreContext()
+      );
+      await BasePage.waitForSkylineFrame();
+      const parkedDraws = await skylineDrawCalls();
+      await (await browser.$('footer a[href="/"]')).click();
+      await expect(viewer).toBeDisplayed();
+      assert.equal((await viewer.shadow$('#building')).elementId, canvasId);
+      await browser.waitUntil(
+        async () => (await skylineDrawCalls()) > parkedDraws,
+        {timeout: 30_000, timeoutMsg: 'The restored skyline must draw on Home'}
+      );
+      assert.equal(
+        await browser.execute(
+          selector =>
+            document
+              .querySelector(selector)
+              ?.shadowRoot?.querySelector<HTMLCanvasElement>('#building')
+              ?.getContext('webgl2')
+              ?.isContextLost(),
+          skylineRegion
+        ),
+        false
+      );
+    } finally {
+      await probe.remove();
+    }
+  });
+
+  it('keeps a pending background load across navigation and hides show original', async () => {
     // Hold the scene markup until the boot-state assertions complete.
     const delayScene = await browser.addInitScript(() => {
       const sceneReady = new Promise<void>(resolve => {
@@ -104,9 +305,18 @@ describe('staging 3D skyline', () => {
       };
     });
     try {
-      await BasePage.openStaging('');
+      await BasePage.openStaging('store');
       const viewer = await browser.$(skylineRegion);
       await viewer.waitForExist({timeout: 30_000});
+      const viewerId = viewer.elementId;
+      await expect(viewer).not.toBeDisplayed();
+      await (await browser.$('footer a[href="/"]')).click();
+      await expect(viewer).toBeDisplayed();
+      await (await browser.$('a[href="/store"]')).click();
+      await expect(viewer).not.toBeDisplayed();
+      await (await browser.$('footer a[href="/"]')).click();
+      await expect(viewer).toBeDisplayed();
+      assert.equal((await browser.$(skylineRegion)).elementId, viewerId);
       const original = await viewer.shadow$('#embedded-original');
       await original.waitForExist({timeout: 30_000});
       await browser.waitUntil(
@@ -260,7 +470,7 @@ describe('staging 3D skyline', () => {
     }
   });
 
-  it('renders, keeps controls usable, and cleans up on desktop and mobile navigation', async () => {
+  it('renders and preserves controls on desktop and mobile navigation', async () => {
     const probe = await probeSkyline();
     try {
       for (const [width, height] of [
@@ -290,6 +500,7 @@ describe('staging 3D skyline', () => {
           'Interactive Chicago skyline'
         );
         await BasePage.waitForSkylineFrame();
+        const viewerId = viewer.elementId;
         // The viewer renders in the page, without frames, fills the viewport,
         // shows its sky through the transparent header, and receives presses
         // outside the header.
@@ -378,32 +589,36 @@ describe('staging 3D skyline', () => {
         // The host navigation stays above the viewer and remains clickable.
         await (await browser.$('a[href="/company"]')).click();
         await expect(await browser.$('h1=Contact')).toExist();
-        await expect(BasePage.skyline).not.toExist();
-        await expect(
-          await browser.$(
-            '[role="region"][aria-label="Interactive Chicago skyline"]'
-          )
-        ).not.toExist();
-        // Leaving Home releases the viewer's WebGL contexts; the parked hat
-        // preview keeps its own.
-        const contexts = await browser.execute(() => {
-          const all = (window as SkylineProbe).__skylineProbe?.contexts ?? [];
-          const detached = all.filter(
-            context =>
-              !(context.canvas instanceof HTMLCanvasElement) ||
-              !context.canvas.isConnected
-          );
-          return {
-            released: detached.filter(context => context.isContextLost())
-              .length,
-            live: detached.filter(context => !context.isContextLost()).length,
-          };
-        });
-        assert.ok(contexts.released > 0, 'The viewer must release a context');
-        assert.strictEqual(contexts.live, 0, 'No detached context stays live');
+        await expect(BasePage.skyline).not.toBeDisplayed();
+        await expect(viewer).not.toBeDisplayed();
+        // Route changes retain the prepared viewer and its WebGL resources.
+        assert.ok(
+          await browser.execute(selector => {
+            const canvas = document
+              .querySelector(selector)
+              ?.shadowRoot?.querySelector('#building');
+            const contexts =
+              (window as SkylineProbe).__skylineProbe?.contexts ?? [];
+            return (
+              contexts.some(context => context.canvas === canvas) &&
+              contexts.every(
+                context =>
+                  context.canvas instanceof HTMLCanvasElement &&
+                  context.canvas.isConnected &&
+                  !context.isContextLost()
+              )
+            );
+          }, skylineRegion),
+          'The parked viewers must retain their connected contexts'
+        );
         await (await browser.$('footer a[href="/"]')).click();
         await (await browser.$(skylineRegion)).waitForExist();
         assert.strictEqual(await browser.$$(skylineRegion).length, 1);
+        assert.strictEqual(
+          (await browser.$(skylineRegion)).elementId,
+          viewerId
+        );
+        await expect(viewer).not.toHaveAttribute('aria-busy');
         await BasePage.waitForSkylineFrame();
         // The hat preview and the viewer share the page's three.js: the
         // viewer never loads its own copy, and three.js logs no warnings,

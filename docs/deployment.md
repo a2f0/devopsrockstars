@@ -146,7 +146,14 @@ structured data, and it publishes no sitemap, so only production is offered to
 search engines. Staging's `robots.txt` still allows crawling:
 a crawler that may not fetch a page never sees its noindex.
 
-Home mounts the shared interactive 3D skyline from
+Cloudflare prepends its own managed `robots.txt` block, with content signals
+and AI crawler rules, to the one each build publishes. It is a zone setting;
+check that the served file still carries production's `Sitemap` line and does
+not block Googlebot or Bingbot.
+
+### Skyline lifecycle
+
+The site mounts the shared interactive 3D skyline from
 `@a2f0/skyline` ([a2f0/skyline](https://github.com/a2f0/skyline)) in the page
 itself, inside a shadow root, and gives it the site's own three.js through
 `@a2f0/skyline/three`, so the skyline and the hat preview share one engine.
@@ -154,18 +161,31 @@ Every build serves its assets at `/static/skyline/`. They include copies of
 the package's viewer pages, which carry a `noindex` robots meta tag, and
 production's `_headers` sends `X-Robots-Tag: noindex, nofollow` on everything
 under that path, matching the package's own host, so neither the pages nor
-their images appear in search. Leaving Home destroys the
-viewer and releases its WebGL contexts. If the 3D skyline cannot start, as
-without WebGL 2, the viewer says why in its place and in the browser console,
-and its **show original** button still opens the original drawing, which its
-control bar also offers once the scene runs. If `store` is enabled, the viewer
-mounts after the background hat preview succeeds or fails, so the two models
-build in sequence. With the store disabled, the 3D skyline starts directly.
+their images appear in search. A single viewer lives outside the routes.
+It prepares at viewport size on public browsing routes (Home, Company, and
+enabled Store/Search pages). Away from Home, opacity and `inert` hide even a
+still-loading viewer without collapsing it; after loading settles, it leaves
+layout. Its existing resize handling stops the turntable while parked;
+returning Home restores the same canvas, camera and
+controls without rebuilding. WebGL resources stay allocated until the app
+unmounts. If the 3D skyline cannot start, as without WebGL 2, the viewer says
+why in its place and in the browser console, and its **show original** button
+still opens the original drawing, which its control bar also offers once the
+scene runs. If `store` is enabled, initial skyline preparation waits for the
+hat preview to succeed or fail, so the two models build in sequence. Later hat
+retries do not restart the skyline. With the store disabled, preparation starts
+directly. Navigating Home before preparation finishes shows the existing load,
+not a second one.
+Direct visits to checkout, receipt, admin, or unknown routes do not start
+skyline preparation; a previously prepared viewer remains parked there.
 
-Cloudflare prepends its own managed `robots.txt` block, with content signals
-and AI crawler rules, to the one each build publishes. It is a zone setting;
-check that the served file still carries production's `Sitemap` line and does
-not block Googlebot or Bingbot.
+The package handles `webglcontextlost` and `webglcontextrestored` itself:
+it requests restoration, shows the interruption with its original-drawing
+fallback, and redraws the same scene when the browser restores the context,
+including while parked. If the browser cannot restore it, the viewer's reload
+message remains available on Home.
+
+### Deployment commands
 
 GitHub Actions deploys `main` to production and `staging` to staging, and
 `workflow_dispatch` defaults to read-only previews. Explicit

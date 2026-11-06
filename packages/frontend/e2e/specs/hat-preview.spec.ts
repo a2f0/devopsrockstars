@@ -272,6 +272,7 @@ describe('3D hat preview', () => {
       for (const path of ['', 'company']) {
         await BasePage.openStaging(path);
         await waitForPreparedPreview();
+        await BasePage.waitForSkylineFrame();
         const canvas = await browser.$(canvasSelector);
         const canvasId = await canvas.elementId;
         await expect(canvas).not.toBeDisplayed();
@@ -397,12 +398,10 @@ describe('3D hat preview', () => {
   });
 
   it('rebuilds a lost parked context when the Store is opened', async () => {
-    // Park on Company, not Home: Home's 3D skyline shares the software GPU, and
-    // leaving it costs a long main-thread task. Under machine load those tasks
-    // outlast WebDriver's 30-second script timeout. Home parking keeps its own
-    // coverage in the first-frame test above.
     await BasePage.openStaging('company');
     await waitForPreparedPreview();
+    await BasePage.waitForSkylineFrame();
+    const skylineId = (await browser.$('#skyline > [role="region"]')).elementId;
     const parkedCanvasId = await browser.$(canvasSelector).elementId;
     assert.ok(
       await browser.execute(() => {
@@ -426,6 +425,11 @@ describe('3D hat preview', () => {
     await waitForPreparedPreview();
     assert.notEqual(await browser.$(canvasSelector).elementId, parkedCanvasId);
     await expect(await browser.$(canvasSelector)).toBeDisplayed();
+    assert.equal(
+      (await browser.$('#skyline > [role="region"]')).elementId,
+      skylineId,
+      'Retrying the hat must not rebuild the prepared skyline'
+    );
     await expect(await browser.$(imageSelector)).not.toExist();
   });
 

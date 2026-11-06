@@ -186,7 +186,10 @@ describe('mobile layouts', () => {
         }
         // Layout coverage does not need another expensive model build. The
         // dedicated preview and skyline specs exercise the actual renderers.
-        if (pathname === '/static/image/store/5950.svg') {
+        if (
+          pathname === '/static/image/store/5950.svg' ||
+          pathname === '/static/skyline/skyline-3d.html'
+        ) {
           throw new Error('Preview unavailable in the layout fixture');
         }
         return originalFetch(input, init);
@@ -203,7 +206,9 @@ describe('mobile layouts', () => {
         assert.ok((await input.getSize()).height >= 44);
         await input.setValue('devops');
         await browser.keys('Enter');
-        await expect(await browser.$('[role="status"]')).toExist();
+        await expect(
+          await browser.$('[data-ct-app="search"] [role="status"]')
+        ).toExist();
         await tap('nav a[href="/store"]');
         const size = await browser.$('[role="combobox"]');
         await expect(size).toBeEnabled();
