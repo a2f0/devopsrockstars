@@ -618,6 +618,101 @@ describe('store page', () => {
     }
   });
 
+  it('stops loading the payment form when Stripe cannot load it', async () => {
+    const pending = {
+      checkout: {
+        clientSecret: 'pi_unloadable_secret_test',
+        currency: 'usd',
+        expiresAt: new Date(Date.now() + 10 * 60_000).toISOString(),
+        lines: [
+          {
+            currency: 'usd',
+            productName: 'DevOpsRockstars 59FIFTY',
+            quantity: 1,
+            unitAmount: 2000,
+            variantId: 'hat-5950-7-1-4',
+            variantLabel: '7 1/4',
+          },
+        ],
+        orderId: '12345678-1234-4234-8234-123456789abc',
+        orderToken: 'order-token',
+        totalAmount: 2000,
+      },
+      shipping: {
+        name: 'Grace Hopper',
+        email: 'grace@example.com',
+        addressLine1: '1 Navy Way',
+        addressLine2: '',
+        city: 'New York',
+        state: 'NY',
+        postalCode: '10001',
+        country: 'US',
+      },
+    };
+    // A stand-in Stripe.js whose Payment Element reports a load failure, as
+    // Stripe does for a PaymentIntent it can no longer show.
+    const fakeStripe = await browser.addInitScript(() => {
+      const browserWindow = window as unknown as {Stripe: unknown};
+      browserWindow.Stripe = () => ({
+        elements: () => ({
+          create: () => {
+            const handlers = new Map<string, (event: unknown) => void>();
+            const element = {
+              on(type: string, handler: (event: unknown) => void) {
+                handlers.set(type, handler);
+                return element;
+              },
+              mount() {
+                setTimeout(() =>
+                  handlers.get('loaderror')?.({
+                    elementType: 'payment',
+                    error: {type: 'invalid_request_error'},
+                  })
+                );
+              },
+              destroy() {},
+            };
+            return element;
+          },
+        }),
+      });
+      const originalFetch = globalThis.fetch.bind(globalThis);
+      const fetchWindow: Window = window;
+      fetchWindow.fetch = async (input, init) =>
+        String(input).endsWith('/api/storefront')
+          ? Response.json({
+              products: [],
+              stripePublishableKey: 'pk_test_store',
+            })
+          : originalFetch(input, init);
+    });
+
+    try {
+      await BasePage.openStaging('');
+      await browser.execute(value => {
+        sessionStorage.clear();
+        sessionStorage.setItem(
+          'devopsrockstars.store.pending-checkout',
+          JSON.stringify(value)
+        );
+      }, pending);
+      await BasePage.openStaging('store/checkout');
+      await BasePage.waitForAppReady();
+
+      await expect(
+        await browser.$('p=The payment form could not be loaded.')
+      ).toExist();
+      await expect(
+        await browser.$('p=Loading secure payment form…')
+      ).not.toExist();
+      await expect(await browser.$('button=Pay order')).toBeDisabled();
+      await expect(await browser.$('button=Cancel checkout')).toBeEnabled();
+    } finally {
+      await browser.execute(() => sessionStorage.clear());
+      await fakeStripe.remove();
+    }
+  });
+
   it('shows a graceful unavailable state without the Worker API', async () => {
     await BasePage.openStaging('store');
     await BasePage.waitForAppReady();
