@@ -83,8 +83,9 @@ function AppRouter() {
             <FlexMain>
               <FlexContainerColumn>
                 <HatPreviewProvider>
+                  <Skyline />
                   <Routes>
-                    <Route path="/" element={<Skyline />} />
+                    <Route path="/" element={null} />
                     <Route path="/company" element={<Company />} />
                     {features.search ? (
                       <Route path="/search" element={<Search />} />

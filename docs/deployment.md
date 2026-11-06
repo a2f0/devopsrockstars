@@ -154,13 +154,19 @@ Every build serves its assets at `/static/skyline/`. They include copies of
 the package's viewer pages, which carry a `noindex` robots meta tag, and
 production's `_headers` sends `X-Robots-Tag: noindex, nofollow` on everything
 under that path, matching the package's own host, so neither the pages nor
-their images appear in search. Leaving Home destroys the
-viewer and releases its WebGL contexts. If the 3D skyline cannot start, as
-without WebGL 2, the viewer says why in its place and in the browser console,
-and its **show original** button still opens the original drawing, which its
-control bar also offers once the scene runs. If `store` is enabled, the viewer
-mounts after the background hat preview succeeds or fails, so the two models
-build in sequence. With the store disabled, the 3D skyline starts directly.
+their images appear in search. A single viewer lives outside the routes:
+it prepares at viewport size while hidden and inert on other pages, then
+leaves layout once loading settles. Its existing resize handling stops the
+turntable while parked; returning Home restores the same canvas, camera and
+controls without rebuilding. WebGL resources stay allocated until the app
+unmounts. If the 3D skyline cannot start, as without WebGL 2, the viewer says
+why in its place and in the browser console, and its **show original** button
+still opens the original drawing, which its control bar also offers once the
+scene runs. If `store` is enabled, initial skyline preparation waits for the
+hat preview to succeed or fail, so the two models build in sequence. Later hat
+retries do not restart the skyline. With the store disabled, preparation starts
+directly. Navigating Home before preparation finishes shows the existing load,
+not a second one.
 
 Cloudflare prepends its own managed `robots.txt` block, with content signals
 and AI crawler rules, to the one each build publishes. It is a zone setting;

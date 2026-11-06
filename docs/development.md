@@ -85,8 +85,9 @@ page's main thread for seconds. WebdriverIO runs `execute` and element reads
 such as `getProperty` as page scripts with a 30-second script timeout, and
 `waitUntil` fails when one poll outlasts its own timeout (10 seconds by
 default). Give a `waitUntil` that polls a 3D page a 30-second `timeout` and a
-`timeoutMsg`. Start a test on Home only when it is about Home: the skyline
-competes for the software GPU, and leaving Home costs a long main-thread task.
+`timeoutMsg`. Both 3D viewers prepare once per app lifetime, including visits
+to Company or Store. The skyline waits for the hat to settle, then stays
+mounted but outside layout away from Home; navigation must not rebuild it.
 
 Run tests whose names match a pattern
 
