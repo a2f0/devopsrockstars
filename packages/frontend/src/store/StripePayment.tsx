@@ -11,17 +11,11 @@ import type {
 } from '@devopsrockstars/shared-types';
 import {PAYMENT_ELEMENT_OPTIONS} from './paymentElementOptions';
 import {Button, FormActions, PaymentHost, Status} from './StoreStyles';
+import {createStripeLoader} from './stripeLoader';
 
-let stripeKey: string | null = null;
-let stripePromise: Promise<Stripe | null> | null = null;
-
-function getStripe(publishableKey: string) {
-  if (stripeKey !== publishableKey || !stripePromise) {
-    stripeKey = publishableKey;
-    stripePromise = loadStripe(publishableKey);
-  }
-  return stripePromise;
-}
+const getStripe = createStripeLoader(publishableKey =>
+  loadStripe(publishableKey)
+);
 
 interface MountedPayment {
   readonly elements: StripeElements;
