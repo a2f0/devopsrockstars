@@ -11,9 +11,10 @@ remote metadata rather than assuming main.
 
 For post-merge cleanup, preview with
 `agent-tool repo cleanup <PR-number> <shipped-head>`, then run it with `--apply`
-within the authorized cleanup scope. It requires a confirmed MERGED PR, preserves
-local edits, checks exact local/remote feature commits, verifies the merge is on
-the default branch, and fast-forwards that branch. By default it prunes the
+within the authorized cleanup scope. It requires a confirmed MERGED PR, refuses
+the default and `branch.exempt` branches, preserves local edits, checks exact
+local/remote feature commits, verifies the merge is on the default branch, and
+fast-forwards that branch. By default it prunes the
 shipped local feature branch and deletes the matching remote branch if present.
 Local pruning also applies after a squash merge or when GitHub already deleted
 the remote branch; a missing remote is not evidence that local cleanup is done.
@@ -39,6 +40,8 @@ switch, and update by fast-forward only. Never discard or automatically stash
 edits, force a diverged default branch, or infer shipping from Git ancestry after
 a squash merge.
 
+Run `agent-tool teardown` and stop what the finished work left running
+(`teardown --apply` for recorded processes); report anything that remains.
 Run the repository's documented dependency/hook setup if required. When copied
 hooks are configured, use `agent-tool hooks check` and `hooks install --apply`;
 inspect unmanaged hooks before an explicit `--adopt`, which backs them up.
