@@ -104,6 +104,12 @@ const StripePayment = React.memo(
           });
           payment = elements.create('payment', PAYMENT_ELEMENT_OPTIONS);
           payment.on('ready', () => active && setReady(true));
+          // Without this the form would stay loading forever, for example
+          // for a PaymentIntent that Stripe can no longer show.
+          payment.on('loaderror', ({error: loadError}) => {
+            console.error('Failed to load the payment form:', loadError.type);
+            if (active) setError('The payment form could not be loaded.');
+          });
           payment.mount(hostRef.current);
           mountedRef.current = {stripe, elements, payment};
         })
