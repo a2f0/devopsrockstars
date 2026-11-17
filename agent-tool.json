@@ -9,8 +9,7 @@
         "name": "code-quality",
         "workflow": "Github Actions"
       }
-    ],
-    "requireStrictBaseFreshness": true
+    ]
   },
   "pr": {
     "rejectClaudeBranding": true
