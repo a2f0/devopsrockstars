@@ -101,7 +101,8 @@ preview evidence before publication.
 Use the shared `$ship-pr` skill. Run Markdown lint, compilation, unit tests,
 format/lint, and pre-commit checks before shipping; run browser tests locally
 when application or browser behavior changes. CI runs the full browser suite.
-Integrate changed bases with normal merges and never force-push.
+`main` does not require an up-to-date branch: integrate the base with a normal
+merge only when GitHub reports a conflict, and never force-push.
 
 Keep `@a2f0/skyline` on its latest npm release while shipping. Before the first
 review, run `bun run skyline:update` on the feature branch. When it moves the
@@ -125,8 +126,10 @@ Handle review comments on the PR with the reply rules above. Use the shared
 exact-head squash helper; invoke `node_modules/.bin/agent-tool pr merge` directly
 when passing an empty subject because `bun run` drops empty arguments. Per
 `agent-tool.json`, it requires `code-quality` from `Github Actions` on the
-reviewed head and refuses to merge unless the `main` ruleset enforces
-strict status checks that the merging account cannot bypass.
+reviewed head. A base that moved during CI needs no integration. Every push to
+`main` runs `code-quality` again, and both deploy jobs need it, so a break from
+combined merges fails before it deploys; the next `$ship-pr` run starts from
+`agent-tool repo base-health` and repairs it.
 
 After merging to `main`, wait for `.github/workflows/main.yml` to deploy
 that merge commit successfully. Smoke-test Home and Company at phone and desktop
