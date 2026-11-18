@@ -2,6 +2,8 @@
 import {readdirSync, readFileSync} from 'node:fs';
 import path from 'node:path';
 
+process.chdir(path.resolve(import.meta.dir, '../..'));
+
 const exactVersion = /^\d+\.\d+\.\d+(-[\w.]+)?$/;
 // Immutable GitHub commits are allowed; branches and tags are rejected.
 const githubCommit = /^github:[^/#\s]+\/[^/#\s]+#[0-9a-f]{40}$/i;

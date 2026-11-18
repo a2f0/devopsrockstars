@@ -7,7 +7,9 @@
  * section of the workflow.
  */
 import {readdirSync, readFileSync} from 'node:fs';
-import {join} from 'node:path';
+import path from 'node:path';
+
+process.chdir(path.resolve(import.meta.dir, '../..'));
 
 const CLAUDE_SKILLS = '.claude/skills';
 const CODEX_SKILLS = '.agents/skills';
@@ -28,8 +30,8 @@ const shared = skillNames(CLAUDE_SKILLS).filter(name =>
 const problems = [];
 
 for (const name of shared) {
-  const claude = join(CLAUDE_SKILLS, name, 'SKILL.md');
-  const codex = join(CODEX_SKILLS, name, 'SKILL.md');
+  const claude = path.join(CLAUDE_SKILLS, name, 'SKILL.md');
+  const codex = path.join(CODEX_SKILLS, name, 'SKILL.md');
   if (readFileSync(claude, 'utf8') !== readFileSync(codex, 'utf8')) {
     problems.push(`  ${name}: ${claude} and ${codex} have diverged`);
   }

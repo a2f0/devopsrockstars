@@ -1,5 +1,5 @@
 import {expect, test} from 'bun:test';
-import {mkdir, mkdtemp, rm} from 'node:fs/promises';
+import {copyFile, mkdir, mkdtemp, rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
 
@@ -12,11 +12,14 @@ async function check(overrides: Record<string, unknown>) {
   const root = await mkdtemp(path.join(tmpdir(), 'dependency-pins-'));
   try {
     await mkdir(path.join(root, 'packages'));
+    const file = path.join(root, 'scripts/checks', path.basename(checker));
+    await mkdir(path.dirname(file), {recursive: true});
+    await copyFile(checker, file);
     await Bun.write(
       path.join(root, 'package.json'),
       JSON.stringify({overrides})
     );
-    const result = Bun.spawnSync([process.execPath, checker], {cwd: root});
+    const result = Bun.spawnSync([process.execPath, file], {cwd: tmpdir()});
     return {exitCode: result.exitCode, output: result.stderr.toString()};
   } finally {
     await rm(root, {recursive: true, force: true});
@@ -51,3 +54,23 @@ test.each([
     expect(result.output).toContain(message);
   }
 );
+
+test('skill check reads both mirrors in its own checkout', async () => {
+  const root = await mkdtemp(path.join(tmpdir(), 'skill mirror '));
+  try {
+    const name = 'check-agent-skills-in-sync.mjs';
+    const script = path.join(root, 'scripts/checks', name);
+    await mkdir(path.dirname(script), {recursive: true});
+    await copyFile(path.join(import.meta.dir, name), script);
+    for (const agent of ['.agents', '.claude']) {
+      const dir = path.join(root, agent, 'skills/example');
+      await mkdir(dir, {recursive: true});
+      await Bun.write(path.join(dir, 'SKILL.md'), agent);
+    }
+    const result = Bun.spawnSync([process.execPath, script], {cwd: tmpdir()});
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr.toString()).toContain('have diverged');
+  } finally {
+    await rm(root, {recursive: true, force: true});
+  }
+});
