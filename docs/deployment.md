@@ -161,7 +161,14 @@ Every build serves its assets at `/static/skyline/`. They include copies of
 the package's viewer pages, which carry a `noindex` robots meta tag, and
 production's `_headers` sends `X-Robots-Tag: noindex, nofollow` on everything
 under that path, matching the package's own host, so neither the pages nor
-their images appear in search. A single viewer lives outside the routes.
+their images appear in search. Home's prerendered document starts the viewer's
+first-frame downloads with the page (`skylinePreloadLinks`, leaving out the
+engine copy because the site shares its own three.js). It also paints the
+package's loading silhouette (`skylineBootMarkup`) in `#skyline-placeholder`,
+placed like the viewer's frame, before any script runs; `Skyline.tsx` passes it
+to `mountSkyline` as `placeholder`, which continues the animation and removes
+it. A `noscript` style hides it when scripts are off. Other pages carry neither.
+A single viewer lives outside the routes.
 It prepares at viewport size on public browsing routes (Home, Company, and
 enabled Store/Search pages). Away from Home, opacity and `inert` hide even a
 still-loading viewer without collapsing it; after loading settles, it leaves

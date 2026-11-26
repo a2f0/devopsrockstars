@@ -9,6 +9,8 @@ import {
 } from '@devopsrockstars/diagnostics/config';
 import {
   headersFile,
+  homeSkylineBoot,
+  pageDocument,
   pageFile,
   pageHead,
   robotsTxt,
@@ -149,10 +151,11 @@ export async function bundleFrontend({
   // crawlers and link previews read it without running JavaScript.
   const pages = sitePages(flags);
   for (const page of [...pages, notFoundPage]) {
-    const html = template.replace(
-      '</head>',
-      () =>
-        `${pageHead(page, environment)}\n<script type="module" src="${entry}"></script>\n</head>`
+    const boot = await homeSkylineBoot(page);
+    const html = pageDocument(
+      template,
+      `${pageHead(page, environment)}\n<script type="module" src="${entry}"></script>\n${boot.head}`,
+      boot.body
     );
     assets.set(
       pageFile(page),

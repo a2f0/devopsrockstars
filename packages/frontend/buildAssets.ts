@@ -1,6 +1,13 @@
+import {skylineBootMarkup, skylinePreloadLinks} from '@a2f0/skyline/build';
 import type {SiteEnvironment} from './src/environment';
 import {pageHeadTags, pageUrl} from './src/pageHead';
 import {type Page, siteOrigin} from './src/pages';
+import {
+  skylineAssetsUrl,
+  skylineFrameStyle,
+  skylinePlaceholderId,
+  skylineTheme,
+} from './src/skylineBoot';
 
 function escapeHtml(value: string) {
   return value
@@ -98,4 +105,35 @@ export function headersFile(environment: SiteEnvironment) {
         ])
       : []),
   ].join('\n');
+}
+
+/**
+ * Fills the application shell with a page's head tags and leading body
+ * markup. A shell without exactly one of each marker fails the build rather
+ * than silently publishing pages without their metadata or scripts.
+ */
+export function pageDocument(template: string, head: string, body: string) {
+  for (const marker of ['</head>', '<body>'])
+    if (template.split(marker).length !== 2)
+      throw new Error(`index.html must contain exactly one ${marker}`);
+  return template
+    .replace('</head>', () => `${head}</head>`)
+    .replace('<body>', () => `<body>\n${body}`);
+}
+
+/**
+ * Home mounts the skyline as soon as the application runs, so its document
+ * starts the viewer's downloads alongside the application's own code and
+ * paints the package's loading silhouette before any script runs, placed like
+ * the viewer's frame. Without scripts the silhouette would never resolve, so
+ * it is hidden. Other pages mount the skyline later, if at all, and leave both
+ * out: an unused preload only earns a console warning.
+ */
+export async function homeSkylineBoot(page: Page) {
+  if (page.path !== '/') return {head: '', body: ''};
+  const preloads = await skylinePreloadLinks(skylineAssetsUrl, {three: true});
+  return {
+    head: `${preloads}\n<noscript><style>#${skylinePlaceholderId}{display:none}</style></noscript>\n`,
+    body: `<div id="${skylinePlaceholderId}" style="${skylineFrameStyle}">${skylineBootMarkup({theme: skylineTheme})}</div>\n`,
+  };
 }

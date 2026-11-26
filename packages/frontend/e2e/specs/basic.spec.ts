@@ -27,7 +27,7 @@ async function expectNoHatPreparation() {
 }
 
 describe('index page', () => {
-  it('keeps the title and empty dark shell without application JavaScript', async () => {
+  it('keeps the title and a dark shell with only the skyline silhouette without application JavaScript', async () => {
     await browser.sendCommand('Network.enable', {});
     await browser.sendCommand('Network.setBlockedURLs', {
       urls: ['*/assets/*.js'],
@@ -47,6 +47,16 @@ describe('index page', () => {
         ),
         'rgb(0, 0, 0)'
       );
+      // The prerendered loading silhouette paints without any script.
+      assert.ok(
+        await browser.execute(
+          () =>
+            document
+              .querySelector('#skyline-placeholder > [data-skyline-boot]')
+              ?.shadowRoot?.querySelector('svg') instanceof SVGSVGElement
+        ),
+        'Home must paint the skyline silhouette before its scripts run'
+      );
     } finally {
       await browser.sendCommand('Network.setBlockedURLs', {urls: []});
       await browser.sendCommand('Network.disable', {});
@@ -65,7 +75,24 @@ describe('index page', () => {
       'aria-label',
       'Interactive Chicago skyline'
     );
+    // The viewer takes over the prerendered silhouette as it mounts, so it
+    // never lingers behind a page the visitor opens while the scene loads.
+    await expect(await browser.$('#skyline-placeholder')).not.toExist();
     await BasePage.waitForSkylineFrame();
+    // The viewer reused every download the document's preloads started.
+    assert.deepStrictEqual(
+      await browser.execute(() => {
+        const names = performance
+          .getEntriesByType('resource')
+          .map(entry => entry.name)
+          .filter(name =>
+            new URL(name).pathname.startsWith('/static/skyline/')
+          );
+        return names.filter((name, index) => names.indexOf(name) !== index);
+      }),
+      [],
+      'No skyline asset may be fetched twice'
+    );
     assert.strictEqual(await browser.getTitle(), 'DevOpsRockstars');
     await expect(await browser.$('h1')).not.toExist();
     assert.strictEqual(await BasePage.headerBackground(), 'rgba(0, 0, 0, 0)');

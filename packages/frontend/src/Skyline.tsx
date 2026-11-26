@@ -4,6 +4,12 @@ import {useLocation} from 'react-router';
 import styled from 'styled-components';
 import {features} from './featureFlags';
 import {matchesRoute} from './routes';
+import {
+  skylineAssetsUrl,
+  skylineFrameStyle,
+  skylinePlaceholderId,
+  skylineTheme,
+} from './skylineBoot';
 import {skylineMayPrepare} from './store/modelPreparation';
 import {useModelPreparation} from './store/PreparedHatPreview';
 
@@ -16,12 +22,7 @@ const preparationRoutes = [
 ];
 
 const FullScreenSkyline = styled.div`
-  z-index: -1337;
-  position: fixed;
-  inset: 0;
-  width: 100%;
-  height: 100vh;
-  height: 100dvh;
+  ${skylineFrameStyle};
   pointer-events: auto;
 `;
 
@@ -40,11 +41,14 @@ const Skyline = React.memo(() => {
     // mounted, the viewer is never rebuilt by a later hat retry.
     if (!prepare || !mayPrepare || viewer.current || !container.current) return;
     const instance = mountSkyline(container.current, {
-      assetsUrl: '/static/skyline/',
+      assetsUrl: skylineAssetsUrl,
       // Match the site's dark backdrop while the scene assets load.
-      theme: 'dark',
+      theme: skylineTheme,
       // Share the hat preview's three.js instead of loading a second engine.
       three: import('@a2f0/skyline/three'),
+      // Home's prerendered silhouette, if this visit started there: the
+      // viewer continues its animation in place and removes it.
+      placeholder: document.getElementById(skylinePlaceholderId),
     });
     viewer.current = instance;
     // Failure still leaves the viewer's explanation and original drawing

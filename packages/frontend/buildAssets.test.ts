@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {
   headersFile,
+  homeSkylineBoot,
+  pageDocument,
   pageFile,
   pageHead,
   robotsTxt,
@@ -238,4 +240,61 @@ test('content-hashed bundles are cached immutably in every environment', () => {
       /^ {2}Cache-Control: public, max-age=31536000, immutable$/mu
     );
   }
+});
+
+test('only Home preloads the skyline viewer and paints its silhouette before scripts', async () => {
+  const home = await homeSkylineBoot(page('/'));
+  const preloads = [...home.head.matchAll(/<link ([^>]*)>/gu)].map(
+    match => match[1] ?? ''
+  );
+  assert.ok(
+    preloads.includes(
+      'rel="modulepreload" href="/static/skyline/skyline-viewer.js"'
+    )
+  );
+  assert.ok(
+    preloads.includes(
+      'rel="preload" href="/static/skyline/skyline-3d.html" as="fetch" crossorigin="anonymous"'
+    )
+  );
+  // The page shares its own three.js, so the assets' engine copy never loads.
+  assert.ok(
+    preloads.every(link => !link.includes('three-r186.bundle.js')),
+    'Home must not preload the vendored engine'
+  );
+  assert.match(
+    home.head,
+    /<noscript><style>#skyline-placeholder\{display:none\}<\/style><\/noscript>/u
+  );
+  assert.match(
+    home.body,
+    /^<div id="skyline-placeholder" style="position:fixed;inset:0;width:100%;height:100vh;height:100dvh;z-index:-1337"><div [^>]*><template shadowrootmode="open">/u
+  );
+  // Decoration only: the viewer's region is what assistive technology reads.
+  assert.match(home.body, /^<div [^>]*><div [^>]*aria-hidden="true"[^>]*>/u);
+  for (const other of [...allPages, notFoundPage].filter(
+    candidate => candidate.path !== '/'
+  )) {
+    assert.deepEqual(await homeSkylineBoot(other), {head: '', body: ''});
+  }
+});
+
+test('fills the application shell and fails on a missing marker', () => {
+  const shell =
+    '<html><head><title>x</title></head><body><div id="app"></div></body></html>';
+  assert.equal(
+    pageDocument(shell, '<meta />\n', '<p>boot</p>\n'),
+    '<html><head><title>x</title><meta />\n</head><body>\n<p>boot</p>\n<div id="app"></div></body></html>'
+  );
+  // Replacement text is inserted literally, never read as a `$&` pattern.
+  assert.match(pageDocument(shell, '$&', ''), /<\/title>\$&<\/head>/u);
+  for (const broken of [
+    shell.replace('</head>', ''),
+    shell.replace('<body>', '<body class="dark">'),
+    shell.replace('<body>', '<body><body>'),
+  ])
+    assert.throws(
+      () => pageDocument(broken, '', ''),
+      /index\.html must contain exactly one/u
+    );
 });
