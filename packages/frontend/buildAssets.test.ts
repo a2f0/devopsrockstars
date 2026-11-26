@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {
   headersFile,
+  homeSkylineBoot,
   pageFile,
   pageHead,
   robotsTxt,
@@ -237,5 +238,40 @@ test('content-hashed bundles are cached immutably in every environment', () => {
       headers,
       /^ {2}Cache-Control: public, max-age=31536000, immutable$/mu
     );
+  }
+});
+
+test('only Home preloads the skyline viewer and paints its silhouette before scripts', async () => {
+  const home = await homeSkylineBoot(page('/'));
+  const preloads = [...home.head.matchAll(/<link ([^>]*)>/gu)].map(
+    match => match[1] ?? ''
+  );
+  assert.ok(
+    preloads.includes(
+      'rel="modulepreload" href="/static/skyline/skyline-viewer.js"'
+    )
+  );
+  assert.ok(
+    preloads.includes(
+      'rel="preload" href="/static/skyline/skyline-3d.html" as="fetch" crossorigin="anonymous"'
+    )
+  );
+  // The page shares its own three.js, so the assets' engine copy never loads.
+  assert.ok(
+    preloads.every(link => !link.includes('three-r186.bundle.js')),
+    'Home must not preload the vendored engine'
+  );
+  assert.match(
+    home.head,
+    /<noscript><style>#skyline-placeholder\{display:none\}<\/style><\/noscript>/u
+  );
+  assert.match(
+    home.body,
+    /^<div id="skyline-placeholder" style="position:fixed;inset:0;width:100%;height:100vh;height:100dvh;z-index:-1337"><div [^>]*><template shadowrootmode="open">/u
+  );
+  for (const other of [...allPages, notFoundPage].filter(
+    candidate => candidate.path !== '/'
+  )) {
+    assert.deepEqual(await homeSkylineBoot(other), {head: '', body: ''});
   }
 });
