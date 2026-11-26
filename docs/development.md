@@ -86,7 +86,9 @@ such as `getProperty` as page scripts with a 30-second script timeout, and
 `waitUntil` fails when one poll outlasts its own timeout (10 seconds by
 default). Give a `waitUntil` that polls a 3D page a 30-second `timeout` and a
 `timeoutMsg`. The skyline prepares once per app lifetime on public browsing
-routes, waiting for the hat to settle when `store` is enabled. It stays mounted
+routes. With `store` enabled, a visit that starts on Home builds the skyline
+before the hat, and any other visit builds the hat first, so specs wait for
+whichever model builds first before asserting on the other. It stays mounted
 but outside layout away from Home; normal navigation must not rebuild it.
 The hat can rebuild after failure or context loss; the skyline package handles
 its own context loss and restoration.

@@ -4,7 +4,8 @@ import {useLocation} from 'react-router';
 import styled from 'styled-components';
 import {features} from './featureFlags';
 import {matchesRoute} from './routes';
-import {useHatPreviewPreparing} from './store/PreparedHatPreview';
+import {skylineMayPrepare} from './store/modelPreparation';
+import {useModelPreparation} from './store/PreparedHatPreview';
 
 // Do not start optional model work on transactional, admin, or error pages.
 const preparationRoutes = [
@@ -31,12 +32,13 @@ const Skyline = React.memo(() => {
   const {pathname} = useLocation();
   const active = pathname === '/';
   const prepare = matchesRoute(preparationRoutes, pathname);
-  const preparingHat = useHatPreviewPreparing();
+  const {preparation, dispatch} = useModelPreparation();
+  const mayPrepare = skylineMayPrepare(preparation);
   useEffect(() => {
-    // Only initial startup waits for the hat; a later hat retry must not
-    // destroy an already prepared skyline.
-    if (!prepare || preparingHat || viewer.current || !container.current)
-      return;
+    // A visit that starts away from Home builds the Store hat first; one that
+    // starts on Home builds this first and the hat once it settles. Once
+    // mounted, the viewer is never rebuilt by a later hat retry.
+    if (!prepare || !mayPrepare || viewer.current || !container.current) return;
     const instance = mountSkyline(container.current, {
       assetsUrl: '/static/skyline/',
       // Match the site's dark backdrop while the scene assets load.
@@ -48,10 +50,12 @@ const Skyline = React.memo(() => {
     // Failure still leaves the viewer's explanation and original drawing
     // available on Home. Ignore completion from a cleaned-up instance.
     const finish = () => {
-      if (viewer.current === instance) setSettled(true);
+      if (viewer.current !== instance) return;
+      setSettled(true);
+      dispatch({type: 'skylineSettled'});
     };
     void instance.ready.then(finish, finish);
-  }, [prepare, preparingHat]);
+  }, [prepare, mayPrepare, dispatch]);
   useEffect(
     () => () => {
       viewer.current?.destroy();

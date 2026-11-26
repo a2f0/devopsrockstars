@@ -100,6 +100,69 @@ async function animationFrames(count: number) {
   }, count);
 }
 
+// Holds the scene markup's response until the page dispatches
+// release-skyline-markup, so a test can act while the viewer is still loading.
+function holdSkylineMarkup() {
+  return browser.addInitScript(() => {
+    const sceneReady = new Promise<void>(resolve => {
+      window.addEventListener('release-skyline-markup', () => resolve(), {
+        once: true,
+      });
+    });
+    const originalFetch = globalThis.fetch.bind(globalThis);
+    const browserWindow: Window = window;
+    browserWindow.fetch = async (input, init) => {
+      const url = input instanceof Request ? input.url : String(input);
+      if (
+        new URL(url, location.href).pathname ===
+        '/static/skyline/skyline-3d.html'
+      ) {
+        document.documentElement.dataset['skylineMarkupHeld'] = 'true';
+        await sceneReady;
+      }
+      return originalFetch(input, init);
+    };
+  });
+}
+
+function releaseSkylineMarkup() {
+  return browser.execute(() =>
+    window.dispatchEvent(new Event('release-skyline-markup'))
+  );
+}
+
+async function waitForHeldSkylineMarkup() {
+  await browser.waitUntil(
+    () =>
+      browser.execute(
+        () => document.documentElement.dataset['skylineMarkupHeld'] === 'true'
+      ),
+    {timeout: 30_000, timeoutMsg: 'The scene markup request must be held'}
+  );
+}
+
+// Resource Timing lists only finished responses, so this backs up, and never
+// replaces, checking that the hat preview has not mounted.
+function hatArtworkRequested() {
+  return browser.execute(() =>
+    performance
+      .getEntriesByType('resource')
+      .some(
+        entry => new URL(entry.name).pathname === '/static/image/store/5950.svg'
+      )
+  );
+}
+
+async function waitForHatStatus(text: string) {
+  await browser.waitUntil(
+    async () =>
+      String(
+        await browser.$('[data-hat-preview-status]').getProperty('textContent')
+      ).includes(text),
+    {timeout: 30_000, timeoutMsg: `The hat preview must report ${text}`}
+  );
+}
+
 function skylineDrawCalls() {
   return browser.execute(
     selector =>
@@ -284,26 +347,7 @@ describe('staging 3D skyline', () => {
 
   it('keeps a pending background load across navigation and hides show original', async () => {
     // Hold the scene markup until the boot-state assertions complete.
-    const delayScene = await browser.addInitScript(() => {
-      const sceneReady = new Promise<void>(resolve => {
-        window.addEventListener('release-skyline-markup', () => resolve(), {
-          once: true,
-        });
-      });
-      const originalFetch = globalThis.fetch.bind(globalThis);
-      const browserWindow: Window = window;
-      browserWindow.fetch = async (input, init) => {
-        const url = input instanceof Request ? input.url : String(input);
-        if (
-          new URL(url, location.href).pathname ===
-          '/static/skyline/skyline-3d.html'
-        ) {
-          document.documentElement.dataset['skylineMarkupHeld'] = 'true';
-          await sceneReady;
-        }
-        return originalFetch(input, init);
-      };
-    });
+    const delayScene = await holdSkylineMarkup();
     try {
       await BasePage.openStaging('store');
       const viewer = await browser.$(skylineRegion);
@@ -319,36 +363,75 @@ describe('staging 3D skyline', () => {
       assert.equal((await browser.$(skylineRegion)).elementId, viewerId);
       const original = await viewer.shadow$('#embedded-original');
       await original.waitForExist({timeout: 30_000});
-      await browser.waitUntil(
-        () =>
-          browser.execute(
-            () =>
-              document.documentElement.dataset['skylineMarkupHeld'] === 'true'
-          ),
-        {
-          timeout: 30_000,
-          timeoutMsg: 'The scene markup request must be held',
-        }
-      );
+      await waitForHeldSkylineMarkup();
       await expect(viewer).toHaveAttribute('aria-busy', 'true');
       await expect(original).not.toBeDisplayed();
-      await browser.execute(() =>
-        window.dispatchEvent(new Event('release-skyline-markup'))
-      );
+      await releaseSkylineMarkup();
       await BasePage.waitForSkylineFrame();
       await expect(original).not.toBeDisplayed();
     } finally {
       try {
-        await browser.execute(() =>
-          window.dispatchEvent(new Event('release-skyline-markup'))
-        );
+        await releaseSkylineMarkup();
       } finally {
         await delayScene.remove();
       }
     }
   });
 
-  it('waits for background hat preparation before mounting the viewer', async () => {
+  it('builds the Home skyline before the background hat', async () => {
+    const delayScene = await holdSkylineMarkup();
+    try {
+      await BasePage.openStaging('');
+      await (await browser.$(skylineRegion)).waitForExist({timeout: 30_000});
+      await waitForHeldSkylineMarkup();
+      await expect(await browser.$('[data-hat-preview-status]')).not.toExist();
+      assert.strictEqual(
+        await hatArtworkRequested(),
+        false,
+        'The hat must wait for the Home skyline'
+      );
+      await releaseSkylineMarkup();
+      await BasePage.waitForSkylineFrame();
+      await waitForHatStatus('3D preview ready');
+    } finally {
+      try {
+        await releaseSkylineMarkup();
+      } finally {
+        await delayScene.remove();
+      }
+    }
+  });
+
+  it('starts the hat at once when the Store opens before the Home skyline settles', async () => {
+    const delayScene = await holdSkylineMarkup();
+    try {
+      await BasePage.openStaging('');
+      const viewer = await browser.$(skylineRegion);
+      await viewer.waitForExist({timeout: 30_000});
+      await waitForHeldSkylineMarkup();
+      await expect(await browser.$('[data-hat-preview-status]')).not.toExist();
+      await (await browser.$('a[href="/store"]')).click();
+      // This spec has no storefront fixture, so the Store shows its error;
+      // the hat preview spec covers presenting the canvas on the Store.
+      await waitForHatStatus('3D preview ready');
+      await expect(viewer).toHaveAttribute('aria-busy', 'true');
+      await releaseSkylineMarkup();
+      await (await browser.$('footer a[href="/"]')).click();
+      await BasePage.waitForSkylineFrame();
+      assert.equal(
+        (await browser.$(skylineRegion)).elementId,
+        viewer.elementId
+      );
+    } finally {
+      try {
+        await releaseSkylineMarkup();
+      } finally {
+        await delayScene.remove();
+      }
+    }
+  });
+
+  it('waits for background hat preparation before mounting the viewer away from Home', async () => {
     const delayArtwork = await browser.addInitScript(() => {
       const artworkReady = new Promise<void>(resolve => {
         window.addEventListener('release-hat-artwork', () => resolve(), {
@@ -365,7 +448,7 @@ describe('staging 3D skyline', () => {
       };
     });
     try {
-      await BasePage.openStaging('');
+      await BasePage.openStaging('company');
       await BasePage.waitForAppReady();
       await expect(BasePage.skyline).toExist();
       assert.strictEqual(await browser.$$(skylineRegion).length, 0);
@@ -392,6 +475,61 @@ describe('staging 3D skyline', () => {
     }
   });
 
+  it('starts the skyline at once when Home opens before the background hat settles', async () => {
+    const delayArtwork = await browser.addInitScript(() => {
+      // Keep the held hat loading on a slow machine: its 15-second timeout
+      // would otherwise settle it and release the skyline anyway.
+      const originalSetTimeout = window.setTimeout;
+      window.setTimeout = ((...args: Parameters<typeof window.setTimeout>) => {
+        const [handler, delay, ...rest] = args;
+        return originalSetTimeout(
+          handler,
+          delay === 15_000 ? 600_000 : delay,
+          ...rest
+        );
+      }) as typeof window.setTimeout;
+      const artworkReady = new Promise<void>(resolve => {
+        window.addEventListener('release-hat-artwork', () => resolve(), {
+          once: true,
+        });
+      });
+      const originalFetch = globalThis.fetch.bind(globalThis);
+      const browserWindow: Window = window;
+      browserWindow.fetch = async (input, init) => {
+        if (String(input).endsWith('/static/image/store/5950.svg')) {
+          await artworkReady;
+        }
+        return originalFetch(input, init);
+      };
+    });
+    try {
+      await BasePage.openStaging('company');
+      await BasePage.waitForAppReady();
+      await waitForHatStatus('loading preview');
+      assert.strictEqual(await browser.$$(skylineRegion).length, 0);
+      await (await browser.$('footer a[href="/"]')).click();
+      await (await browser.$(skylineRegion)).waitForExist({timeout: 30_000});
+      assert.match(
+        String(
+          await browser
+            .$('[data-hat-preview-status]')
+            .getProperty('textContent')
+        ),
+        /loading preview/u,
+        'Home must not wait for the held hat'
+      );
+      await BasePage.waitForSkylineFrame();
+    } finally {
+      try {
+        await browser.execute(() =>
+          window.dispatchEvent(new Event('release-hat-artwork'))
+        );
+      } finally {
+        await delayArtwork.remove();
+      }
+    }
+  });
+
   it('starts the skyline even when background hat preparation times out', async () => {
     const shortenTimeout = await browser.addInitScript(() => {
       const originalSetTimeout = window.setTimeout;
@@ -405,7 +543,7 @@ describe('staging 3D skyline', () => {
       }) as typeof window.setTimeout;
     });
     try {
-      await BasePage.openStaging('');
+      await BasePage.openStaging('company');
       await browser.waitUntil(async () =>
         String(
           await browser

@@ -271,8 +271,9 @@ describe('3D hat preview', () => {
     try {
       for (const path of ['', 'company']) {
         await BasePage.openStaging(path);
-        await waitForPreparedPreview();
+        // Home builds its skyline before the hat; Company, the hat first.
         await BasePage.waitForSkylineFrame();
+        await waitForPreparedPreview();
         const canvas = await browser.$(canvasSelector);
         const canvasId = await canvas.elementId;
         await expect(canvas).not.toBeDisplayed();

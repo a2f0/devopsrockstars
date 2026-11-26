@@ -171,11 +171,15 @@ controls without rebuilding. WebGL resources stay allocated until the app
 unmounts. If the 3D skyline cannot start, as without WebGL 2, the viewer says
 why in its place and in the browser console, and its **show original** button
 still opens the original drawing, which its control bar also offers once the
-scene runs. If `store` is enabled, initial skyline preparation waits for the
-hat preview to succeed or fail, so the two models build in sequence. Later hat
-retries do not restart the skyline. With the store disabled, preparation starts
-directly. Navigating Home before preparation finishes shows the existing load,
-not a second one.
+scene runs. If `store` is enabled, the skyline and the hat preview build in
+sequence (`packages/frontend/src/store/modelPreparation.ts`): a visit that
+starts on Home builds the skyline first and the hat once the skyline's `ready`
+settles; any other visit builds the hat first and the skyline once the hat
+succeeds or fails. Opening the page that shows the waiting model, the Store for
+the hat or Home for the skyline, starts it at once. Later hat retries do not
+restart the skyline. With the store disabled, preparation starts directly.
+Navigating Home before preparation finishes shows the existing load, not a
+second one.
 Direct visits to checkout, receipt, admin, or unknown routes do not start
 skyline preparation; a previously prepared viewer remains parked there.
 

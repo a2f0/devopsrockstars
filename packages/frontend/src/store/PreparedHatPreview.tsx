@@ -1,19 +1,37 @@
 import React, {
   createContext,
+  type Dispatch,
   type ReactNode,
+  useCallback,
   useContext,
   useLayoutEffect,
   useMemo,
+  useReducer,
   useRef,
   useState,
 } from 'react';
 import {createPortal} from 'react-dom';
+import {useLocation} from 'react-router';
 import {features} from '../featureFlags';
 import HatPreview, {type HatPreviewStatus} from './HatPreview';
+import {
+  hatMayPrepare,
+  initialModelPreparation,
+  type ModelPreparation,
+  type ModelPreparationEvent,
+  transitionModelPreparation,
+} from './modelPreparation';
 
-const PreparationContext = createContext(false);
+const PreparationContext = createContext<{
+  preparation: ModelPreparation;
+  dispatch: Dispatch<ModelPreparationEvent>;
+}>({preparation: {status: 'released'}, dispatch: () => {}});
 
-export function useHatPreviewPreparing() {
+/**
+ * The background models' build order. Without the store there is no hat, so
+ * the skyline prepares directly.
+ */
+export function useModelPreparation() {
   return useContext(PreparationContext);
 }
 
@@ -24,8 +42,13 @@ const PreviewContext = createContext<{
 } | null>(null);
 
 function PreparedPreview({children}: {children: ReactNode}) {
+  const {pathname} = useLocation();
+  const [preparation, dispatch] = useReducer(
+    transitionModelPreparation,
+    pathname,
+    initialModelPreparation
+  );
   const [container] = useState(() => document.createElement('div'));
-  const [status, setStatus] = useState<HatPreviewStatus>('loading');
   const parking = useRef<HTMLDivElement>(null);
   const [presentation, setPresentation] = useState({
     name: 'Hat',
@@ -35,12 +58,26 @@ function PreparedPreview({children}: {children: ReactNode}) {
     () => ({container, parking, setPresentation}),
     [container]
   );
+  const preparationValue = useMemo(
+    () => ({preparation, dispatch}),
+    [preparation]
+  );
+
+  // Before paint, so a Store reached while the hat waits (including through
+  // history) never shows its empty slot for a frame.
+  useLayoutEffect(() => {
+    dispatch({type: 'routeChanged', pathname});
+  }, [pathname]);
 
   useLayoutEffect(() => {
     // A direct Store visit may already have attached the canvas to its slot.
     if (!container.parentNode) parking.current?.appendChild(container);
     return () => container.remove();
   }, [container]);
+
+  const onStatusChange = useCallback((status: HatPreviewStatus) => {
+    if (status !== 'loading') dispatch({type: 'hatSettled'});
+  }, []);
 
   return (
     <PreviewContext.Provider value={preview}>
@@ -58,11 +95,13 @@ function PreparedPreview({children}: {children: ReactNode}) {
           pointerEvents: 'none',
         }}
       />
-      {createPortal(
-        <HatPreview {...presentation} onStatusChange={setStatus} />,
-        container
-      )}
-      <PreparationContext.Provider value={status === 'loading'}>
+      {hatMayPrepare(preparation)
+        ? createPortal(
+            <HatPreview {...presentation} onStatusChange={onStatusChange} />,
+            container
+          )
+        : null}
+      <PreparationContext.Provider value={preparationValue}>
         {children}
       </PreparationContext.Provider>
     </PreviewContext.Provider>
