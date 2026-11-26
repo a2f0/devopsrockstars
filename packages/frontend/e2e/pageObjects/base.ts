@@ -1,9 +1,6 @@
 import {$, browser} from '../browser';
 
 class Base {
-  get mapDiv(): ReturnType<WebdriverIO.Browser['$']> {
-    return $('#mapdiv');
-  }
   get skyline(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#skyline');
   }

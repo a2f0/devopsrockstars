@@ -13,7 +13,6 @@ import {parseSiteEnvironment} from './environment';
 import Footer from './Footer';
 import {features} from './featureFlags';
 import Header from './Header';
-import FullScreenMap from './Map';
 import NotFound from './NotFound';
 import {applyPageHead, pageHeadTags} from './pageHead';
 import {pageForPath} from './pages';
@@ -75,7 +74,6 @@ function AppRouter() {
       <GlobalStyle />
       <DocumentHead />
       <StorePrefetch />
-      <FullScreenMap />
       <FlexContainerRow>
         <FlexFullHeightMin>
           <FlexContainerColumn>

@@ -176,7 +176,6 @@ Dependencies point one way, and `biome.json` enforces it in every lint run
 - `packages/frontend/src/Footer.tsx` - Footer (hidden on main page)
 - `packages/frontend/src/Skyline.tsx` - Main page content
 - `packages/frontend/src/Company.tsx` - Company information page
-- `packages/frontend/src/Map.tsx` - Full-screen Leaflet map component
 - `packages/frontend/src/admin/` - Lazily loaded store admin under `/admin`
 - `packages/frontend/src/NotFound.tsx` - Catch-all route for unmatched paths
 - `packages/frontend/src/pages.ts` - Every route's title, description, and indexing, prerendered by the build
