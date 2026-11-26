@@ -1,7 +1,8 @@
 import {matchesRoute} from '../routes';
 
 /**
- * Which background 3D model a visit builds first when the store is enabled.
+ * Which background 3D model a visit builds first when the store is enabled;
+ * without the store there is no hat, and the skyline prepares directly.
  * Building the Home skyline and the Store hat at once makes them compete for
  * the main thread and GPU, so startup builds one, then the other: the skyline
  * when the visit starts on Home, where it is the page, and otherwise the hat.
@@ -25,14 +26,7 @@ export type ModelPreparationEvent =
 const homeRoutes = ['/'];
 const hatRoutes = ['/store'];
 
-export function initialModelPreparation({
-  store,
-  pathname,
-}: {
-  store: boolean;
-  pathname: string;
-}): ModelPreparation {
-  if (!store) return {status: 'released'};
+export function initialModelPreparation(pathname: string): ModelPreparation {
   return matchesRoute(homeRoutes, pathname)
     ? {status: 'skylineFirst'}
     : {status: 'hatFirst'};

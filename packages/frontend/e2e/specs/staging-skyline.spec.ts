@@ -473,6 +473,58 @@ describe('staging 3D skyline', () => {
     }
   });
 
+  it('starts the skyline at once when Home opens before the background hat settles', async () => {
+    const delayArtwork = await browser.addInitScript(() => {
+      // Keep the held hat loading on a slow machine: its 15-second timeout
+      // would otherwise settle it and release the skyline anyway.
+      const originalSetTimeout = window.setTimeout;
+      window.setTimeout = ((...args: Parameters<typeof window.setTimeout>) => {
+        const [handler, delay, ...rest] = args;
+        return originalSetTimeout(
+          handler,
+          delay === 15_000 ? 600_000 : delay,
+          ...rest
+        );
+      }) as typeof window.setTimeout;
+      const artworkReady = new Promise<void>(resolve => {
+        window.addEventListener('release-hat-artwork', () => resolve(), {
+          once: true,
+        });
+      });
+      const originalFetch = globalThis.fetch.bind(globalThis);
+      const browserWindow: Window = window;
+      browserWindow.fetch = async (input, init) => {
+        if (String(input).endsWith('/static/image/store/5950.svg')) {
+          await artworkReady;
+        }
+        return originalFetch(input, init);
+      };
+    });
+    try {
+      await BasePage.openStaging('company');
+      await BasePage.waitForAppReady();
+      await waitForHatStatus('loading preview');
+      assert.strictEqual(await browser.$$(skylineRegion).length, 0);
+      await (await browser.$('footer a[href="/"]')).click();
+      await (await browser.$(skylineRegion)).waitForExist({timeout: 30_000});
+      assert.match(
+        String(
+          await browser
+            .$('[data-hat-preview-status]')
+            .getProperty('textContent')
+        ),
+        /loading preview/u,
+        'Home must not wait for the held hat'
+      );
+      await BasePage.waitForSkylineFrame();
+    } finally {
+      await browser.execute(() =>
+        window.dispatchEvent(new Event('release-hat-artwork'))
+      );
+      await delayArtwork.remove();
+    }
+  });
+
   it('starts the skyline even when background hat preparation times out', async () => {
     const shortenTimeout = await browser.addInitScript(() => {
       const originalSetTimeout = window.setTimeout;

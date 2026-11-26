@@ -46,7 +46,7 @@ function PreparedPreview({children}: {children: ReactNode}) {
   const {pathname} = useLocation();
   const [preparation, dispatch] = useReducer(
     transitionModelPreparation,
-    {store: true, pathname},
+    pathname,
     initialModelPreparation
   );
   const [container] = useState(() => document.createElement('div'));

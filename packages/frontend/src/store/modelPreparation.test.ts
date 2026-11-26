@@ -14,25 +14,17 @@ const hatFirst: ModelPreparation = {status: 'hatFirst'};
 const released: ModelPreparation = {status: 'released'};
 
 test('starts with the model the first page shows', () => {
-  const cases: ReadonlyArray<
-    readonly [{store: boolean; pathname: string}, ModelPreparation]
-  > = [
-    [{store: true, pathname: '/'}, skylineFirst],
-    [{store: true, pathname: '/store'}, hatFirst],
-    [{store: true, pathname: '/store/'}, hatFirst],
-    [{store: true, pathname: '/company'}, hatFirst],
-    [{store: true, pathname: '/search'}, hatFirst],
-    [{store: true, pathname: '/store/checkout'}, hatFirst],
-    [{store: true, pathname: '/missing'}, hatFirst],
-    [{store: false, pathname: '/'}, released],
-    [{store: false, pathname: '/company'}, released],
+  const cases: ReadonlyArray<readonly [string, ModelPreparation]> = [
+    ['/', skylineFirst],
+    ['/store', hatFirst],
+    ['/store/', hatFirst],
+    ['/company', hatFirst],
+    ['/search', hatFirst],
+    ['/store/checkout', hatFirst],
+    ['/missing', hatFirst],
   ];
-  for (const [input, expected] of cases) {
-    assert.deepEqual(
-      initialModelPreparation(input),
-      expected,
-      JSON.stringify(input)
-    );
+  for (const [pathname, expected] of cases) {
+    assert.deepEqual(initialModelPreparation(pathname), expected, pathname);
   }
 });
 
