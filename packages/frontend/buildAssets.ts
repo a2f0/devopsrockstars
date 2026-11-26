@@ -6,6 +6,7 @@ import {
   skylineAssetsUrl,
   skylineFrameStyle,
   skylinePlaceholderId,
+  skylineTheme,
 } from './src/skylineBoot';
 
 function escapeHtml(value: string) {
@@ -133,6 +134,6 @@ export async function homeSkylineBoot(page: Page) {
   const preloads = await skylinePreloadLinks(skylineAssetsUrl, {three: true});
   return {
     head: `${preloads}\n<noscript><style>#${skylinePlaceholderId}{display:none}</style></noscript>\n`,
-    body: `<div id="${skylinePlaceholderId}" style="${skylineFrameStyle}">${skylineBootMarkup({theme: 'dark'})}</div>\n`,
+    body: `<div id="${skylinePlaceholderId}" style="${skylineFrameStyle}">${skylineBootMarkup({theme: skylineTheme})}</div>\n`,
   };
 }

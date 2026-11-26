@@ -8,6 +8,7 @@ import {
   skylineAssetsUrl,
   skylineFrameStyle,
   skylinePlaceholderId,
+  skylineTheme,
 } from './skylineBoot';
 import {skylineMayPrepare} from './store/modelPreparation';
 import {useModelPreparation} from './store/PreparedHatPreview';
@@ -42,7 +43,7 @@ const Skyline = React.memo(() => {
     const instance = mountSkyline(container.current, {
       assetsUrl: skylineAssetsUrl,
       // Match the site's dark backdrop while the scene assets load.
-      theme: 'dark',
+      theme: skylineTheme,
       // Share the hat preview's three.js instead of loading a second engine.
       three: import('@a2f0/skyline/three'),
       // Home's prerendered silhouette, if this visit started there: the

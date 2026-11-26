@@ -4,6 +4,9 @@
 /** Where every build serves the `@a2f0/skyline` viewer assets. */
 export const skylineAssetsUrl = '/static/skyline/';
 
+/** The site's dark backdrop, matched by the silhouette and the viewer. */
+export const skylineTheme = 'dark';
+
 /** The prerendered loading silhouette on Home, handed to the viewer at mount. */
 export const skylinePlaceholderId = 'skyline-placeholder';
 
