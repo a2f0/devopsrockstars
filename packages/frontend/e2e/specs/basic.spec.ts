@@ -75,10 +75,11 @@ describe('index page', () => {
       'aria-label',
       'Interactive Chicago skyline'
     );
-    await BasePage.waitForSkylineFrame();
-    // The viewer took over the prerendered silhouette and reused every
-    // download the document's preloads started.
+    // The viewer takes over the prerendered silhouette as it mounts, so it
+    // never lingers behind a page the visitor opens while the scene loads.
     await expect(await browser.$('#skyline-placeholder')).not.toExist();
+    await BasePage.waitForSkylineFrame();
+    // The viewer reused every download the document's preloads started.
     assert.deepStrictEqual(
       await browser.execute(() => {
         const names = performance

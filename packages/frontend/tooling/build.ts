@@ -10,6 +10,7 @@ import {
 import {
   headersFile,
   homeSkylineBoot,
+  pageDocument,
   pageFile,
   pageHead,
   robotsTxt,
@@ -151,13 +152,11 @@ export async function bundleFrontend({
   const pages = sitePages(flags);
   for (const page of [...pages, notFoundPage]) {
     const boot = await homeSkylineBoot(page);
-    const html = template
-      .replace(
-        '</head>',
-        () =>
-          `${pageHead(page, environment)}\n<script type="module" src="${entry}"></script>\n${boot.head}</head>`
-      )
-      .replace('<body>', () => `<body>\n${boot.body}`);
+    const html = pageDocument(
+      template,
+      `${pageHead(page, environment)}\n<script type="module" src="${entry}"></script>\n${boot.head}`,
+      boot.body
+    );
     assets.set(
       pageFile(page),
       new Blob([html], {type: 'text/html;charset=utf-8'})

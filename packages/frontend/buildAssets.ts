@@ -107,6 +107,20 @@ export function headersFile(environment: SiteEnvironment) {
 }
 
 /**
+ * Fills the application shell with a page's head tags and leading body
+ * markup. A shell without exactly one of each marker fails the build rather
+ * than silently publishing pages without their metadata or scripts.
+ */
+export function pageDocument(template: string, head: string, body: string) {
+  for (const marker of ['</head>', '<body>'])
+    if (template.split(marker).length !== 2)
+      throw new Error(`index.html must contain exactly one ${marker}`);
+  return template
+    .replace('</head>', () => `${head}</head>`)
+    .replace('<body>', () => `<body>\n${body}`);
+}
+
+/**
  * Home mounts the skyline as soon as the application runs, so its document
  * starts the viewer's downloads alongside the application's own code and
  * paints the package's loading silhouette before any script runs, placed like
