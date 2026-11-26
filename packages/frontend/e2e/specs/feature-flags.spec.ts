@@ -77,9 +77,10 @@ describe('independent feature flags', () => {
                   'true'
               )
             );
-            await expect(
-              await browser.$('[data-hat-preview-status]')
-            ).toExist();
+            // Home builds the skyline first, then the background hat.
+            await (await browser.$('[data-hat-preview-status]')).waitForExist({
+              timeout: 30_000,
+            });
           } else {
             assert.equal(
               await browser.execute(
