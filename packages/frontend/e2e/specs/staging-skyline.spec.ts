@@ -520,10 +520,13 @@ describe('staging 3D skyline', () => {
       );
       await BasePage.waitForSkylineFrame();
     } finally {
-      await browser.execute(() =>
-        window.dispatchEvent(new Event('release-hat-artwork'))
-      );
-      await delayArtwork.remove();
+      try {
+        await browser.execute(() =>
+          window.dispatchEvent(new Event('release-hat-artwork'))
+        );
+      } finally {
+        await delayArtwork.remove();
+      }
     }
   });
 
