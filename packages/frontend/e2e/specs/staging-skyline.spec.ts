@@ -141,6 +141,8 @@ async function waitForHeldSkylineMarkup() {
   );
 }
 
+// Resource Timing lists only finished responses, so this backs up, and never
+// replaces, checking that the hat preview has not mounted.
 function hatArtworkRequested() {
   return browser.execute(() =>
     performance

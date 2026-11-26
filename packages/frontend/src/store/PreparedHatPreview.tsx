@@ -4,7 +4,6 @@ import React, {
   type ReactNode,
   useCallback,
   useContext,
-  useEffect,
   useLayoutEffect,
   useMemo,
   useReducer,
@@ -64,7 +63,9 @@ function PreparedPreview({children}: {children: ReactNode}) {
     [preparation]
   );
 
-  useEffect(() => {
+  // Before paint, so a Store reached while the hat waits (including through
+  // history) never shows its empty slot for a frame.
+  useLayoutEffect(() => {
     dispatch({type: 'routeChanged', pathname});
   }, [pathname]);
 
