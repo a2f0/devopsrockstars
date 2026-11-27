@@ -44,7 +44,8 @@ required CI policy. Dependency maintenance follows the shared
 `update-dependencies` skill and
 [deployment preview policy](docs/dependency-maintenance.md). Update installed
 skills and the generated harness permission rules (`.claude/settings.json`,
-`.codex/rules/agent-tool.rules`, `.agent-tool-permissions.json`) with
+`.codex/rules/agent-tool.rules`, `.gemini/policies/agent-tool.toml`,
+`.agent-tool-permissions.json`) with
 `bun run agents:sync` after changing the dependency pin or the
 `permissions.executables` classes in `agent-tool.json`, and check them with
 `bun run agents:check`. Do not edit managed skills or generated rules locally.
