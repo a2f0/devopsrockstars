@@ -44,8 +44,7 @@ required CI policy. Dependency maintenance follows the shared
 `update-dependencies` skill and
 [deployment preview policy](docs/dependency-maintenance.md). Update installed
 skills and the generated harness permission rules (`.claude/settings.json`,
-`.codex/rules/agent-tool.rules`, `.gemini/policies/agent-tool.toml`,
-`.agent-tool-permissions.json`) with
+`.codex/rules/agent-tool.rules`, `.agent-tool-permissions.json`) with
 `bun run agents:sync` after changing the dependency pin or the
 `permissions.executables` classes in `agent-tool.json`, and check them with
 `bun run agents:check`. Do not edit managed skills or generated rules locally.
@@ -118,8 +117,9 @@ The Home skyline renders with the frontend's `three` through
 when updating either; the staging browser tests fail if the viewer loads its
 own copy.
 
-Review with an agent other than the one that wrote the change: Codex from
-Claude Code, Claude from Codex, then the remaining CLIs, reporting any fallback.
+Review with an independent agent from a different model/provider than the one
+that wrote the change (Antigravity CLI `agy`, Claude Code, Codex, or OpenCode),
+reporting any fallback.
 Require a complete non-blocking verdict on the final commit. Validate, commit, and re-review repairs until findings are addressed.
 Report the reviewer, fallback, verdict, repair count, and reviewed commit.
 

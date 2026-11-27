@@ -7,7 +7,7 @@ validation, and preview evidence in its PR instead of accumulating a journal.
 and guard rollout that introduced the constraints below. Historical findings
 and previews are not current audit or live-state evidence.
 
-Use the managed `update-dependencies` skill for both Codex and Claude. Inventory
+Use the managed `update-dependencies` skill. Inventory
 all workspace manifests, `bun.lock`, Bun and CI runtimes, Actions, pre-commit,
 Terraform core/providers, and intentional patches. Query official releases and
 registries, read migrations, and choose compatible groups before changing pins.
