@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "agentToolVersion": "0.1.78",
+  "agentToolVersion": "0.1.83",
   "scope": "all",
   "claude": {
     "allow": [
@@ -232,9 +232,5 @@
   "codex": {
     "file": ".codex/rules/agent-tool.rules",
     "sha256": "8053e75a854db4920f466c742487abbbc028df264d491e4c0f0a78ddd14bb2a6"
-  },
-  "gemini": {
-    "file": ".gemini/policies/agent-tool.toml",
-    "sha256": "155cbdd89778d1af466ddfcfaecaa2067f3073bfcf54255989cb694dce3a874e"
   }
 }
